@@ -34,4 +34,8 @@ export const envs = {
   POSTGRES_DB: get('POSTGRES_DB').required().asString(),
   POSTGRES_PORT: get('POSTGRES_PORT').required().asPortNumber(),
 
+  SUPABASE_URL: get('SUPABASE_URL').required().asString(),
+  SUPABASE_ANON_KEY: get('SUPABASE_ANON_KEY').required().asString(),
+  BUCKET_NAME: get('BUCKET_NAME').required().asString(),
+
 }

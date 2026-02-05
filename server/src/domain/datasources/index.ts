@@ -28,3 +28,4 @@ export * from './property.datasource';
 export * from './invitation.datasource';
 export * from './record.datasource';
 export * from './favorite.datasource'
+export * from './storage.datasource'

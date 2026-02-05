@@ -22,7 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-import { CreateUserRepositoryInput, UserDatasource, UserEntity, UserRepository } from "../../domain";
+import { CreateUserRepositoryInput, UpdateUserRepositoryInput, UserDatasource, UserEntity, UserRepository } from "../../domain";
 
 export class UserRepositoryImpl implements UserRepository {
 
@@ -36,5 +36,21 @@ export class UserRepositoryImpl implements UserRepository {
 
     findByEmail(email: string): Promise<UserEntity | null> {
         return this.datasource.findByEmail(email);
+    }
+
+    findById(idUser: number): Promise<UserEntity | null> {
+        return this.datasource.findById(idUser);
+    }
+
+    findAll(): Promise<UserEntity[]> {
+        return this.datasource.findAll();
+    }
+
+    update(idUser: number, data: UpdateUserRepositoryInput): Promise<UserEntity> {
+        return this.datasource.update(idUser, data);
+    }
+
+    delete(idUser: number): Promise<void> {
+        return this.datasource.delete(idUser);
     }
 }

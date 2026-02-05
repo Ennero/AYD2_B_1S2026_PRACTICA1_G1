@@ -23,3 +23,4 @@ SOFTWARE.
 */
 
 export * from './user.repository';
+export * from './storage.repository';

@@ -24,7 +24,7 @@ SOFTWARE.
 */
 
 import { prisma } from '../../config/postgres';
-import { CreateUserRepositoryInput, UserDatasource, UserEntity } from '../../domain';
+import { CreateUserRepositoryInput, UpdateUserRepositoryInput, UserDatasource, UserEntity } from '../../domain';
 
 export class UserDatasourceImpl implements UserDatasource {
 
@@ -52,6 +52,47 @@ export class UserDatasourceImpl implements UserDatasource {
         });
 
         return user ? UserEntity.fromObject(user) : null;
+    }
+
+    async findById(idUser: number): Promise<UserEntity | null> {
+        const user = await prisma.user.findFirst({
+            where: { idUser },
+        });
+
+        return user ? UserEntity.fromObject(user) : null;
+    }
+
+    async findAll(): Promise<UserEntity[]> {
+        const users = await prisma.user.findMany({
+            orderBy: { idUser: 'asc' },
+        });
+
+        return users.map(UserEntity.fromObject);
+    }
+
+    async update(idUser: number, data: UpdateUserRepositoryInput): Promise<UserEntity> {
+		const updateData: any = {};
+		if (data.email !== undefined) updateData.email = data.email;
+		if (data.password !== undefined) updateData.password = data.password;
+		if (data.gender !== undefined) updateData.gender = data.gender;
+		if (data.type !== undefined) updateData.type = data.type;
+		if (data.name !== undefined) updateData.name = data.name;
+		if (data.lastName !== undefined) updateData.lastName = data.lastName;
+		if (data.phone !== undefined) updateData.phone = data.phone;
+		if (data.urlImg !== undefined) updateData.urlImg = data.urlImg;
+
+        const user = await prisma.user.update({
+            where: { idUser },
+			data: updateData,
+        });
+
+        return UserEntity.fromObject(user);
+    }
+
+    async delete(idUser: number): Promise<void> {
+        await prisma.user.delete({
+            where: { idUser },
+        });
     }
 
 }

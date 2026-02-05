@@ -29,6 +29,15 @@ import { UserRepositoryImpl } from "../../infrastructure/repositories/user.repos
 import { BcryptPasswordHasherService } from "../../infrastructure/services/bcrypt.password-hasher.service";
 import { CreateUserUseCase } from "../../domain/use-cases/user/create-user.usecase";
 import { validateCreateUserDTO } from "./middlewares/create-user.dto.middleware";
+import { validateUpdateUserDTO } from "./middlewares/update-user.dto.middleware";
+import multer from 'multer';
+import { GetUsersUseCase } from "../../domain/use-cases/user/get-users.usecase";
+import { GetUserByIdUseCase } from "../../domain/use-cases/user/get-user-by-id.usecase";
+import { UpdateUserUseCase } from "../../domain/use-cases/user/update-user.usecase";
+import { DeleteUserUseCase } from "../../domain/use-cases/user/delete-user.usecase";
+import { UploadUserAvatarUseCase } from "../../domain/use-cases/user/upload-user-avatar.usecase";
+import { SupabaseStorageDatasourceImpl } from "../../infrastructure/datasources/supabase.storage.datasource.impl";
+import { StorageRepositoryImpl } from "../../infrastructure/repositories/storage.repository.impl";
 
 export class UserRoutes {
 
@@ -38,14 +47,39 @@ export class UserRoutes {
         const datasource = new UserDatasourceImpl();
         const repository = new UserRepositoryImpl(datasource);
         const passwordHasher = new BcryptPasswordHasherService();
-        const createUserUseCase = new CreateUserUseCase(repository, passwordHasher);
-        const routesController = new UserController(createUserUseCase);
 
-        router.post('/user', validateCreateUserDTO, routesController.create);
-        router.get('/user', routesController.getAll);
-        router.get('/user/:id', routesController.getById);
-        router.put('/user/:id', routesController.update);
-        router.delete('/user/:id', routesController.delete);
+        const createUserUseCase = new CreateUserUseCase(repository, passwordHasher);
+        const getUsersUseCase = new GetUsersUseCase(repository);
+        const getUserByIdUseCase = new GetUserByIdUseCase(repository);
+        const updateUserUseCase = new UpdateUserUseCase(repository, passwordHasher);
+        const deleteUserUseCase = new DeleteUserUseCase(repository);
+
+        const storageDatasource = new SupabaseStorageDatasourceImpl();
+        const storageRepository = new StorageRepositoryImpl(storageDatasource);
+        const uploadUserAvatarUseCase = new UploadUserAvatarUseCase(storageRepository, repository);
+
+        const routesController = new UserController(
+            createUserUseCase,
+            getUsersUseCase,
+            getUserByIdUseCase,
+            updateUserUseCase,
+            deleteUserUseCase,
+            uploadUserAvatarUseCase,
+        );
+
+        const upload = multer({
+            storage: multer.memoryStorage(),
+            limits: { fileSize: 25 * 1024 * 1024 },
+        });
+
+        router.post('/', validateCreateUserDTO, routesController.create);
+        router.get('/', routesController.getAll);
+        router.get('/:id', routesController.getById);
+        router.put('/:id', validateUpdateUserDTO, routesController.update);
+        router.delete('/:id', routesController.delete);
+
+        // Avatar upload to Supabase Storage, updates urlImg
+        router.post('/:id/avatar', upload.single('file'), routesController.uploadAvatar);
 
 
         return router;

@@ -23,7 +23,7 @@ SOFTWARE.
 */
 
 import { UserEntity } from "../entities/user.entity";
-import { CreateUserRepositoryInput } from "../repositories/user.repository";
+import { CreateUserRepositoryInput, UpdateUserRepositoryInput } from "../repositories/user.repository";
 
 
 export abstract class UserDatasource {
@@ -31,5 +31,13 @@ export abstract class UserDatasource {
     abstract create(data: CreateUserRepositoryInput): Promise<UserEntity>
 
     abstract findByEmail(email: string): Promise<UserEntity | null>
+
+    abstract findById(idUser: number): Promise<UserEntity | null>
+
+    abstract findAll(): Promise<UserEntity[]>
+
+    abstract update(idUser: number, data: UpdateUserRepositoryInput): Promise<UserEntity>
+
+    abstract delete(idUser: number): Promise<void>
 
 }

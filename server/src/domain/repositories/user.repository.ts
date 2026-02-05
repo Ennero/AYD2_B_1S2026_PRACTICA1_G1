@@ -36,8 +36,23 @@ export interface CreateUserRepositoryInput {
 	createdAt: Date;
 }
 
+export interface UpdateUserRepositoryInput {
+	email?: string;
+	password?: string;
+	gender?: number;
+	type?: string;
+	name?: string;
+	lastName?: string;
+	phone?: string;
+	urlImg?: string | null;
+}
+
 export abstract class UserRepository {
 	abstract create(data: CreateUserRepositoryInput): Promise<UserEntity>;
 	abstract findByEmail(email: string): Promise<UserEntity | null>;
+	abstract findById(idUser: number): Promise<UserEntity | null>;
+	abstract findAll(): Promise<UserEntity[]>;
+	abstract update(idUser: number, data: UpdateUserRepositoryInput): Promise<UserEntity>;
+	abstract delete(idUser: number): Promise<void>;
 }
 

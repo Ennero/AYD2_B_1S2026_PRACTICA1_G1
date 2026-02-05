@@ -32,7 +32,8 @@
   "homepage": "https://github.com/Ennero/AYD2_B_1S2026_PRACTICA1_G1#readme",
   "devDependencies": {
     "@types/express": "^5.0.6",
-    "@types/node": "^25.2.0",
+    "@types/multer": "^2.0.0",
+    "@types/node": "^25.2.1",
     "@types/pg": "^8.16.0",
     "prisma": "^7.3.0",
     "rimraf": "^6.1.2",
@@ -43,10 +44,12 @@
   "dependencies": {
     "@prisma/adapter-pg": "^7.3.0",
     "@prisma/client": "^7.3.0",
+    "@supabase/supabase-js": "^2.95.1",
     "bcryptjs": "^3.0.3",
     "dotenv": "^17.2.3",
     "env-var": "^7.5.0",
     "express": "^5.2.1",
+    "multer": "^2.0.2",
     "pg": "^8.18.0"
   }
 }
