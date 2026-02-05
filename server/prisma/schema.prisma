@@ -1,0 +1,112 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  idUser    Int      @id @default(autoincrement()) @map("id_user")
+  email     String   @db.VarChar(30)
+  password  String   @db.VarChar(30)
+  gender    Decimal
+  type      String   @db.VarChar(30)
+  name      String   @db.VarChar(30)
+  lastName  String   @map("last_name") @db.VarChar(30)
+  urlImg    String?  @map("url_img") @db.VarChar(150)
+  phone     String   @db.VarChar(9)
+  createdAt DateTime @map("created_at")
+
+  properties  Property[]   @relation("AgentProperties")
+  favorites   Favorite[]   @relation("ClientFavorites")
+  invitations Invitation[] @relation("ClientInvitations")
+  records     Record[]     @relation("ClientRecords")
+
+  @@map("USER")
+}
+
+model Property {
+  idProperty   Int      @id @default(autoincrement()) @map("id_property")
+  title        String   @db.VarChar(50)
+  type         String   @db.VarChar(30)
+  address      String   @db.VarChar(150)
+  price        Decimal  @db.Decimal(8, 2)
+  description  String   @db.VarChar(300)
+  numRooms     Decimal  @map("num_rooms") @db.Decimal(4, 0)
+  numBathrooms Decimal  @map("num_bathrooms") @db.Decimal(4, 0)
+  squareMeters Decimal  @map("square_meters") @db.Decimal(6, 2)
+  state        String   @db.VarChar(30)
+  zone         Decimal  @db.Decimal(3, 0)
+  createdAt    DateTime @map("created_at")
+
+  agentId Int  @map("id_agent")
+  agent   User @relation("AgentProperties", fields: [agentId], references: [idUser], onDelete: Cascade)
+
+  favorites   Favorite[]
+  images      Image[]
+  invitations Invitation[]
+  records     Record[]
+
+  @@map("property")
+}
+
+model Favorite {
+  idFavorite Int      @id @default(autoincrement()) @map("id_favorite")
+  createdAt  DateTime @map("created_at")
+
+  clientId   Int      @map("id_client")
+  propertyId Int      @map("id_property")
+  client     User     @relation("ClientFavorites", fields: [clientId], references: [idUser], onDelete: Cascade)
+  property   Property @relation(fields: [propertyId], references: [idProperty], onDelete: Cascade)
+
+  @@map("favorite")
+}
+
+model Image {
+  idImage     Int     @id @default(autoincrement()) @map("id_image")
+  correlative Decimal @db.Decimal(3, 0)
+  urlImg      String  @map("url_img") @db.VarChar(150)
+
+  propertyId Int      @map("id_property")
+  property   Property @relation(fields: [propertyId], references: [idProperty], onDelete: Cascade)
+
+  @@map("image")
+}
+
+model Invitation {
+  idInvitation Int       @id @default(autoincrement()) @map("id_invitation")
+  status       String    @db.VarChar(30)
+  createdAt    DateTime  @map("created_at")
+  updatedAt    DateTime  @map("updated_at")
+  isAccepted   Decimal?  @map("is_accepted")
+  justification String?  @db.VarChar(300)
+  description  String?   @db.VarChar(300)
+  expectedDate DateTime? @map("expected_date")
+
+  clientId   Int      @map("id_client")
+  propertyId Int      @map("id_property")
+  client     User     @relation("ClientInvitations", fields: [clientId], references: [idUser], onDelete: Cascade)
+  property   Property @relation(fields: [propertyId], references: [idProperty], onDelete: Cascade)
+
+  @@map("invitation")
+}
+
+model Record {
+  idRecord  Int      @id @default(autoincrement()) @map("id_record")
+  createdAt DateTime @map("created_at")
+
+  clientId   Int      @map("id_client")
+  propertyId Int      @map("id_property")
+  client     User     @relation("ClientRecords", fields: [clientId], references: [idUser], onDelete: Cascade)
+  property   Property @relation(fields: [propertyId], references: [idProperty], onDelete: Cascade)
+
+  @@map("record")
+}

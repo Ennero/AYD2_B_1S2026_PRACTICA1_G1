@@ -1,0 +1,52 @@
+{
+  "name": "ayd2_b_1s2026_practica1_g1",
+  "version": "1.0.0",
+  "description": "HomeFinder Pro S.A",
+  "main": "src/app.ts",
+  "scripts": {
+    "dev": "tsx watch src/app.ts",
+    "dev:tsnd": "tsnd --respawn --clear src/app.ts",
+    "build": "rimraf ./dist && tsc",
+    "start": "npm run build && node dist/app.js",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:reset": "prisma migrate reset",
+    "prisma:studio": "prisma studio"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ennero/AYD2_B_1S2026_PRACTICA1_G1.git"
+  },
+  "keywords": [
+    "USAC",
+    "ECYS",
+    "TypeScript",
+    "Express",
+    "PostgreSQL"
+  ],
+  "author": "Marcos Bonifasi, Enner Mendizabal, David Barrios, Emilio Morales, Gahel Herrera",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Ennero/AYD2_B_1S2026_PRACTICA1_G1/issues"
+  },
+  "homepage": "https://github.com/Ennero/AYD2_B_1S2026_PRACTICA1_G1#readme",
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^25.2.0",
+    "@types/pg": "^8.16.0",
+    "prisma": "^7.3.0",
+    "rimraf": "^6.1.2",
+    "ts-node-dev": "^2.0.0",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "@prisma/adapter-pg": "^7.3.0",
+    "@prisma/client": "^7.3.0",
+    "bcryptjs": "^3.0.3",
+    "dotenv": "^17.2.3",
+    "env-var": "^7.5.0",
+    "express": "^5.2.1",
+    "pg": "^8.18.0"
+  }
+}
