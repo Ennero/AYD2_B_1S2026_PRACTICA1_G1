@@ -100,6 +100,24 @@
   }
 }
 
+@keyframes rotateY {
+  from {
+    transform: rotateY(0deg);
+  }
+  to {
+    transform: rotateY(360deg);
+  }
+}
+
+@keyframes shimmerSlide {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
 @keyframes spin {
   from {
     transform: rotate(0deg);
@@ -139,4 +157,17 @@
 
 .animate-spin {
   animation: spin 1s linear infinite;
+}
+
+.animate-rotateY {
+  animation: rotateY 1s ease-in-out;
+}
+
+/* Utilidades adicionales para efectos 3D */
+.rotate-y-2 {
+  transform: rotateY(2deg);
+}
+
+.rotate-y-12 {
+  transform: rotateY(12deg);
 }

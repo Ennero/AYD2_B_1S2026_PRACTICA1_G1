@@ -1,15 +1,18 @@
 /**
  * Componente Principal de la Aplicación
- * TODO: Implementar React Router cuando tengamos más páginas
+ * Sistema de rutas con React Router
  */
 
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import LoginPage from './pages/LoginPage'
+import HomePage from './pages/HomePage'
+import RegisterPage from './pages/RegisterPage'
 import './App.css'
 import { Toaster } from 'react-hot-toast'
 
 function App() {
   return (
-    <>
+    <BrowserRouter>
       <Toaster 
         position="top-right"
         reverseOrder={false}
@@ -35,8 +38,12 @@ function App() {
           },
         }}
       />
-      <LoginPage />
-    </>
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+      </Routes>
+    </BrowserRouter>
   )
 }
 

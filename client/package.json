@@ -17,6 +17,7 @@
     "react-dom": "^19.2.0",
     "react-hot-toast": "^2.6.0",
     "react-parallax-tilt": "^1.7.319",
+    "react-router-dom": "^7.13.0",
     "tsparticles": "^3.9.1"
   },
   "devDependencies": {

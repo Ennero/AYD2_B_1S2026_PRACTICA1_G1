@@ -1,9 +1,11 @@
 
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { LoginForm } from '../../components/auth';
 import toast from 'react-hot-toast';
 
 const LoginContainer = () => {
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -57,8 +59,7 @@ const LoginContainer = () => {
   };
 
   const handleRegisterClick = () => {
-    console.log('Navigate to register');
-    alert('Register page will be implemented later');
+    navigate('/register');
   };
 
 
