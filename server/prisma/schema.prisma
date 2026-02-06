@@ -9,7 +9,7 @@ datasource db {
 
 model USER {
   id_user    Int          @id(map: "user_pk") @default(autoincrement())
-  email      String       @db.VarChar(30)
+  email      String       @unique(map: "idx_user_email") @db.VarChar(30)
   password   String       @db.VarChar(30)
   gender     Decimal      @db.Decimal
   type       String       @db.VarChar(30)

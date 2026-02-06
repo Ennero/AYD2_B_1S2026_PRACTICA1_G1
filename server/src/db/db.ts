@@ -1,12 +1,18 @@
 import 'dotenv/config'
 import { PrismaClient } from '../generated/prisma/client.ts'
+import { PrismaPg } from '@prisma/adapter-pg'
+import pg from 'pg'
 
+// TODO Falta aplicar patron singlenton (mañana lo hago xd)
+
+const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL })
+const adapter = new PrismaPg(pool)
 
 declare global {
     var prisma: PrismaClient | undefined
 }
 
-const DB = global.prisma ?? new PrismaClient({} as any)
+const DB = global.prisma ?? new PrismaClient({ adapter })
 
 if (process.env.NODE_ENV === 'development') {
     global.prisma = DB
