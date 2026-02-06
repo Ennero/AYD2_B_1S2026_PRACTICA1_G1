@@ -22,7 +22,7 @@ const LoginForm = ({
     <div className="w-full">
       <div className="mb-8">
         <h1 className="text-4xl font-bold text-gray-900 mb-2">
-          ¡Bienvenido de nuevo!
+          Iniciar Sesión
         </h1>
         <p className="text-gray-600">
           Ingresa tus credenciales para continuar
