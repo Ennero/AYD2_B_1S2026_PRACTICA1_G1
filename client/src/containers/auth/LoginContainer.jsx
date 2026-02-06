@@ -1,6 +1,7 @@
 
 import { useState } from 'react';
 import { LoginForm } from '../../components/auth';
+import toast from 'react-hot-toast';
 
 const LoginContainer = () => {
   const [email, setEmail] = useState('');
@@ -20,15 +21,39 @@ const LoginContainer = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
     setError('');
-
-    console.log('Login attempt:', { email, password });
     
-    setTimeout(() => {
+    if (!email || !password) {
+      const errorMsg = 'Por favor completa todos los campos';
+      setError(errorMsg);
+      toast.error(errorMsg, {
+        duration: 3000,
+        position: 'top-right',
+      });
+      return;
+    }
+    
+    setLoading(true);
+    
+    toast.promise(
+      new Promise((resolve, reject) => {
+        setTimeout(() => {
+          // Simulación de login
+          if (email === 'test@test.com' && password === 'Test1234') {
+            resolve();
+          } else {
+            reject();
+          }
+        }, 2000);
+      }),
+      {
+        loading: 'Verificando credenciales...',
+        success: '¡Bienvenido! Redirigiendo...',
+        error: 'Credenciales incorrectas',
+      }
+    ).finally(() => {
       setLoading(false);
-      alert('Login functionality will be connected later');
-    }, 1000);
+    });
   };
 
   const handleRegisterClick = () => {

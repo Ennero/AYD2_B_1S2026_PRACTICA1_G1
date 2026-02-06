@@ -1,5 +1,7 @@
 
-import { Input, Button, InfoBox } from '../ui';
+import { Input, Button } from '../ui';
+import { Mail, Lock } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 const LoginForm = ({ 
   email, 
@@ -11,28 +13,32 @@ const LoginForm = ({
   loading = false,
   error = '' 
 }) => {
-  
-  const passwordRequirements = [
-    "Mínimo 8 caracteres",
-    "Al menos una mayúscula",
-    "Al menos un número"
-  ];
 
   return (
     <div className="w-full">
-      <div className="mb-8">
+      <motion.div 
+        className="mb-8"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
         <h1 className="text-4xl font-bold text-gray-900 mb-2">
           Iniciar Sesión
         </h1>
         <p className="text-gray-600">
           Ingresa tus credenciales para continuar
         </p>
-      </div>
+      </motion.div>
 
       {error && (
-        <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
+        <motion.div 
+          className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm"
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: 20 }}
+        >
           {error}
-        </div>
+        </motion.div>
       )}
 
       <form onSubmit={onSubmit} className="space-y-1">
@@ -44,6 +50,7 @@ const LoginForm = ({
           onChange={onEmailChange}
           placeholder=""
           required
+          Icon={Mail}
         />
 
         <Input
@@ -54,37 +61,44 @@ const LoginForm = ({
           onChange={onPasswordChange}
           placeholder=""
           required
+          Icon={Lock}
+          hints={[
+            "Mínimo 8 caracteres",
+            "Al menos una mayúscula",
+            "Al menos un número"
+          ]}
         />
 
-        <InfoBox 
-          title="Tu contraseña debe contener:" 
-          items={passwordRequirements}
-          variant="info"
-        />
-
-        <Button 
+        <div className="pt-8">
+          <Button 
           type="submit" 
           variant="primary" 
           fullWidth
-          disabled={loading}
+          loading={loading}
           className="mt-6"
         >
-          {loading ? 'Iniciando...' : 'Iniciar Sesión'}
+          Iniciar Sesión
         </Button>
+        </div>
       </form>
 
-      <div className="text-center mt-6">
+      <motion.div 
+        className="text-center mt-8"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.5 }}
+      >
         <button
           type="button"
           onClick={onRegisterClick}
-          className="text-gray-600 hover:text-gray-900 transition-colors"
+          className="text-gray-600 hover:text-gray-900 transition-all duration-300 transform hover:scale-105"
         >
           ¿No tienes una cuenta?{' '}
-          <span className="text-emerald-600 font-semibold hover:text-emerald-700 underline">
+          <span className="text-emerald-600 font-semibold hover:text-emerald-700 underline decoration-2 underline-offset-2 hover:decoration-emerald-600">
             Registrate Aqui
           </span>
         </button>
-      </div>
+      </motion.div>
     </div>
   );
 };
