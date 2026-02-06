@@ -1,3 +1,31 @@
+@import url('https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Inter:wght@300;400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  html, body {
+    @apply h-full w-full m-0 p-0;
+  }
+  
+  body {
+    @apply font-sans antialiased;
+  }
+  
+  #root {
+    @apply h-full w-full;
+  }
+}
+
+@layer utilities {
+  .pattern-diagonal-lines {
+    background-image: repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 10px,
+      rgba(200, 200, 200, 0.2) 10px,
+      rgba(200, 200, 200, 0.2) 11px
+    );
+  }
+}
