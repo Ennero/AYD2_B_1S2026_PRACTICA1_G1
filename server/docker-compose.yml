@@ -6,7 +6,8 @@ services:
       - ./.env
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./src/db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      # Prisma migrations create the schema; keep init.sql out to avoid drift
+      # - ./src/db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     ports:
       - 5433:5432
 

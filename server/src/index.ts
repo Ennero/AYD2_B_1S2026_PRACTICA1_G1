@@ -12,13 +12,14 @@ const port = process.env.PORT || 3000;
 
 app.use(express.json())
 app.use(cors(corsOptions))
+app.use(express.urlencoded({ extended: true }))
 void connectDB()
 
 app.get('/', async (req, res) => {
     res.status(200).send("Server running well :3")
 });
 
-app.use("/auth", authRouter)
+app.use("/api/auth", authRouter)
 
 
 
