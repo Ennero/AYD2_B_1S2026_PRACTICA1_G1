@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "property" ALTER COLUMN "price" SET DATA TYPE DECIMAL(10,2);

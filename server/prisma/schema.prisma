@@ -62,7 +62,7 @@ model property {
   title         String       @db.VarChar(50)
   type          String       @db.VarChar(30)
   address       String       @db.VarChar(150)
-  price         Decimal      @db.Decimal(8, 2)
+  price         Decimal      @db.Decimal(10, 2)
   description   String       @db.VarChar(300)
   num_rooms     Decimal      @db.Decimal(4, 0)
   num_bathrooms Decimal      @db.Decimal(4, 0)

@@ -25,7 +25,7 @@ CREATE TABLE property (
     title         VARCHAR(50) NOT NULL,
     type          VARCHAR(30) NOT NULL,
     address       VARCHAR(150) NOT NULL,
-    price         NUMERIC(8, 2) NOT NULL,
+    price         NUMERIC(10, 2) NOT NULL,
     description   VARCHAR(300) NOT NULL,
     num_rooms     NUMERIC(4) NOT NULL,
     num_bathrooms NUMERIC(4) NOT NULL,
