@@ -1,15 +1,53 @@
 services:
   postgres-db:
     image: postgres:15.3
+    container_name: homefinder-postgres
     restart: always
     env_file:
       - ./.env
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      # Prisma migrations create the schema; keep init.sql out to avoid drift
-      # - ./src/db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     ports:
-      - 5433:5432
+      - "${POSTGRES_PORT}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - homefinder-network
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: homefinder-backend
+    restart: always
+    env_file:
+      - ./.env
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres-db:5432/${POSTGRES_DB}
+      NODE_ENV: development
+    ports:
+      - "${PORT}:3000"
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+    volumes:
+      - ./src:/app/src
+      - ./prisma:/app/prisma
+      - /app/node_modules
+    networks:
+      - homefinder-network
+    command: sh docker-entrypoint.sh
 
 volumes:
   postgres_data:
+
+networks:
+  homefinder-network:
+    driver: bridge
