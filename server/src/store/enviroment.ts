@@ -1,0 +1,1 @@
+//TODO Apply Singlenton to obtain env variables
