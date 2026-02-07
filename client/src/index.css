@@ -172,6 +172,43 @@
   transform: rotateY(12deg);
 }
 
+/* Animación de escala con perspectiva 3D */
+@keyframes scaleIn3D {
+  from {
+    opacity: 0;
+    transform: scale(0.8) translateZ(-50px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateZ(0);
+  }
+}
+
+@keyframes bounceIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.3) translateY(-50px);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+  70% {
+    transform: scale(0.95);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.animate-scaleIn3D {
+  animation: scaleIn3D 0.6s ease-out;
+}
+
+.animate-bounceIn {
+  animation: bounceIn 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
 /* Animaciones adicionales para HomePage */
 @keyframes slideInDown {
   from {
