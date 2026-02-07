@@ -44,11 +44,14 @@ docker-compose up --build
 Esto hará automáticamente:
 ✅ Crear y levantar el contenedor de PostgreSQL  
 ✅ Crear y levantar el contenedor del backend  
-✅ Ejecutar las migraciones de Prisma  
+✅ Esperar a que PostgreSQL esté completamente listo  
+✅ Ejecutar las migraciones de Prisma (`migrate deploy`)  
 ✅ Poblar la base de datos con datos iniciales (seed)  
 ✅ Iniciar el servidor en modo desarrollo  
 
 El servidor estará disponible en: **http://localhost:3000**
+
+> **Nota**: Todos los comandos de inicialización están integrados en `docker-compose.yml`, lo que garantiza compatibilidad multiplataforma (Windows, Mac, Linux).
 
 ### 3. Detener los Servicios
 

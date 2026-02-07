@@ -12,3 +12,4 @@ npm-debug.log
 .idea
 *.swp
 *.swo
+docker-entrypoint.sh

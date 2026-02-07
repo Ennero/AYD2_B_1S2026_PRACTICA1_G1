@@ -17,5 +17,5 @@ RUN npx prisma generate
 # Exponer el puerto
 EXPOSE 3000
 
-# El script de inicio se encargará de las migraciones y seed
-CMD ["sh", "-c", "npm run db:migrate && npm run db:seed && npm run dev"]
+# El comando se configura en docker-compose.yml
+CMD ["npm", "run", "dev"]
