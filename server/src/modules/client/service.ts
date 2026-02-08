@@ -2,6 +2,7 @@ import DB from '../../db/db.ts'
 import { hashPassword } from '../../lib/security.ts'
 import { normalizeEmail } from '../../utils/strings.ts'
 import { UserType } from '../../store/enums.ts'
+import { title } from 'node:process'
 
 export type UpdateClientInput = {
 	id_user?: number
@@ -15,6 +16,7 @@ export type UpdateClientInput = {
 }
 
 export class ClientService {
+	// =============================== DAVID ===============================
 	async getprofile(id_user : number) {
         console.log('Getting profile for user id:', id_user)  
         // Casteo de sting a numero, por si acaso
@@ -85,4 +87,31 @@ export class ClientService {
 			id_user: updated.id_user,
 		}
 	}
+
+	async propertiesfavorite(id_user: number) {
+		console.log('Getting profile for user id:', id_user);  
+		id_user = Number(id_user);
+
+		const properties = await DB.favorite.findMany({
+			where: { id_client: id_user },
+			include: { property: true}
+		})
+
+		if (!properties){
+			throw new Error('No favorite properties found for this user')
+		}
+
+		return properties.map(fav => ({
+			id_favorite: fav.id_favorite,
+			title: fav.property.title,
+			price: fav.property.price,
+			num_rooms: fav.property.num_rooms,
+			num_bathrooms: fav.property.num_bathrooms,
+			square_meters: fav.property.square_meters,
+			address: fav.property.address,
+			id_property: fav.id_property
+		}))
+
+	}
+	// =============================== DAVID ===============================
 }

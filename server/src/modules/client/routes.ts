@@ -10,6 +10,7 @@ import { UserType } from '../../store/enums.ts'
 const clientRouter = Router()
 const clientController = new ClientController()
 
+// =============================== DAVID ===============================
 // GET /api/client/profile
 clientRouter.get(
 	'/profile',
@@ -33,10 +34,22 @@ clientRouter.put(
 		body('phone').notEmpty().withMessage('phone must not be empty'),
 		body('email').isEmail().withMessage('email must be valid'),
 		body('url_img').optional({ nullable: true }).isURL().withMessage('url_img must be a valid URL'),
-		body('password').optional().isString().isLength({ min: 6 }).withMessage('password must be at least 6 characters long'),
+		body('password').optional().isString().isLength({ min: 8 }).withMessage('password must be at least 8 characters long'),
 		validateFields,
 	],
 	clientController.updateProfileClient,
 )
+
+// GET /api/client/properties/favorite
+clientRouter.get(
+	'/properties/favorite',
+	[
+		authMiddleware,
+		requireRole(UserType.Client),
+	],
+	clientController.propertiesfavorite,
+)
+
+// =============================== DAVID ===============================
 
 export default clientRouter
