@@ -121,6 +121,19 @@ clientRouter.get(
 	clientController.getacknowledgeappointments,
 )
 
+// POST /client/appointment/acknowledge
+clientRouter.post(
+	'/appointment/acknowledge',
+	[
+		authMiddleware,
+		requireRole(UserType.Client),
+		body('id_appointment').isInt({ gt: 0 }).withMessage('id_appointment must be a positive integer'),
+		body('status').isIn(['accepted', 'rejected']).withMessage('status must be either accepted or rejected'),
+		body('justification').optional().isString().withMessage('justify must be a string'),
+	],
+	clientController.acknowledgeappointment,
+)
+
 // =============================== DAVID ===============================
 
 export default clientRouter

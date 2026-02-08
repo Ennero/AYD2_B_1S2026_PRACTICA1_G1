@@ -208,5 +208,23 @@ export class ClientController {
             })
         }
     }
+
+    acknowledgeappointment: RequestHandler = async (req, res) => {
+        try {
+            const user_id = Number(req.user?.sub);
+            const id_appointment = Number(req.body.id_appointment)
+            const status = req.body.status
+            const justification = req.body.justification
+
+            const result = await this.clientService.acknowledgeappointment(user_id, id_appointment, status, justification);
+            return res.json(result)
+        } catch (error) {
+            return response_with_error(res, {
+                statusCode: 400,
+                message: 'Could not acknowledge appointment',
+                details: error instanceof Error ? error.message : error,
+            })
+        }
+    }
     // =============================== DAVID ===============================
 }

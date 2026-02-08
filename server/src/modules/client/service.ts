@@ -4,6 +4,7 @@ import { normalizeEmail } from '../../utils/strings.ts'
 import { UserType } from '../../store/enums.ts'
 import { title } from 'node:process'
 import {InvitationState} from '../../store/enums.ts'
+import { invitation } from '../../generated/prisma/browser';
 
 export type UpdateClientInput = {
 	id_user?: number
@@ -364,6 +365,30 @@ export class ClientService {
 			is_accepted: app.is_accepted?.toString() === '1'? true : app.is_accepted?.toString() === '0'? false : null,
 			justification: app.justification,
 		}))
+	}
+
+	async acknowledgeappointment(id_user: number, id_property: number, status: string, justification?: string) {
+		
+		const invitation = await DB.invitation.findFirst({
+			where: { id_client: id_user, id_property: id_property, status: InvitationState.Acknowledge }
+		})
+
+		if (!invitation) {
+			throw new Error('Appointment not found')
+		}
+
+		await DB.invitation.updateMany({
+			where: { id_client: id_user, id_property: id_property, status: InvitationState.Acknowledge },
+			data: {
+				status: status.toUpperCase(),
+				justification: justification || null,
+				is_accepted: status.toLowerCase() === 'accepted' ? 1 : 0,
+			}
+		})
+
+		return {
+			message: (status.toLowerCase() === 'accepted' ? 'Cita aceptada' : 'La cita ha sido rechazada'),
+		}
 	}
 	// =============================== DAVID ===============================
 }
