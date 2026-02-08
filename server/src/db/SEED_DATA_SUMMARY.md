@@ -1,29 +1,37 @@
 # Resumen de Datos - Seed Database
 
+> **Nota Importante para Presentación:**  
+> Los usuarios principales para demostración son:
+> - **Admin**: Rosita Administradora (admin@homefinder.com)
+> - **Agente**: María López (maria.lopez@homefinder.com) - *Agente principal con más propiedades*
+> - **Cliente**: Pedro Sánchez (pedro.sanchez@gmail.com) - *Cliente principal con más actividad*
+> 
+> La mayoría de las relaciones (favoritos, invitaciones, visitas) están centradas en María y Pedro.
+
 ## Usuarios (27 total)
 
 ### Administrador (1)
 | Email | Contraseña | Nombre |
 |-------|-----------|---------|
-| admin@homefinder.com | Admin123! | Carlos Administrador |
+| admin@homefinder.com | Admin123! | Rosita Administradora ⭐ |
 
 ### Agentes Inmobiliarios (6)
-| Email | Contraseña | Nombre Completo | Teléfono |
-|-------|-----------|----------------|----------|
-| maria.lopez@homefinder.com | Agent123! | María López | 55557001 |
-| juan.perez@homefinder.com | Agent123! | Juan Pérez | 55557002 |
-| ana.martinez@homefinder.com | Agent123! | Ana Martínez | 55557003 |
-| roberto.garcia@homefinder.com | Agent123! | Roberto García | 55557004 |
-| laura.fernandez@homefinder.com | Agent123! | Laura Fernández | 55557005 |
-| diego.rodriguez@homefinder.com | Agent123! | Diego Rodríguez | 55557006 |
+| Email | Contraseña | Nombre Completo | Teléfono | Nota |
+|-------|-----------|----------------|----------|------|
+| maria.lopez@homefinder.com | Agent123! | María López | 55557001 | ⭐ **AGENTE PRINCIPAL** |
+| juan.perez@homefinder.com | Agent123! | Juan Pérez | 55557002 | |
+| ana.martinez@homefinder.com | Agent123! | Ana Martínez | 55557003 | |
+| roberto.garcia@homefinder.com | Agent123! | Roberto García | 55557004 | |
+| laura.fernandez@homefinder.com | Agent123! | Laura Fernández | 55557005 | |
+| diego.rodriguez@homefinder.com | Agent123! | Diego Rodríguez | 55557006 | |
 
 ### Clientes (20)
-| Email | Contraseña | Nombre Completo | Teléfono |
-|-------|-----------|----------------|----------|
-| sofia.gomez@gmail.com | Client123! | Sofía Gómez | 55558001 |
-| pedro.sanchez@gmail.com | Client123! | Pedro Sánchez | 55558002 |
-| carmen.diaz@gmail.com | Client123! | Carmen Díaz | 55558003 |
-| miguel.torres@gmail.com | Client123! | Miguel Torres | 55558004 |
+| Email | Contraseña | Nombre Completo | Teléfono | Nota |
+|-------|-----------|----------------|----------|------|
+| sofia.gomez@gmail.com | Client123! | Sofía Gómez | 55558001 | |
+| pedro.sanchez@gmail.com | Client123! | Pedro Sánchez | 55558002 | ⭐ **CLIENTE PRINCIPAL** |
+| carmen.diaz@gmail.com | Client123! | Carmen Díaz | 55558003 | |
+| miguel.torres@gmail.com | Client123! | Miguel Torres | 55558004 | |
 | isabel.ramirez@gmail.com | Client123! | Isabel Ramírez | 55558005 |
 | francisco.castro@gmail.com | Client123! | Francisco Castro | 55558006 |
 | lucia.morales@gmail.com | Client123! | Lucía Morales | 55558007 |
@@ -121,20 +129,37 @@
 
 ## Estadísticas Adicionales
 
-### Favoritos (~30)
-- Relaciones entre clientes y sus propiedades favoritas
-- Fechas de marcado entre: 15/01/2026 - 05/02/2026
+### Relación María - Pedro (Usuarios Principales)
 
-### Historial de Visitas (~80)
-- Registros de propiedades vistas por clientes
-- Fechas entre: 15/01/2026 - 06/02/2026
+#### Propiedades de María López
+María es la agente con más propiedades en el sistema, especializada en diferentes tipos de inmuebles.
 
-### Invitaciones (~40)
+#### Actividad de Pedro Sánchez
+Pedro es el cliente más activo en el sistema:
+- **~8 Favoritos**: Principalmente propiedades de María
+- **~15 Visitas**: Historial extenso de propiedades visitadas, mayoría de María
+- **~15 Invitaciones**: Múltiples solicitudes de citas con propiedades de María
+
+### Favoritos (~33 total)
+- **Pedro ↔ María**: ~8 favoritos de propiedades de María
+- **Otros clientes**: ~25 favoritos distribuidos
+- Fechas de marcado: 20/01/2026 - 07/02/2026
+
+### Historial de Visitas (~85 total)
+- **Pedro**: ~25 visitas (15 a propiedades de María + 10 otras)
+- **Otros clientes**: ~60 visitas distribuidas
+- Fechas entre: 18/01/2026 - 07/02/2026
+
+### Invitaciones (~40 total)
 Distribución por estado:
-- **PENDING (Pendiente)**: ~10 invitaciones
-- **ACCEPTED (Aceptado)**: ~15 invitaciones (con fecha esperada)
-- **REJECTED (Rechazado)**: ~8 invitaciones (con justificación)
-- **ACKNOWLEDGE (Confirmado)**: ~7 invitaciones (visitas completadas)
+- **PENDING (Pendiente)**: ~10 invitaciones - Esperando respuesta del agente
+- **ACKNOWLEDGE (Confirmado)**: ~10 invitaciones - Agente propuso fecha, esperando cliente
+- **ACCEPTED (Aceptado)**: ~10 invitaciones - Cliente aceptó cita (fechas: 10/02 - 05/03/2026)
+- **REJECTED (Rechazado)**: ~10 invitaciones - Cliente rechazó con justificación
+
+**Invitaciones Pedro ↔ María**: ~15 del total (37.5% del sistema)
+- Fechas creadas: 01/02/2026 - 08/02/2026
+- Fechas de citas futuras: 09/02/2026 - 05/03/2026
 
 ## Distribución por Zonas
 
@@ -148,21 +173,15 @@ Las propiedades están distribuidas en diferentes zonas de Guatemala:
 
 ## Línea de Tiempo
 
-- **1 de enero 2026**: Sistema inicia operaciones, creación de admin
-- **2-9 de enero**: Registro de agentes inmobiliarios
+- **1 de enero 2026**: Sistema inicia operaciones, Rosita (admin) creada
+- **5 de enero**: María López se registra como agente
+- **2-9 de enero**: Otros agentes se registran
 - **10-20 de enero**: Primeros clientes se registran
-- **10-5 de febrero**: Agentes publican propiedades
-- **15 enero - 5 febrero**: Clientes marcan favoritos
-- **15 enero - 6 febrero**: Historial de visitas
-- **20 enero - 6 febrero**: Solicitudes de citas y gestión
-
-## Imágenes
-
-Todas las propiedades incluyen imágenes reales de:
-- **Unsplash**: Imágenes de alta calidad de propiedades
-- **Pravatar**: Avatares para usuarios
-
-Los URLs son válidos y retornan imágenes reales.
+- **10 enero - 5 febrero**: Agentes publican propiedades (María con mayor cantidad)
+- **20 enero - 7 febrero**: Pedro comienza a marcar favoritos de María
+- **18 enero - 7 febrero**: Pedro visita múltiples propiedades de María
+- **1 febrero - 8 febrero**: Pedro solicita múltiples citas con propiedades de María
+- **9 febrero - 5 marzo**: Fechas futuras programadas para citas aceptadas
 
 ## Seguridad
 
