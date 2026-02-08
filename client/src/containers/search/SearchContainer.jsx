@@ -228,7 +228,7 @@ const SearchContainer = () => {
        
         <div className="flex-1 min-w-0 pr-6 animate-slideInRight">
         
-          <div className="flex items-center justify-between mb-6 animate-fadeIn transform transition-all duration-500 hover:scale-[1.01]" style={{ transformStyle: 'preserve-3d' }}>
+            <div className="relative z-20 flex items-center justify-between mb-6 animate-fadeIn transform transition-all duration-500 hover:scale-[1.01]" style={{ transformStyle: 'preserve-3d' }}>
             <div>
               <h2 className="text-3xl font-bold text-gray-900">Resultados de Búsqueda</h2>
               <p className="text-gray-600 mt-1">
@@ -241,37 +241,39 @@ const SearchContainer = () => {
               <button
                 onClick={() => setShowSortMenu(!showSortMenu)}
                 className="flex items-center gap-2 px-6 py-3 bg-white border-2 border-gray-200 rounded-xl hover:border-orange-600 transition-all duration-300 font-semibold text-gray-900 shadow-lg hover:shadow-xl transform hover:scale-105 hover:-translate-y-1 active:scale-95"
-                style={{ transformStyle: 'preserve-3d' }}
               >
                 <span className="text-sm">Ordenar por:</span>
                 <span className="text-sm text-orange-600">{currentSortLabel}</span>
                 <ChevronDown className={`w-5 h-5 transition-transform duration-300 ${showSortMenu ? 'rotate-180' : ''}`} />
               </button>
 
-              {/* Menú desplegable */}
+              {/* Menú desplegable con z-index muy alto */}
               {showSortMenu && (
-                <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-2xl border border-gray-100 py-2 z-50 animate-slideInDown backdrop-blur-sm" style={{ transformStyle: 'preserve-3d' }}>
-                  {sortOptions.map((option, index) => (
-                    <button
-                      key={option.value}
-                      onClick={() => {
-                        setSortType(option.value)
-                        setShowSortMenu(false)
-                      }}
-                      className={`w-full text-left px-4 py-3 transition-all duration-300 transform hover:scale-105 hover:translate-x-2 ${
-                        sortType === option.value
-                          ? 'bg-orange-50 text-orange-600 font-semibold shadow-sm'
-                          : 'text-gray-700 hover:bg-gray-50'
-                      }`}
-                      style={{ 
-                        transformStyle: 'preserve-3d',
-                        animationDelay: `${index * 50}ms`
-                      }}
-                    >
-                      {option.label}
-                    </button>
-                  ))}
-                </div>
+                <>
+                  {/* Overlay invisible para cerrar al hacer click fuera */}
+                  <div 
+                    className="fixed inset-0 z-[9998]" 
+                    onClick={() => setShowSortMenu(false)}
+                  />
+                  <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-2xl border border-gray-100 py-2 animate-slideInDown z-[9999]">
+                    {sortOptions.map((option) => (
+                      <button
+                        key={option.value}
+                        onClick={() => {
+                          setSortType(option.value)
+                          setShowSortMenu(false)
+                        }}
+                        className={`w-full text-left px-4 py-3 transition-all duration-300 hover:translate-x-2 ${
+                          sortType === option.value
+                            ? 'bg-orange-50 text-orange-600 font-semibold shadow-sm'
+                            : 'text-gray-700 hover:bg-gray-50'
+                        }`}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                </>
               )}
             </div>
           </div>

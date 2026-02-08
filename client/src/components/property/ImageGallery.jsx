@@ -1,89 +1,104 @@
 import { useState } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 
-/**
- * Galería de imágenes con miniaturas verticales a la derecha
- */
 const ImageGallery = ({ images, title, agentCard }) => {
   const [selectedImage, setSelectedImage] = useState(0)
 
-  const nextImage = () => {
+  const nextImage = (e) => {
+    e?.stopPropagation()
     setSelectedImage((prev) => (prev + 1) % images.length)
   }
 
-  const prevImage = () => {
+  const prevImage = (e) => {
+    e?.stopPropagation()
     setSelectedImage((prev) => (prev - 1 + images.length) % images.length)
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      {/* Imagen principal */}
-      <div className="lg:col-span-2">
-        <div className="bg-white overflow-hidden shadow-xl transform transition-all duration-500 hover:shadow-2xl h-full" style={{ transformStyle: 'preserve-3d', borderRadius: '60px 60px 30px 30px' }}>
-          <div className="relative h-full min-h-[600px] overflow-hidden group" style={{ borderRadius: '60px 60px 30px 30px' }}>
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      
+      <svg width="0" height="0" className="absolute">
+        <defs>
+          <clipPath id="folder-soft" clipPathUnits="objectBoundingBox">
+            <path d="M0,1 L0,0.08 C0,0.02 0.02,0 0.08,0 L0.32,0 C0.40,0 0.42,0.08 0.50,0.08 L1,0.08 L1,1 Z" />
+          </clipPath>
+        </defs>
+      </svg>
+
+      <div className="lg:col-span-2 pt-4">
+        
+        <div 
+          className="relative w-full h-full min-h-[500px] transition-transform duration-500 hover:scale-[1.005]"
+          style={{ 
+            filter: 'drop-shadow(0 15px 25px rgba(0,0,0,0.1))' 
+          }}
+        >
+          <div 
+            className="relative w-full h-full bg-gray-100 group overflow-hidden"
+            style={{ 
+              clipPath: 'url(#folder-soft)', 
+              WebkitClipPath: 'url(#folder-soft)'
+            }}
+          >
             <img
               src={images[selectedImage]}
               alt={`${title} - Imagen ${selectedImage + 1}`}
-              className="w-full h-full object-cover transform transition-transform duration-700 group-hover:scale-105"
+              className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
             />
-            
-            {/* Overlay gradiente */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
 
-            {/* Indicador de imagen */}
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/60 backdrop-blur-md text-white px-4 py-2 rounded-full text-sm font-semibold">
-              {selectedImage + 1} / {images.length}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+
+            <div className="absolute bottom-6 right-6 flex items-center gap-3 z-20">
+              <button
+                onClick={prevImage}
+                className="bg-white/90 backdrop-blur-sm p-3 rounded-full text-gray-800 hover:bg-white transition-all hover:scale-110 shadow-lg"
+              >
+                <ChevronLeft size={20} />
+              </button>
+              
+              <button
+                onClick={nextImage}
+                className="bg-white/90 backdrop-blur-sm p-3 rounded-full text-gray-800 hover:bg-white transition-all hover:scale-110 shadow-lg"
+              >
+                <ChevronRight size={20} />
+              </button>
             </div>
-
-            {/* Botones de navegación */}
-            <button
-              onClick={prevImage}
-              className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/90 backdrop-blur-md text-gray-900 p-3 rounded-full hover:bg-white transition-all duration-300 transform hover:scale-110 active:scale-95 shadow-lg opacity-0 group-hover:opacity-100"
-              style={{ transformStyle: 'preserve-3d' }}
-            >
-              <ChevronLeft className="w-6 h-6" />
-            </button>
-            <button
-              onClick={nextImage}
-              className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/90 backdrop-blur-md text-gray-900 p-3 rounded-full hover:bg-white transition-all duration-300 transform hover:scale-110 active:scale-95 shadow-lg opacity-0 group-hover:opacity-100"
-              style={{ transformStyle: 'preserve-3d' }}
-            >
-              <ChevronRight className="w-6 h-6" />
-            </button>
+            
+            <div className="absolute bottom-8 left-8 text-white font-medium text-lg tracking-widest drop-shadow-md z-20">
+              {String(selectedImage + 1).padStart(2, '0')} <span className="text-white/60 text-sm">/ {String(images.length).padStart(2, '0')}</span>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Sidebar derecho - 1 columna */}
-      <div className="lg:col-span-1 space-y-4">
-        {/* Tarjeta del agente */}
+      <div className="lg:col-span-1 flex flex-col gap-6">
         {agentCard}
 
-        {/* Miniaturas verticales  */}
-        <div className="grid grid-cols-4 gap-2">
-          {images.map((image, index) => (
-            <button
-              key={index}
-              onClick={() => setSelectedImage(index)}
-              className={`relative w-full h-20 rounded-2xl overflow-hidden transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 ${
-                selectedImage === index
-                  ? 'ring-4 ring-orange-500 shadow-lg'
-                  : 'ring-2 ring-gray-200 hover:ring-orange-300'
-              }`}
-              style={{ transformStyle: 'preserve-3d' }}
-            >
-              <img
-                src={image}
-                alt={`Miniatura ${index + 1}`}
-                className="w-full h-full object-cover"
-              />
-              {selectedImage === index && (
-                <div className="absolute inset-0 bg-orange-500/20 backdrop-blur-[1px] flex items-center justify-center">
-                  <div className="w-3 h-3 bg-white rounded-full shadow-lg"></div>
-                </div>
-              )}
-            </button>
-          ))}
+        <div className="bg-white p-4 rounded-3xl shadow-sm border border-gray-100">
+            <h3 className="text-gray-400 text-xs font-bold uppercase tracking-wider mb-4 ml-2">Galería</h3>
+            <div className="grid grid-cols-3 gap-3">
+            {images.map((image, index) => (
+                <button
+                key={index}
+                onClick={() => setSelectedImage(index)}
+                className={`relative aspect-[4/3] rounded-2xl overflow-hidden transition-all duration-300 group ${
+                    selectedImage === index
+                    ? 'ring-2 ring-orange-500 ring-offset-2 scale-95'
+                    : 'hover:opacity-90 hover:scale-105'
+                }`}
+                >
+                <img 
+                    src={image} 
+                    alt="" 
+                    className="w-full h-full object-cover" 
+                />
+                
+                {selectedImage !== index && (
+                    <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors"></div>
+                )}
+                </button>
+            ))}
+            </div>
         </div>
       </div>
     </div>
