@@ -90,5 +90,27 @@ export class ClientController {
             })
         }
     }
+
+    getpropertybyid: RequestHandler = async (req, res) => {
+        try {
+            const user_id = Number(req.user?.sub);
+            const id_property = Number(req.query.id)
+            if(!Number.isFinite(id_property) || id_property <= 0) {
+                return response_with_error(res, {
+                    statusCode: 400,
+                    message: 'Invalid property id',
+                })
+            }
+
+            const result = await this.clientService.getpropertybyid(user_id, id_property);
+            return response_ok(res, result, 200);
+        } catch (error) {
+            return response_with_error(res, {
+                statusCode: 400,
+                message: 'Could not get property by id',
+                details: error instanceof Error ? error.message : error,
+            })
+        }
+    }
     // =============================== DAVID ===============================
 }

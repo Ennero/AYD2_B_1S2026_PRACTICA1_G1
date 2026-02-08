@@ -60,6 +60,16 @@ clientRouter.delete(
 	clientController.deletepropertiesfavorites,
 )
 
+// GET /api/client/property/:id
+clientRouter.get(
+	'/property',
+	[
+		authMiddleware,
+		requireRole(UserType.Client),
+	],
+	clientController.getpropertybyid,
+)
+
 // =============================== DAVID ===============================
 
 export default clientRouter
