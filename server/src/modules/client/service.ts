@@ -3,6 +3,7 @@ import { hashPassword } from '../../lib/security.ts'
 import { normalizeEmail } from '../../utils/strings.ts'
 import { UserType } from '../../store/enums.ts'
 import { title } from 'node:process'
+import { me } from '../auth/controller.ts'
 
 export type UpdateClientInput = {
 	id_user?: number
@@ -112,6 +113,24 @@ export class ClientService {
 			id_property: fav.id_property
 		}))
 
+	}
+
+	async deletepropertiesfavorites(id_user: number, id_favorite: number) {
+		id_user = Number(id_user);
+		id_favorite = Number(id_favorite);
+
+		const deleteFavorite = await DB.favorite.deleteMany({
+			where: { id_favorite: id_favorite, id_client: id_user }
+		})
+
+		if (deleteFavorite.count === 0) {
+			throw new Error('Favorite property not found for this user')
+		}
+
+		return {
+			message: 'Favorite property deleted successfully',
+			id_favorite: id_favorite
+		}
 	}
 	// =============================== DAVID ===============================
 }
