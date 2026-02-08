@@ -5,11 +5,7 @@ const AgentDashboardService = {
 // Metodo Get
   async getDashboardData() {
     try {
-      // TODO: const response = await fetch(`${API_URL}/agent/dashboard`)
-      // const data = await response.json()
-      // return data
-
-      // Datos quemados mientras
+      // Logica para obtener datos del dashboard del agente (simulación)
       return {
         agent: {
           id: 1,
