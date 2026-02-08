@@ -60,7 +60,7 @@ clientRouter.delete(
 	clientController.deletepropertiesfavorites,
 )
 
-// GET /api/client/property/:id
+// GET /api/client/property/?id=31
 clientRouter.get(
 	'/property',
 	[
@@ -79,6 +79,16 @@ clientRouter.post(
 		body('id_property').isInt({ gt: 0 }).withMessage('id_property must be a positive integer'),
 	],
 	clientController.addpropertytofavorite,
+)
+
+// GET /api/client/appointment/all
+clientRouter.get(
+	'/appointment/all',
+	[
+		authMiddleware,
+		requireRole(UserType.Client),
+	],
+	clientController.getallappointments,
 )
 
 // =============================== DAVID ===============================

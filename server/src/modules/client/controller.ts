@@ -12,7 +12,8 @@ export class ClientController {
             const userId = Number(req.user?.sub)
             const result = await this.clientService.getprofile(userId);
 
-            return response_ok(res, result,)
+            // return response_ok(res, result,)
+            return res.json(result)
         } catch (error) {
             return response_with_error(res, {
                 statusCode: 400,
@@ -44,7 +45,8 @@ export class ClientController {
                 password: req.body.password,
             });
 
-            return response_ok(res, result, 200);
+            // return response_ok(res, result, 200);
+            return res.json(result)
         } catch (error) {
             return response_with_error(res, {
                 statusCode: 400,
@@ -59,7 +61,11 @@ export class ClientController {
 
             const userId = Number(req.user?.sub)
             const result = await this.clientService.propertiesfavorite(userId);
-            return response_ok(res, result, 200);
+            // return response_ok(res, result, 200);
+            return res.json({
+                total: result.length,
+                favorites: result,
+            })
         } catch (error) {
             return response_with_error(res, {
                 statusCode: 400,
@@ -81,7 +87,8 @@ export class ClientController {
             }
 
             const result = await this.clientService.deletepropertiesfavorites(userId, id_favorite);
-            return response_ok(res, result, 200);
+            // return response_ok(res, result, 200);
+            return res.json(result)
         } catch (error) {
             return response_with_error(res, {
                 statusCode: 400,
@@ -103,7 +110,8 @@ export class ClientController {
             }
 
             const result = await this.clientService.getpropertybyid(user_id, id_property);
-            return response_ok(res, result, 200);
+            // return response_ok(res, result, 200);
+            return res.json(result)
         } catch (error) {
             return response_with_error(res, {
                 statusCode: 400,
@@ -124,11 +132,28 @@ export class ClientController {
                 })
             }
             const result = await this.clientService.addpropertytofavorite(user_id, id_property);
-            return response_ok(res, result, 200);
+            // return response_ok(res, result, 200);
+            return res.json(result)
         } catch (error) {
             return response_with_error(res, {
                 statusCode: 400,
                 message: 'Could not add property to favorites',
+                details: error instanceof Error ? error.message : error,
+            })
+        }
+    }
+
+    getallappointments: RequestHandler = async (req, res) => {
+        try {
+            const user_id = Number(req.user?.sub);
+            const result = await this.clientService.getallappointments(user_id);
+            return res.json({
+                appoinments: result,
+            })
+        } catch (error) {
+            return response_with_error(res, {
+                statusCode: 400,
+                message: 'Could not get client appointments',
                 details: error instanceof Error ? error.message : error,
             })
         }
