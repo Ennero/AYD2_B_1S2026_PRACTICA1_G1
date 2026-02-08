@@ -1,0 +1,15 @@
+node_modules
+dist
+.git
+.gitignore
+*.md
+!README.md
+.env*
+!.env
+postgres
+npm-debug.log
+.vscode
+.idea
+*.swp
+*.swo
+docker-entrypoint.sh

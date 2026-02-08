@@ -1,0 +1,32 @@
+meta {
+  name: /api/admin/agents
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{URL}}/api/admin/agents
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{TOKEN}}
+}
+
+body:json {
+  {
+    "id_user": 1,
+    "email": "agente1@gmail.com",
+    "name": "Carlos",
+    "last_name": "García",
+    "phone": "12345678",
+    "url_img": "https://example.com/imagen.jpg",
+    "type": "agent"
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

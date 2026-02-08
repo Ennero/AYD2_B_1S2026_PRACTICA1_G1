@@ -4,6 +4,7 @@ import dotenv from 'dotenv'
 import cors from 'cors'
 import corsOptions from './config/cors.config.ts'
 import authRouter from './modules/auth/route.ts'
+import adminRouter from './modules/admin/routes.ts'
 
 dotenv.config()
 
@@ -19,7 +20,8 @@ app.get('/', async (req, res) => {
     res.status(200).send("Server running well :3")
 });
 
-app.use("/api/auth", authRouter)
+app.use('/api/auth', authRouter)
+app.use('/api/admin', adminRouter)
 
 
 

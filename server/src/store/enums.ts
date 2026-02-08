@@ -2,7 +2,7 @@ export enum InvitationState {
     Pending = 'PENDING',
     Accepted = "ACCEPTED",
     Rejected = "REJECTED",
-    Acknowledge = "Acknowledge"
+    Acknowledge = "ACKNOWLEDGE"
 }
 
 export enum PropertyType {

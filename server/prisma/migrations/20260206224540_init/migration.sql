@@ -56,7 +56,7 @@ CREATE TABLE "property" (
     "title" VARCHAR(50) NOT NULL,
     "type" VARCHAR(30) NOT NULL,
     "address" VARCHAR(150) NOT NULL,
-    "price" DECIMAL(8,2) NOT NULL,
+    "price" DECIMAL(10,2) NOT NULL,
     "description" VARCHAR(300) NOT NULL,
     "num_rooms" DECIMAL(4,0) NOT NULL,
     "num_bathrooms" DECIMAL(4,0) NOT NULL,
