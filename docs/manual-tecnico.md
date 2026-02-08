@@ -2,60 +2,14 @@
 
 ## Índice
 
-- [Manual Técnico - HomeFinder Pro S.A.](#manual-técnico---homefinder-pro-sa)
-  - [Índice](#índice)
-  - [1. Introducción](#1-introducción)
-    - [1.1 Propósito](#11-propósito)
-    - [1.2 Alcance](#12-alcance)
-    - [1.3 Descripción General del Sistema](#13-descripción-general-del-sistema)
-    - [1.4 Alcances Funcionales](#14-alcances-funcionales)
-    - [1.5 Stakeholders](#15-stakeholders)
-    - [1.6 Usuarios del Sistema](#16-usuarios-del-sistema)
-    - [1.7 Arquitectura del Sistema](#17-arquitectura-del-sistema)
-      - [1.7.1 Arquitectura Clean (Limpia)](#171-arquitectura-clean-limpia)
-      - [1.7.2 Arquitectura de Tres Capas](#172-arquitectura-de-tres-capas)
-    - [1.8 Componentes del Sistema](#18-componentes-del-sistema)
-      - [1.8.1 Frontend (React + Vite)](#181-frontend-react--vite)
-      - [1.8.2 Backend (Express.js + TypeScript)](#182-backend-expressjs--typescript)
-      - [1.8.3 Base de Datos (PostgreSQL + Prisma)](#183-base-de-datos-postgresql--prisma)
-      - [1.8.4 Infraestructura (Docker)](#184-infraestructura-docker)
-    - [1.9 Patrones de Diseño Implementados](#19-patrones-de-diseño-implementados)
-      - [1.9.1 Patrones en el Frontend](#191-patrones-en-el-frontend)
-      - [1.9.2 Patrones en el Backend](#192-patrones-en-el-backend)
-    - [1.10 Tecnologías y Justificación](#110-tecnologías-y-justificación)
-    - [1.11 Estructura del Proyecto](#111-estructura-del-proyecto)
-      - [1.11.1 Estructura del Frontend](#1111-estructura-del-frontend)
-      - [1.11.2 Estructura del Backend](#1112-estructura-del-backend)
-    - [1.12 Base de Datos](#112-base-de-datos)
-      - [1.12.1 Modelo Relacional](#1121-modelo-relacional)
-      - [1.12.2 Descripción de Tablas](#1122-descripción-de-tablas)
-    - [1.13 APIs y Servicios REST](#113-apis-y-servicios-rest)
-    - [1.14 Seguridad](#114-seguridad)
-    - [1.15 Despliegue](#115-despliegue)
-  - [2. Diagramas de Casos de Uso](#2-diagramas-de-casos-de-uso)
-    - [2.1 Actores del Sistema](#21-actores-del-sistema)
-    - [2.2 Diagrama de Casos de Uso de Alto Nivel (High-Level)](#22-diagrama-de-casos-de-uso-de-alto-nivel-high-level)
-    - [2.3 Descomposición de Casos de Uso](#23-descomposición-de-casos-de-uso)
-    - [2.4 Especificación Detallada de Casos de Uso](#24-especificación-detallada-de-casos-de-uso)
-      - [2.4.1 CDU001 - Gestión de Propiedades Inmobiliarias](#241-cdu001---gestión-de-propiedades-inmobiliarias)
-      - [2.4.2 CDU002 - Solicitud y Negociación de Citas](#242-cdu002---solicitud-y-negociación-de-citas)
-      - [2.4.3 CDU003 - Gestión de Usuarios/Agentes](#243-cdu003---gestión-de-usuariosagentes)
-      - [2.4.4 CDU004 - Gestión de Perfil y Búsqueda](#244-cdu004---gestión-de-perfil-y-búsqueda)
-      - [2.4.5 CDU005 - Autenticación y Autorización](#245-cdu005---autenticación-y-autorización)
-  - [3. Requerimientos del Sistema](#3-requerimientos-del-sistema)
-    - [3.1 Requerimientos Funcionales](#31-requerimientos-funcionales)
-    - [3.2 Requerimientos No Funcionales](#32-requerimientos-no-funcionales)
-  - [4. Matrices de Trazabilidad](#4-matrices-de-trazabilidad)
-    - [4.1 Matriz de Trazabilidad de Casos de Uso](#41-matriz-de-trazabilidad-de-casos-de-uso)
-    - [4.2 Matriz de Trazabilidad de Requerimientos Funcionales](#42-matriz-de-trazabilidad-de-requerimientos-funcionales)
-    - [4.3 Matriz de Trazabilidad de Requerimientos No Funcionales](#43-matriz-de-trazabilidad-de-requerimientos-no-funcionales)
-  - [5. Diagramas de Secuencia](#5-diagramas-de-secuencia)
-    - [5.1 Descripción General](#51-descripción-general)
-    - [5.2 Diagramas Disponibles](#52-diagramas-disponibles)
-      - [5.2.1 Publicación de Propiedad](#521-publicación-de-propiedad)
-      - [5.2.2 Negociación de Cita](#522-negociación-de-cita)
-    - [5.3 Convenciones Utilizadas](#53-convenciones-utilizadas)
-    - [5.4 Relación con Casos de Uso](#54-relación-con-casos-de-uso)
+- [1. Introducción](#1-introducción)
+- [2. Elección y Justificación del Framework](#2-elección-y-justificación-del-framework)
+- [3. Elección y Justificación de Patrones de Diseño](#3-elección-y-justificación-de-patrones-de-diseño)
+- [4. Componentes y Estructura del Sistema](#4-componentes-y-estructura-del-sistema)
+- [5. Diagramas de Casos de Uso](#5-diagramas-de-casos-de-uso)
+- [6. Requerimientos del Sistema](#6-requerimientos-del-sistema)
+- [7. Matrices de Trazabilidad](#7-matrices-de-trazabilidad)
+- [8. Diagramas de Secuencia](#8-diagramas-de-secuencia)
 
 ---
 
@@ -63,36 +17,21 @@
 
 ### 1.1 Propósito
 
-El presente manual técnico tiene como propósito documentar de forma detallada la arquitectura, diseño, implementación y despliegue del sistema **HomeFinder Pro S.A.**, una plataforma digital para la gestión y publicación de inmuebles. Este documento está dirigido a desarrolladores, arquitectos de software y personal técnico involucrado en el mantenimiento, extensión o auditoría del sistema.
+Documentar la arquitectura, diseño, implementación y despliegue de **HomeFinder Pro S.A.**, plataforma digital para la gestión y publicación de inmuebles.
 
-### 1.2 Alcance
+### 1.2 Descripción General del Sistema
 
-Este manual técnico cubre los siguientes aspectos del sistema HomeFinder Pro:
+**HomeFinder Pro** es una plataforma web para el mercado de bienes raíces y alquiler de propiedades. Permite la administración de usuarios (agentes y clientes), propiedades, y un sistema de búsqueda avanzado. La plataforma se compone de:
 
-- **Arquitectura del sistema**: Descripción de la arquitectura Clean, capas y comunicación entre componentes
-- **Framework y tecnologías**: Justificación de las tecnologías seleccionadas (React, Express, PostgreSQL, Docker)
-- **Patrones de diseño**: Implementación y uso de patrones como Strategy, Adapter, Singleton, Container/Presentational, entre otros
-- **Estructura del proyecto**: Organización de directorios y archivos tanto en frontend como backend
-- **Base de datos**: Modelo de datos, esquemas Prisma y relaciones entre entidades
-- **APIs y servicios**: Especificación de endpoints REST
-- **Seguridad**: Mecanismos de autenticación JWT, hashing con bcrypt y protección de rutas
-- **Despliegue**: Dockerización del backend y base de datos con Docker Compose
+1. **Frontend**: React + Vite + Tailwind CSS
+2. **Backend**: API RESTful con Express.js y TypeScript, organizado en módulos independientes
+3. **Base de Datos**: PostgreSQL 15.3 dockerizada, con Prisma ORM
 
-### 1.3 Descripción General del Sistema
+El sistema implementa tres roles de usuario (Cliente, Agente, Administrador) con permisos específicos.
 
-**HomeFinder Pro** es una plataforma digital integral diseñada para la gestión y publicación de inmuebles en el mercado de bienes raíces y alquiler de propiedades. El sistema permite la administración completa de usuarios (agentes y clientes), propiedades, planes de publicación y un sistema de búsqueda avanzado.
+> **Grabación de reunión del equipo**: [Ver grabación en Google Drive](https://drive.google.com/file/d/12jqS7NmptNaC-R2ljdes3CAZS-amgMqk/view)
 
-La plataforma está construida como una aplicación web moderna de tres capas, compuesta por:
-
-1. **Frontend (Cliente)**: Interfaz de usuario desarrollada en React + Vite + Tailwind CSS que proporciona experiencias interactivas para clientes, agentes y administradores
-2. **Backend (Servidor)**: API RESTful desarrollada con Express.js y TypeScript, siguiendo arquitectura Clean con módulos independientes
-3. **Base de Datos**: PostgreSQL 15.3 dockerizada, con Prisma ORM para la gestión del esquema y migraciones
-
-El sistema implementa un modelo de roles y permisos que permite diferentes niveles de acceso y funcionalidades específicas según el tipo de usuario (Cliente, Agente, Administrador).
-
-### 1.4 Alcances Funcionales
-
-El sistema HomeFinder Pro cubre las siguientes funcionalidades:
+### 1.3 Alcances Funcionales
 
 | Módulo | Funcionalidades |
 |--------|----------------|
@@ -105,19 +44,17 @@ El sistema HomeFinder Pro cubre las siguientes funcionalidades:
 | **Gestión de Agentes** | CRUD de agentes por parte del administrador |
 | **Perfiles** | Actualización de datos personales y fotografía de perfil |
 
-### 1.5 Stakeholders
+### 1.4 Stakeholders
 
 | Stakeholder | Rol | Interés en el Sistema |
 |-------------|-----|----------------------|
-| **HomeFinder Pro S.A.** | Empresa propietaria | Disponer de una plataforma digital que permita la gestión y publicación de inmuebles para expandir su presencia en el mercado inmobiliario |
-| **Clientes** | Usuarios finales (compradores/arrendatarios) | Buscar, filtrar y contactar agentes para evaluar propiedades de forma ágil y segura |
-| **Agentes Inmobiliarios** | Profesionales inmobiliarios | Publicar y administrar sus propiedades, gestionar citas y visualizar estadísticas de rendimiento |
-| **Administrador del Sistema** | Operador interno | Gestionar los agentes inmobiliarios activos en la plataforma, garantizando la calidad y operatividad del servicio |
-| **Equipo de Desarrollo** | Desarrolladores | Construir, mantener y escalar la plataforma utilizando buenas prácticas de ingeniería de software |
+| **HomeFinder Pro S.A.** | Empresa propietaria | Disponer de una plataforma digital para la gestión y publicación de inmuebles |
+| **Clientes** | Usuarios finales | Buscar, filtrar y contactar agentes para evaluar propiedades |
+| **Agentes Inmobiliarios** | Profesionales inmobiliarios | Publicar propiedades, gestionar citas y visualizar estadísticas |
+| **Administrador del Sistema** | Operador interno | Gestionar los agentes inmobiliarios activos en la plataforma |
+| **Equipo de Desarrollo** | Desarrolladores | Construir, mantener y escalar la plataforma |
 
-### 1.6 Usuarios del Sistema
-
-El sistema está diseñado para operar con tres perfiles de usuario distintos, cada uno con permisos y funcionalidades específicas:
+### 1.5 Usuarios del Sistema
 
 | Actor | Tipo | Descripción | Funcionalidades principales |
 |-------|------|-------------|----------------------------|
@@ -125,11 +62,124 @@ El sistema está diseñado para operar con tres perfiles de usuario distintos, c
 | **Agente Inmobiliario** | Externo | Profesional encargado de dar de alta, actualizar y dar mantenimiento a las propiedades publicadas en el sitio. | CRUD completo de propiedades (título, dirección, precio, descripción, fotos, habitaciones, baños, m²), gestión de tipos de inmueble, dashboard con gráficas (Top 3 tipos, Top 5 zonas), gestión de citas y propuesta de horarios. |
 | **Administrador** | Interno | Encargado de la gestión operativa del sistema; su función principal es gestionar a los agentes inmobiliarios. | CRUD de agentes (crear, editar, eliminar), supervisión general del sistema, ingreso mediante credenciales (correo y contraseña). |
 
-### 1.7 Arquitectura del Sistema
+---
 
-#### 1.7.1 Arquitectura Clean (Limpia)
+## 2. Elección y Justificación del Framework
 
-El sistema HomeFinder Pro implementa una **Arquitectura Clean** que separa las responsabilidades en capas bien definidas, promoviendo la independencia de frameworks, testabilidad y mantenibilidad:
+Se seleccionaron frameworks y tecnologías que en conjunto cumplen con los requerimientos funcionales y no funcionales del sistema, priorizando productividad, mantenibilidad y ecosistema.
+
+### 2.1 Frontend: React + Vite + Tailwind CSS
+
+| Criterio | Justificación |
+|----------|---------------|
+| **¿Por qué React?** | Es la librería más adoptada para aplicaciones SPA (Single Page Application). Su modelo basado en componentes permite crear interfaces modulares y reutilizables (componentes como `PropertyCard`, `FilterPanel`, `Button`). El Virtual DOM garantiza rendimiento en listas dinámicas como los resultados de búsqueda de propiedades. |
+| **¿Por qué Vite?** | Vite ofrece un arranque de servidor en milisegundos y Hot Module Replacement (HMR) instantáneo, lo que acelera el ciclo de desarrollo comparado con webpack/CRA. Además permite builds optimizados con Rollup para producción. |
+| **¿Por qué Tailwind CSS?** | Tailwind es un framework CSS utility-first que elimina la necesidad de escribir CSS convencional. Permite estilizar directamente en JSX, reduce el código muerto mediante purging, y facilita la creación de interfaces responsivas con breakpoints integrados. |
+| **¿Por qué React Router DOM?** | Proporciona routing declarativo SPA para las vistas del sistema (HomePage, LoginPage, RegisterPage, SearchPage), con navegación sin recarga de página. |
+
+### 2.2 Backend: Express.js + TypeScript
+
+| Criterio | Justificación |
+|----------|---------------|
+| **¿Por qué Express.js?** | Es el framework HTTP más usado en Node.js. Su enfoque minimalista y sin opiniones permite estructurar el backend como se necesite (en este caso, modular por dominio). El ecosistema de middleware es vasto: se usa `cors`, `express-validator`, middleware de autenticación JWT, etc. |
+| **¿Por qué TypeScript?** | El tipado estático previene errores en tiempo de compilación, mejora el autocompletado/IntelliSense y facilita el refactoreo seguro. Combinado con Prisma, se obtienen queries completamente tipadas contra la base de datos, eliminando errores de runtime por campos inexistentes o tipos incorrectos. |
+
+### 2.3 Base de Datos: PostgreSQL + Prisma ORM
+
+| Criterio | Justificación |
+|----------|---------------|
+| **¿Por qué PostgreSQL?** | RDBMS robusto con soporte completo para transacciones ACID, integridad referencial con foreign keys, índices, y tipos de datos ricos (`NUMERIC`, `TIMESTAMP`, `VARCHAR`). Es necesario para un sistema con múltiples relaciones (usuarios → propiedades → favoritos → citas → imágenes). |
+| **¿Por qué Prisma ORM?** | Prisma genera un cliente tipado a partir del schema, lo que permite queries type-safe en TypeScript. Sus migraciones versionadas (`prisma migrate`) mantienen el esquema sincronizado entre entornos. El adapter `@prisma/adapter-pg` con pool nativo de `pg` ofrece control fino sobre las conexiones. |
+
+### 2.4 Infraestructura: Docker + Docker Compose
+
+| Criterio | Justificación |
+|----------|---------------|
+| **¿Por qué Docker?** | Containerizar el backend y la base de datos garantiza que el entorno sea **idéntico** en la máquina de cualquier desarrollador y en producción. Elimina el problema de "funciona en mi máquina". |
+| **¿Por qué Docker Compose?** | Permite orquestar los dos servicios (PostgreSQL + backend) con un solo `docker-compose up`. El healthcheck asegura que el backend no arranque hasta que PostgreSQL esté disponible. |
+
+### 2.5 Resumen de Tecnologías
+
+| Tecnología | Versión | Rol en el sistema |
+|------------|---------|-------------------|
+| React | 19.2 | UI: Componentes reactivos, SPA |
+| Vite | — | Bundler con HMR instantáneo |
+| Tailwind CSS | — | Estilos utility-first responsivos |
+| Express.js | 5.2 | API REST, middleware HTTP |
+| TypeScript | 5.9 | Tipado estático en backend |
+| PostgreSQL | 15.3 | Base de datos relacional ACID |
+| Prisma ORM | 7.3 | ORM type-safe, migraciones |
+| Docker / Compose | — | Containerización y orquestación |
+| bcryptjs | 3.0 | Hashing de contraseñas |
+| jsonwebtoken | 9.0 | Autenticación JWT stateless |
+| Supabase Storage | 2.95 | Almacenamiento de imágenes con CDN |
+
+---
+
+## 3. Elección y Justificación de Patrones de Diseño
+
+Se implementaron patrones de diseño reconocidos tanto en el frontend como en el backend para resolver problemas concretos de diseño, mejorar la mantenibilidad y facilitar la extensión del sistema.
+
+### 3.1 Patrones en el Frontend
+
+#### 3.1.1 Container/Presentational
+
+**Problema que resuelve**: En aplicaciones React, mezclar lógica de negocio/estado con código de renderizado produce componentes difíciles de probar y reutilizar.
+
+**Solución implementada**: Se separan los componentes en dos capas:
+- **Containers** (`containers/`): Manejan estado, efectos secundarios y llamadas a la API. Ejemplo: `LoginContainer.jsx` gestiona el estado de email/password, la llamada al endpoint `/api/auth/login` y el manejo de errores.
+- **Presentational** (`components/`): Solo reciben props y renderizan UI. Ejemplo: `LoginForm.jsx` renderiza el formulario sin saber de dónde vienen los datos.
+
+**Beneficio**: Los componentes presentacionales son reutilizables y testeables de forma aislada. La lógica de negocio se concentra en un solo lugar.
+
+#### 3.1.2 Strategy (Patrón de Estrategia)
+
+**Problema que resuelve**: El sistema necesita 8 filtros y 5 criterios de ordenamiento diferentes para las propiedades. Implementarlos con condicionales `if/else` o `switch` generaría un código monolítico e imposible de extender.
+
+**Solución implementada**:
+- `strategies/PropertyFilters.js`: Define 8 estrategias de filtrado intercambiables (texto, tipo, precio mín/máx, zona, habitaciones, baños, área). Cada estrategia implementa el método `execute(properties, filterValue)`.
+- `strategies/PropertySorters.js`: Define 5 estrategias de ordenamiento (reciente, precio asc/desc, área, popularidad) con una clase base `SortStrategy` y una clase contexto `PropertySorter`.
+
+**Beneficio**: Para agregar un nuevo filtro, solo se crea un nuevo objeto con `execute()`. No se modifica ningún código existente (principio Open/Closed).
+
+#### 3.1.3 State
+
+Gestión del estado mediante hooks de React (`useState`, `useEffect`, `useCallback`). `SearchContainer.jsx` gestiona centralizadamente el estado de propiedades, filtros activos, tipo de ordenamiento y resultados.
+
+#### 3.1.4 Module (Barrel Exports)
+
+Cada carpeta de componentes tiene un `index.js` que re-exporta sus componentes, simplificando las importaciones: `import { LoginForm, RegisterForm } from '../components/auth'`.
+
+### 3.2 Patrones en el Backend
+
+#### 3.2.1 Singleton
+
+**Problema que resuelve**: Crear múltiples instancias de `PrismaClient` o del cliente de Supabase desperdicia recursos y puede causar errores de conexión.
+
+**Solución implementada**:
+- `db/db.ts`: La instancia de `PrismaClient` se almacena en `global.prisma` para reutilizarla entre recargas en caliente durante desarrollo.
+- `lib/supabase.ts`: El cliente de Supabase se almacena en `global.supabase`.
+
+**Beneficio**: Se garantiza una única instancia por recurso costoso, reutilizando conexiones.
+
+#### 3.2.2 Adapter
+
+**Problema que resuelve**: El servicio de almacenamiento de archivos (Supabase Storage) es un proveedor externo. Si se quisiera cambiar a AWS S3 o almacenamiento local, sin un adapter habría que modificar cada módulo que sube archivos.
+
+**Solución implementada**:
+- `adapters/storage/public-object-storage.ts`: Define la interfaz `PublicObjectStorage` con el método `uploadObject()`.
+- `adapters/storage/supabase-public-object-storage.adapter.ts`: Implementa dicha interfaz usando el SDK de Supabase.
+- Los servicios (como `auth/service.ts`) solo dependen de la interfaz, nunca de Supabase directamente.
+
+**Beneficio**: Cambiar de proveedor de almacenamiento requiere solo crear un nuevo adapter. Cero cambios en la lógica de negocio.
+
+---
+
+## 4. Componentes y Estructura del Sistema
+
+### 4.1 Arquitectura
+
+El sistema sigue una **Arquitectura Modular por Capas (Layered Modular Architecture)**:
 
 ```
 ┌─────────────────────────────────────────────────┐
@@ -146,112 +196,32 @@ El sistema HomeFinder Pro implementa una **Arquitectura Clean** que separa las r
 └─────────────────────────────────────────────────┘
 ```
 
-**Principios aplicados**:
-- **Separación de responsabilidades**: Cada módulo tiene una tarea específica (routing, validación, lógica de negocio, persistencia)
-- **Inversión de dependencias**: Las capas internas no dependen de detalles externos; se usan interfaces (Adapter Pattern) para servicios como almacenamiento de archivos
-- **Independencia de frameworks**: La lógica de negocio (servicios) no depende directamente de Express; los controladores actúan como adaptadores
+El backend se organiza en **módulos por dominio** (`auth`, `admin`, `agent`, `client`), donde cada módulo sigue internamente una separación en tres capas: **Route → Controller → Service**. Las dependencias externas se abstraen mediante interfaces (Adapter Pattern).
 
-#### 1.7.2 Arquitectura de Tres Capas
-
-La aplicación se organiza en tres capas principales:
-
-| Capa | Tecnología | Responsabilidad |
-|------|-----------|-----------------|
-| **Presentación** | React + Vite + Tailwind CSS | Interfaz de usuario, interacción con el usuario, validaciones del lado del cliente |
-| **Lógica de Negocio** | Express.js + TypeScript | Procesamiento de solicitudes, validaciones, reglas de negocio, autenticación |
-| **Persistencia** | PostgreSQL + Prisma ORM | Almacenamiento de datos, consultas, migraciones, integridad referencial |
-
-### 1.8 Componentes del Sistema
-
-#### 1.8.1 Frontend (React + Vite)
-
-El frontend está desarrollado con **React 19** y utiliza **Vite** como bundler para desarrollo rápido con HMR. Se estiliza con **Tailwind CSS** y sigue una arquitectura de componentes organizada en capas:
+### 4.2 Frontend
 
 | Capa | Directorio | Descripción |
 |------|-----------|-------------|
-| **Pages** | `src/pages/` | Vistas completas que representan rutas de la aplicación (HomePage, LoginPage, RegisterPage, SearchPage) |
-| **Containers** | `src/containers/` | Componentes con lógica de estado y efectos secundarios. Orquestan la comunicación con la API y pasan datos a los componentes presentacionales |
-| **Components** | `src/components/` | Componentes presentacionales reutilizables organizados por dominio (auth, layout, search, ui) |
-| **Strategies** | `src/strategies/` | Implementación del patrón Strategy para filtrado y ordenamiento de propiedades |
+| **Pages** | `src/pages/` | Vistas por ruta (HomePage, LoginPage, RegisterPage, SearchPage) |
+| **Containers** | `src/containers/` | Lógica de estado y llamadas a la API |
+| **Components** | `src/components/` | Componentes presentacionales reutilizables (auth, layout, search, ui) |
+| **Strategies** | `src/strategies/` | Patrón Strategy para filtrado y ordenamiento |
 
-**Dependencias principales**: React 19, React Router DOM 7, Tailwind CSS, Lucide React (iconos), Framer Motion (animaciones), React Hot Toast (notificaciones), TSParticles (efectos visuales).
-
-#### 1.8.2 Backend (Express.js + TypeScript)
-
-El backend está desarrollado con **Express 5** y **TypeScript 5.9**, organizado en módulos independientes siguiendo Clean Architecture:
+### 4.3 Backend
 
 | Capa | Directorio | Descripción |
 |------|-----------|-------------|
-| **Módulos** | `src/modules/` | Módulos por dominio (auth, admin, agent, client), cada uno con route, controller y service |
-| **Middleware** | `src/middleware/` | Middleware de autenticación JWT y validación de campos con express-validator |
-| **Adapters** | `src/adapters/` | Adaptadores para servicios externos (Supabase Storage) que implementan interfaces definidas internamente |
-| **Lib** | `src/lib/` | Utilidades core: seguridad (bcrypt, JWT), cliente Supabase |
-| **Config** | `src/config/` | Configuraciones (CORS) |
-| **Store** | `src/store/` | Enums y constantes del dominio (tipos de usuario, estados de propiedad, estados de invitación) |
-| **Utils** | `src/utils/` | Funciones utilitarias (respuestas HTTP, base64, strings, variables de entorno) |
-| **DB** | `src/db/` | Configuración de conexión a base de datos con Prisma y pool de PostgreSQL |
+| **Módulos** | `src/modules/` | Módulos por dominio (auth, admin, agent, client), cada uno con route → controller → service |
+| **Middleware** | `src/middleware/` | Autenticación JWT y validación con express-validator |
+| **Adapters** | `src/adapters/` | Adaptadores para servicios externos (Supabase Storage) |
+| **Lib** | `src/lib/` | Seguridad (bcrypt, JWT), cliente Supabase |
+| **Store** | `src/store/` | Enums del dominio (UserType, PropertyType, PropertyState, InvitationState) |
+| **Utils** | `src/utils/` | Funciones utilitarias (respuestas HTTP, base64, env, strings) |
+| **DB** | `src/db/` | Conexión a BD con Prisma + pool pg |
 
-**Dependencias principales**: Express 5, Prisma 7 (con adapter-pg), bcryptjs, jsonwebtoken, express-validator, Supabase JS, dotenv.
+### 4.4 Estructura del Proyecto
 
-#### 1.8.3 Base de Datos (PostgreSQL + Prisma)
-
-La base de datos **PostgreSQL 15.3** se gestiona mediante **Prisma ORM** con las siguientes características:
-
-- **Migraciones automáticas**: Control de versiones del esquema con `prisma migrate`
-- **Generación de cliente tipado**: Prisma Client generado automáticamente para queries type-safe
-- **Adapter pattern**: Se utiliza `@prisma/adapter-pg` con un pool nativo de `pg` para máximo control sobre la conexión
-- **Seed de datos**: Script de seeding (`src/db/seed.ts`) para poblar la base de datos con datos de prueba
-
-#### 1.8.4 Infraestructura (Docker)
-
-El backend y la base de datos se despliegan mediante **Docker Compose** con dos servicios:
-
-| Servicio | Imagen | Descripción |
-|----------|--------|-------------|
-| **postgres-db** | `postgres:15.3` | Base de datos PostgreSQL con volumen persistente, healthcheck configurado |
-| **backend** | Build desde `Dockerfile` | Aplicación Node.js 24 Alpine, ejecuta migraciones, seed y servidor de desarrollo |
-
-**Docker Compose** orquesta ambos servicios en una red bridge interna (`homefinder-network`), asegurando que el backend espere a que PostgreSQL esté saludable antes de arrancar.
-
-### 1.9 Patrones de Diseño Implementados
-
-#### 1.9.1 Patrones en el Frontend
-
-| Patrón | Descripción | Implementación |
-|--------|-------------|----------------|
-| **Container/Presentational** | Separa la lógica de estado (containers) de la presentación visual (components). Los containers manejan estado, efectos y llamadas a la API; los components solo reciben props y renderizan UI. | `containers/auth/LoginContainer.jsx` maneja el estado de login y pasa datos a `components/auth/LoginForm.jsx` que solo renderiza el formulario. |
-| **Strategy** | Define una familia de algoritmos intercambiables para filtrado y ordenamiento. Permite añadir nuevos filtros u ordenamientos sin modificar el código existente. | `strategies/PropertyFilters.js` define 8 estrategias de filtrado (texto, tipo, precio min/max, zona, habitaciones, baños, área). `strategies/PropertySorters.js` define 5 estrategias de ordenamiento (reciente, precio asc/desc, área, popularidad). |
-| **State** | Gestión del estado de la aplicación usando hooks de React (useState, useEffect, useCallback) para manejar los ciclos de vida de los componentes. | `SearchContainer.jsx` gestiona estado de propiedades, filtros activos, tipo de ordenamiento y resultados filtrados. |
-| **Command** | Encapsula acciones como objetos, permitiendo parametrizar clientes con diferentes solicitudes. | Acciones de filtrado y búsqueda se encapsulan como funciones que se pasan como callbacks a los componentes. |
-| **Module** | Organización del código en módulos autocontenidos con barrel exports para simplificar importaciones. | Cada carpeta de componentes tiene un archivo `index.js` que re-exporta los componentes (barrel export). |
-
-#### 1.9.2 Patrones en el Backend
-
-| Patrón | Descripción | Implementación |
-|--------|-------------|----------------|
-| **Singleton** | Garantiza una única instancia de recursos costosos como la conexión a la base de datos y clientes de servicios externos. | `db/db.ts`: La instancia de `PrismaClient` se almacena en `global.prisma` para reutilizarla en desarrollo. `lib/supabase.ts`: El cliente de Supabase se almacena en `global.supabase`. |
-| **Adapter** | Desacopla la lógica de negocio de implementaciones externas concretas. Si se cambia un proveedor (ej: de Supabase a S3), solo se modifica el adaptador, no los servicios que lo consumen. | `adapters/storage/public-object-storage.ts` define la interfaz `PublicObjectStorage`. `adapters/storage/supabase-public-object-storage.adapter.ts` implementa dicha interfaz usando Supabase. Los servicios solo dependen de la interfaz, nunca de Supabase directamente. |
-
-### 1.10 Tecnologías y Justificación
-
-| Tecnología | Versión | Justificación |
-|------------|---------|---------------|
-| **React** | 19.2 | Librería líder para construcción de interfaces de usuario reactivas con amplio ecosistema |
-| **Vite** | — | Bundler ultra-rápido con HMR instantáneo, ideal para desarrollo ágil |
-| **Tailwind CSS** | — | Framework CSS utility-first que acelera el desarrollo de UI sin salir del HTML/JSX |
-| **Express.js** | 5.2 | Framework minimalista y flexible para APIs REST en Node.js |
-| **TypeScript** | 5.9 | Tipado estático que reduce errores en tiempo de desarrollo y mejora la mantenibilidad |
-| **PostgreSQL** | 15.3 | RDBMS robusto, confiable y con soporte completo para transacciones ACID |
-| **Prisma ORM** | 7.3 | ORM moderno con generación de tipos, migraciones automáticas y queries type-safe |
-| **Docker** | — | Contenedorización para garantizar entornos reproducibles y despliegue consistente |
-| **Docker Compose** | — | Orquestación de servicios (backend + DB) en un solo comando |
-| **bcryptjs** | 3.0 | Hashing seguro de contraseñas con salt rounds configurables |
-| **jsonwebtoken** | 9.0 | Estándar industria para autenticación stateless basada en tokens JWT |
-| **Supabase Storage** | 2.95 | Almacenamiento de objetos (imágenes) con CDN integrado |
-
-### 1.11 Estructura del Proyecto
-
-#### 1.11.1 Estructura del Frontend
+#### 4.4.1 Estructura del Frontend
 
 ```
 client/
@@ -284,7 +254,7 @@ client/
 └── postcss.config.js
 ```
 
-#### 1.11.2 Estructura del Backend
+#### 4.4.2 Estructura del Backend
 
 ```
 server/
@@ -314,15 +284,15 @@ server/
 └── tsconfig.json
 ```
 
-### 1.12 Base de Datos
+### 4.5 Base de Datos
 
-#### 1.12.1 Modelo Relacional
+#### 4.5.1 Modelo Relacional
 
 ![Modelo Relacional](imgs/Relational.png)
 
 ![Modelo Lógico](imgs/Logical.png)
 
-#### 1.12.2 Descripción de Tablas
+#### 4.5.2 Descripción de Tablas
 
 | Tabla | Descripción | Campos principales |
 |-------|-------------|-------------------|
@@ -333,7 +303,7 @@ server/
 | **invitation** | Gestiona las solicitudes de cita entre clientes y propiedades (y por ende, agentes). | `id_invitation`, `status` (PENDING/ACCEPTED/REJECTED/ACKNOWLEDGE), `created_at`, `updated_at`, `is_accepted`, `justification`, `description`, `expected_date`, `id_client` (FK → USER), `id_property` (FK → property) |
 | **record** | Registro de historial de visitas/interacciones de clientes con propiedades. | `id_record`, `created_at`, `id_client` (FK → USER), `id_property` (FK → property) |
 
-### 1.13 APIs y Servicios REST
+### 4.6 APIs y Endpoints
 
 | Método | Endpoint | Descripción | Autenticación |
 |--------|----------|-------------|---------------|
@@ -341,7 +311,7 @@ server/
 | `POST` | `/api/auth/login` | Inicio de sesión con email y contraseña, retorna JWT | No |
 | `GET` | `/api/auth/me` | Obtener información del usuario autenticado | Sí (Bearer JWT) |
 
-### 1.14 Seguridad
+### 4.7 Seguridad
 
 | Mecanismo | Descripción |
 |-----------|-------------|
@@ -352,9 +322,9 @@ server/
 | **CORS** | Configuración restrictiva: solo permite orígenes autorizados (localhost en desarrollo, dominios de producción), con soporte para credentials. |
 | **Variables de entorno** | Secrets (JWT_SECRET, DATABASE_URL, SUPABASE_KEY) se gestionan mediante archivos `.env` y nunca se incluyen en el repositorio. |
 
-### 1.15 Despliegue
+### 4.8 Despliegue
 
-El despliegue se realiza mediante Docker Compose con la siguiente configuración:
+El despliegue se realiza mediante Docker Compose:
 
 ```yaml
 # docker-compose.yml
@@ -363,23 +333,13 @@ services:
   backend:        # Node.js 24 Alpine, depende de postgres-db
 ```
 
-**Pasos de despliegue**:
-1. Configurar archivo `.env` con variables de entorno
-2. Ejecutar `docker-compose up --build`
-3. El `docker-entrypoint.sh` ejecuta:
-   - `prisma migrate dev` (migraciones)
-   - `prisma db seed` (datos iniciales)
-   - `npm run dev` (servidor de desarrollo)
-
-**Estrategia de branching**: GitFlow con ramas `main` y `develop`. Features se crean desde `develop` y se fusionan de vuelta. Formato de commits: `#carnet: mensaje`.
+**Pasos**: `docker-compose up --build` → el `docker-entrypoint.sh` ejecuta migraciones (`prisma migrate dev`), seed (`prisma db seed`) y arranca el servidor (`npm run dev`).
 
 ---
 
-## 2. Diagramas de Casos de Uso
+## 5. Diagramas de Casos de Uso
 
-Esta sección presenta los diagramas de casos de uso del sistema HomeFinder Pro, organizados desde el nivel más alto de abstracción hasta el detalle de cada caso de uso expandido.
-
-### 2.1 Actores del Sistema
+### 5.1 Actores del Sistema
 
 | Actor | Tipo | Descripción | Casos de Uso Principales |
 |-------|------|-------------|--------------------------|
@@ -388,26 +348,19 @@ Esta sección presenta los diagramas de casos de uso del sistema HomeFinder Pro,
 | **Administrador** | Primario / Interno | Usuario con privilegios administrativos cuya función principal es gestionar a los agentes inmobiliarios del sistema. Ingresa mediante credenciales (correo y contraseña). | CDU003 (CRUD de agentes inmobiliarios), CDU005 (Inicio de sesión) |
 | **Sistema** | Secundario / Interno | La plataforma HomeFinder Pro que procesa solicitudes, valida datos, gestiona notificaciones y mantiene la integridad de la información. | Participa en todos los CDU como el componente que procesa y responde a las acciones de los actores primarios. |
 
-### 2.2 Diagrama de Casos de Uso de Alto Nivel (High-Level)
+### 5.2 Diagrama de Casos de Uso de Alto Nivel (High-Level)
 
 ![Diagrama de Alto Nivel](imgs/high-level-use-case.png)
 
-El diagrama de alto nivel presenta una vista general del sistema, mostrando los principales actores y la funcionalidad principal que ofrece la plataforma:
-
-**Casos de uso principales**:
 - **CDU001**: Gestión de Propiedades Inmobiliarias
 - **CDU002**: Solicitud y Negociación de Citas
 - **CDU003**: Gestión de Usuarios/Agentes
 - **CDU004**: Gestión de Perfil y Búsqueda
 - **CDU005**: Autenticación y Autorización
 
-Este nivel de abstracción permite comprender rápidamente el alcance funcional del sistema y las interacciones principales entre actores y funcionalidades.
-
-### 2.3 Descomposición de Casos de Uso
+### 5.3 Descomposición de Casos de Uso
 
 ![Descomposición de Casos de Uso](imgs/descomposition-use-case.png)
-
-Cada caso de uso principal se descompone en sub-casos de uso más específicos que detallan las operaciones concretas que pueden realizar los actores. A continuación se presenta la estructura jerárquica:
 
 **CDU001 - Gestión de Propiedades**:
 - CDU001.0: Gestionar Propiedades
@@ -444,13 +397,13 @@ Cada caso de uso principal se descompone en sub-casos de uso más específicos q
 - CDU005.1: Iniciar Sesión
 - CDU005.2: Cerrar Sesión
 
-### 2.4 Especificación Detallada de Casos de Uso
+### 5.4 Especificación Detallada de Casos de Uso
 
 A continuación se presenta la especificación detallada de cada caso de uso expandido.
 
 ---
 
-#### 2.4.1 CDU001 - Gestión de Propiedades Inmobiliarias
+#### 5.4.1 CDU001 - Gestión de Propiedades Inmobiliarias
 
 ![Diagrama CDU001](imgs/CDU001.png)
 
@@ -469,7 +422,7 @@ A continuación se presenta la especificación detallada de cada caso de uso exp
 
 ---
 
-#### 2.4.2 CDU002 - Solicitud y Negociación de Citas
+#### 5.4.2 CDU002 - Solicitud y Negociación de Citas
 
 ![Diagrama CDU002](imgs/CDU002.png)
 
@@ -488,7 +441,7 @@ A continuación se presenta la especificación detallada de cada caso de uso exp
 
 ---
 
-#### 2.4.3 CDU003 - Gestión de Usuarios/Agentes
+#### 5.4.3 CDU003 - Gestión de Usuarios/Agentes
 
 ![Diagrama CDU003](imgs/CDU003.png)
 
@@ -507,7 +460,7 @@ A continuación se presenta la especificación detallada de cada caso de uso exp
 
 ---
 
-#### 2.4.4 CDU004 - Gestión de Perfil y Búsqueda
+#### 5.4.4 CDU004 - Gestión de Perfil y Búsqueda
 
 ![Diagrama CDU004](imgs/CDU004.png)
 
@@ -526,7 +479,7 @@ A continuación se presenta la especificación detallada de cada caso de uso exp
 
 ---
 
-#### 2.4.5 CDU005 - Autenticación y Autorización
+#### 5.4.5 CDU005 - Autenticación y Autorización
 
 ![Diagrama CDU005](imgs/CDU005.png)
 
@@ -545,9 +498,9 @@ A continuación se presenta la especificación detallada de cada caso de uso exp
 
 ---
 
-## 3. Requerimientos del Sistema
+## 6. Requerimientos del Sistema
 
-### 3.1 Requerimientos Funcionales
+### 6.1 Requerimientos Funcionales
 
 | ID | Requerimiento | Descripción | Prioridad | CDU Relacionado |
 |----|--------------|-------------|-----------|-----------------|
@@ -576,7 +529,7 @@ A continuación se presenta la especificación detallada de cada caso de uso exp
 | RF023 | Carga de imágenes | El sistema debe permitir subir fotografías de propiedades y perfiles en formato base64 o URL, almacenándolas en Supabase Storage. | Alta | CDU001.1, CDU005.0 |
 | RF024 | Registro de visitas | El sistema debe registrar cada visita/interacción de un cliente con una propiedad para alimentar las estadísticas del agente. | Baja | CDU004.0 |
 
-### 3.2 Requerimientos No Funcionales
+### 6.2 Requerimientos No Funcionales
 
 | ID | Requerimiento | Categoría | Descripción | Métrica / Criterio de Aceptación |
 |----|--------------|-----------|-------------|----------------------------------|
@@ -598,11 +551,9 @@ A continuación se presenta la especificación detallada de cada caso de uso exp
 
 ---
 
-## 4. Matrices de Trazabilidad
+## 7. Matrices de Trazabilidad
 
-### 4.1 Matriz de Trazabilidad de Casos de Uso
-
-Esta matriz relaciona cada caso de uso con los actores involucrados, los requerimientos funcionales que implementa y los módulos del sistema que lo soportan.
+### 7.1 Matriz de Trazabilidad de Casos de Uso
 
 | Caso de Uso | Actor(es) | Requerimientos Funcionales | Módulo Backend | Componentes Frontend |
 |-------------|-----------|---------------------------|----------------|---------------------|
@@ -627,40 +578,36 @@ Esta matriz relaciona cada caso de uso con los actores involucrados, los requeri
 | CDU005.1 - Iniciar Sesión | Cliente, Agente, Admin | RF002, RF003 | `modules/auth/` | `LoginContainer`, `LoginForm` |
 | CDU005.2 - Cerrar Sesión | Cliente, Agente, Admin | RF004 | — (cliente) | `NavbarClient` |
 
-### 4.2 Matriz de Trazabilidad de Requerimientos Funcionales
+### 7.2 Matriz de Trazabilidad de Requerimientos Funcionales
 
-Esta matriz vincula cada requerimiento funcional con sus casos de uso correspondientes, su estado de implementación y los componentes técnicos involucrados.
+| ID | Requerimiento | CDU | Componente Técnico |
+|----|--------------|-----|-------------------|
+| RF001 | Registro de clientes | CDU005.0 | `auth/service.ts` → `registerUser()`, `RegisterContainer.jsx`, `RegisterForm.jsx` |
+| RF002 | Inicio de sesión | CDU005.1 | `auth/service.ts` → `loginUser()`, `LoginContainer.jsx`, `LoginForm.jsx` |
+| RF003 | Autenticación JWT | CDU005 | `lib/security.ts` → `signAuthToken()`, `verifyAuthToken()`, `middleware/auth.ts` |
+| RF004 | Cierre de sesión | CDU005.2 | `NavbarClient.jsx` → `onLogout()` (limpieza de token en cliente) |
+| RF005 | Crear propiedad | CDU001.1 | `modules/agent/` |
+| RF006 | Actualizar propiedad | CDU001.2 | `modules/agent/` |
+| RF007 | Eliminar propiedad | CDU001.3 | `modules/agent/` |
+| RF008 | Consultar estadísticas | CDU001.4 | `modules/agent/` |
+| RF009 | Gestionar tipos de inmueble | CDU001.5-8 | `modules/agent/` |
+| RF010 | Visualizar propiedades (Agente) | CDU001.9 | `modules/agent/` |
+| RF011 | Solicitar cita | CDU002.0 | `modules/client/` |
+| RF012 | Proponer horario | CDU002.1 | `modules/agent/` |
+| RF013 | Aceptar/Rechazar horario | CDU002.2 | `modules/client/`, `modules/agent/` |
+| RF014 | Visualizar agentes | CDU003.0 | `modules/admin/` |
+| RF015 | Crear agente | CDU003.2 | `modules/admin/` |
+| RF016 | Actualizar agente | CDU003.3 | `modules/admin/` |
+| RF017 | Eliminar agente | CDU003.4 | `modules/admin/` |
+| RF018 | Buscar propiedades | CDU004.0-1 | `SearchContainer.jsx`, `strategies/PropertyFilters.js` |
+| RF019 | Filtrar propiedades | CDU004.1 | `FilterPanel.jsx`, `PropertyFilters.js` (8 estrategias) |
+| RF020 | Ordenar resultados | CDU004.1 | `PropertySorters.js` (5 estrategias) |
+| RF021 | Gestionar favoritos | CDU004.0 | `PropertyCard.jsx` → `onToggleFavorite()` |
+| RF022 | Editar perfil | CDU004.2 | `modules/client/` |
+| RF023 | Carga de imágenes | CDU001.1, CDU005.0 | `adapters/storage/`, `utils/supabase-storage.ts`, `utils/base64.ts` |
+| RF024 | Registro de visitas | CDU004.0 | Tabla `record` en BD |
 
-| ID | Requerimiento | CDU | Componente Técnico | Estado |
-|----|--------------|-----|-------------------|--------|
-| RF001 | Registro de clientes | CDU005.0 | `auth/service.ts` → `registerUser()`, `RegisterContainer.jsx`, `RegisterForm.jsx` | ✅ Implementado |
-| RF002 | Inicio de sesión | CDU005.1 | `auth/service.ts` → `loginUser()`, `LoginContainer.jsx`, `LoginForm.jsx` | ✅ Implementado |
-| RF003 | Autenticación JWT | CDU005 | `lib/security.ts` → `signAuthToken()`, `verifyAuthToken()`, `middleware/auth.ts` | ✅ Implementado |
-| RF004 | Cierre de sesión | CDU005.2 | `NavbarClient.jsx` → `onLogout()` (limpieza de token en cliente) | ⚠️ Parcial |
-| RF005 | Crear propiedad | CDU001.1 | `modules/agent/` (en desarrollo) | 🔲 Pendiente |
-| RF006 | Actualizar propiedad | CDU001.2 | `modules/agent/` (en desarrollo) | 🔲 Pendiente |
-| RF007 | Eliminar propiedad | CDU001.3 | `modules/agent/` (en desarrollo) | 🔲 Pendiente |
-| RF008 | Consultar estadísticas | CDU001.4 | `modules/agent/` (en desarrollo) | 🔲 Pendiente |
-| RF009 | Gestionar tipos de inmueble | CDU001.5-8 | `modules/agent/` (en desarrollo) | 🔲 Pendiente |
-| RF010 | Visualizar propiedades (Agente) | CDU001.9 | `modules/agent/` (en desarrollo) | 🔲 Pendiente |
-| RF011 | Solicitar cita | CDU002.0 | `modules/client/` (en desarrollo) | 🔲 Pendiente |
-| RF012 | Proponer horario | CDU002.1 | `modules/agent/` (en desarrollo) | 🔲 Pendiente |
-| RF013 | Aceptar/Rechazar horario | CDU002.2 | `modules/client/`, `modules/agent/` (en desarrollo) | 🔲 Pendiente |
-| RF014 | Visualizar agentes | CDU003.0 | `modules/admin/` (en desarrollo) | 🔲 Pendiente |
-| RF015 | Crear agente | CDU003.2 | `modules/admin/` (en desarrollo) | 🔲 Pendiente |
-| RF016 | Actualizar agente | CDU003.3 | `modules/admin/` (en desarrollo) | 🔲 Pendiente |
-| RF017 | Eliminar agente | CDU003.4 | `modules/admin/` (en desarrollo) | 🔲 Pendiente |
-| RF018 | Buscar propiedades | CDU004.0-1 | `SearchContainer.jsx`, `strategies/PropertyFilters.js` (frontend con datos mock) | ⚠️ Parcial |
-| RF019 | Filtrar propiedades | CDU004.1 | `FilterPanel.jsx`, `PropertyFilters.js` (8 estrategias implementadas en frontend) | ⚠️ Parcial |
-| RF020 | Ordenar resultados | CDU004.1 | `PropertySorters.js` (5 estrategias implementadas en frontend) | ⚠️ Parcial |
-| RF021 | Gestionar favoritos | CDU004.0 | `PropertyCard.jsx` → `onToggleFavorite()` (frontend con estado local) | ⚠️ Parcial |
-| RF022 | Editar perfil | CDU004.2 | `modules/client/` (en desarrollo) | 🔲 Pendiente |
-| RF023 | Carga de imágenes | CDU001.1, CDU005.0 | `adapters/storage/`, `utils/supabase-storage.ts`, `utils/base64.ts` | ✅ Implementado |
-| RF024 | Registro de visitas | CDU004.0 | Tabla `record` en BD (en desarrollo la API) | 🔲 Pendiente |
-
-### 4.3 Matriz de Trazabilidad de Requerimientos No Funcionales
-
-Esta matriz relaciona cada requerimiento no funcional con los componentes técnicos que lo implementan y los casos de uso que se ven impactados.
+### 7.3 Matriz de Trazabilidad de Requerimientos No Funcionales
 
 | ID | Requerimiento | Categoría | Componentes que lo implementan | CDU impactados |
 |----|--------------|-----------|-------------------------------|----------------|
@@ -682,79 +629,21 @@ Esta matriz relaciona cada requerimiento no funcional con los componentes técni
 
 ---
 
-## 5. Diagramas de Secuencia
+## 8. Diagramas de Secuencia
 
-Los diagramas de secuencia muestran la interacción entre objetos en orden secuencial, representando cómo se comunican los diferentes componentes del sistema para ejecutar las funcionalidades principales.
+### 8.1 Diagramas Disponibles
 
-### 5.1 Descripción General
-
-Los diagramas de secuencia del sistema HomeFinder Pro documentan los flujos de interacción más importantes entre los actores (Clientes, Agentes, Administradores) y los componentes del sistema (Frontend, Backend, Base de Datos).
-
-### 5.2 Diagramas Disponibles
-
-El sistema cuenta con los siguientes diagramas de secuencia que detallan los procesos principales:
-
-#### 5.2.1 Publicación de Propiedad
+#### 8.1.1 Publicación de Propiedad
 
 ![publish-property.png](imgs/publish-property.png)
 
-**Descripción**: Muestra el flujo completo que realiza un agente inmobiliario al publicar una nueva propiedad en el sistema, incluyendo la validación de datos, carga de fotografías y almacenamiento en la base de datos.
+Muestra el flujo que realiza un agente al publicar una nueva propiedad: ingreso de datos, validación, carga de fotografías a Supabase Storage, almacenamiento en BD y confirmación. **CDU relacionado**: CDU001.1.
 
-**Actores involucrados**:
-- Agente Inmobiliario
-- Sistema Frontend
-- Sistema Backend
-- Base de Datos
-
-**Flujo principal**:
-1. El agente ingresa los datos de la propiedad
-2. El sistema valida la información
-3. Se cargan las fotografías
-4. Se almacena la propiedad en la base de datos
-5. Se confirma la publicación al agente
-
-#### 5.2.2 Negociación de Cita
+#### 8.1.2 Negociación de Cita
 
 ![negotiation-date.png](imgs/negotiation-date.png)
 
-**Descripción**: Representa el proceso de solicitud y negociación de citas entre clientes y agentes para visitar propiedades, incluyendo la propuesta de horarios y el manejo de aceptaciones o rechazos.
+Representa el ciclo de solicitud y negociación de citas: el cliente solicita una cita, el agente puede aceptar o proponer un horario alternativo, y el cliente acepta o rechaza con justificación. **CDU relacionados**: CDU002.0, CDU002.1, CDU002.2.
 
-**Actores involucrados**:
-- Cliente
-- Agente Inmobiliario
-- Sistema Frontend
-- Sistema Backend
-- Base de Datos
-
-**Flujo principal**:
-1. El cliente solicita una cita para visitar una propiedad
-2. El sistema notifica al agente
-3. El agente puede aceptar o proponer un horario alternativo
-4. El cliente recibe la propuesta
-5. El cliente acepta o rechaza el horario propuesto
-6. Si rechaza, debe proporcionar un motivo
-7. El sistema actualiza el estado de la cita
-
-
-### 5.3 Convenciones Utilizadas
-
-Los diagramas de secuencia siguen las siguientes convenciones UML:
-
-- **Actores**: Representados con iconos de persona
-- **Sistemas/Componentes**: Representados con rectángulos
-- **Mensajes síncronos**: Flechas con línea sólida
-- **Mensajes asíncronos**: Flechas con línea punteada
-- **Activación**: Rectángulos verticales en la línea de vida
-- **Retorno**: Líneas punteadas con flecha
-
-### 5.4 Relación con Casos de Uso
-
-Los diagramas de secuencia complementan la especificación de casos de uso, mostrando el detalle temporal de las interacciones:
-
-| Diagrama de Secuencia | Casos de Uso Relacionados | Descripción de la Relación |
-|----------------------|---------------------------|----------------------------|
-| Publicación de Propiedad | CDU001.1 (Crear Propiedad) | Detalla el flujo temporal de creación de una propiedad |
-| Negociación de Cita | CDU002.0, CDU002.1, CDU002.2 | Muestra la secuencia completa de solicitud, propuesta y aceptación/rechazo de citas |
-
----
+------
 
