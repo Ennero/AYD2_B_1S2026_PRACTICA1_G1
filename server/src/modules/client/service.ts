@@ -4,7 +4,6 @@ import { normalizeEmail } from '../../utils/strings.ts'
 import { UserType } from '../../store/enums.ts'
 import { title } from 'node:process'
 import {InvitationState} from '../../store/enums.ts'
-import { invitation } from '../../generated/prisma/browser';
 
 export type UpdateClientInput = {
 	id_user?: number
