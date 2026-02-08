@@ -29,6 +29,8 @@ const AgentPropertiesContainer = () => {
     try {
       setLoading(true)
       const data = await AgentPropertyService.getProperties()
+      // Delay artificial para mejorar la experiencia visual del skeleton
+      await new Promise(resolve => setTimeout(resolve, 400))
       setProperties(data)
       setFilteredProperties(data)
     } catch (error) {
@@ -274,7 +276,7 @@ const AgentPropertiesContainer = () => {
               {loading ? (
                 <div className="flex items-center justify-center py-24">
                   <div className="text-center">
-                    <div className="inline-block p-6 bg-white rounded-2xl shadow-xl">
+                    <div className="inline-block p-6">
                       <div className="w-12 h-12 border-4 border-sky-200 border-t-sky-600 rounded-full animate-spin mx-auto mb-4"></div>
                       <p className="text-gray-600 font-semibold">Cargando propiedades...</p>
                     </div>
