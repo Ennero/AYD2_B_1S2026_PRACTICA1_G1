@@ -183,16 +183,16 @@ El sistema sigue una **Arquitectura Modular por Capas (Layered Modular Architect
 
 ```
 ┌─────────────────────────────────────────────────┐
-│                  Frontend (React)                │
+│                  Frontend (React)               │
 │  Pages → Containers → Components → Strategies   │
 ├─────────────────────────────────────────────────┤
-│              API REST (HTTP/JSON)                │
+│              API REST (HTTP/JSON)               │
 ├─────────────────────────────────────────────────┤
-│                Backend (Express)                 │
+│                Backend (Express)                │
 │  Routes → Controllers → Services → DB/Adapters  │
 ├─────────────────────────────────────────────────┤
-│            Base de Datos (PostgreSQL)            │
-│               Prisma ORM (Schema)                │
+│            Base de Datos (PostgreSQL)           │
+│               Prisma ORM (Schema)               │
 └─────────────────────────────────────────────────┘
 ```
 
@@ -578,36 +578,8 @@ A continuación se presenta la especificación detallada de cada caso de uso exp
 | CDU005.1 - Iniciar Sesión | Cliente, Agente, Admin | RF002, RF003 | `modules/auth/` | `LoginContainer`, `LoginForm` |
 | CDU005.2 - Cerrar Sesión | Cliente, Agente, Admin | RF004 | — (cliente) | `NavbarClient` |
 
-### 7.2 Matriz de Trazabilidad de Requerimientos Funcionales
 
-| ID | Requerimiento | CDU | Componente Técnico |
-|----|--------------|-----|-------------------|
-| RF001 | Registro de clientes | CDU005.0 | `auth/service.ts` → `registerUser()`, `RegisterContainer.jsx`, `RegisterForm.jsx` |
-| RF002 | Inicio de sesión | CDU005.1 | `auth/service.ts` → `loginUser()`, `LoginContainer.jsx`, `LoginForm.jsx` |
-| RF003 | Autenticación JWT | CDU005 | `lib/security.ts` → `signAuthToken()`, `verifyAuthToken()`, `middleware/auth.ts` |
-| RF004 | Cierre de sesión | CDU005.2 | `NavbarClient.jsx` → `onLogout()` (limpieza de token en cliente) |
-| RF005 | Crear propiedad | CDU001.1 | `modules/agent/` |
-| RF006 | Actualizar propiedad | CDU001.2 | `modules/agent/` |
-| RF007 | Eliminar propiedad | CDU001.3 | `modules/agent/` |
-| RF008 | Consultar estadísticas | CDU001.4 | `modules/agent/` |
-| RF009 | Gestionar tipos de inmueble | CDU001.5-8 | `modules/agent/` |
-| RF010 | Visualizar propiedades (Agente) | CDU001.9 | `modules/agent/` |
-| RF011 | Solicitar cita | CDU002.0 | `modules/client/` |
-| RF012 | Proponer horario | CDU002.1 | `modules/agent/` |
-| RF013 | Aceptar/Rechazar horario | CDU002.2 | `modules/client/`, `modules/agent/` |
-| RF014 | Visualizar agentes | CDU003.0 | `modules/admin/` |
-| RF015 | Crear agente | CDU003.2 | `modules/admin/` |
-| RF016 | Actualizar agente | CDU003.3 | `modules/admin/` |
-| RF017 | Eliminar agente | CDU003.4 | `modules/admin/` |
-| RF018 | Buscar propiedades | CDU004.0-1 | `SearchContainer.jsx`, `strategies/PropertyFilters.js` |
-| RF019 | Filtrar propiedades | CDU004.1 | `FilterPanel.jsx`, `PropertyFilters.js` (8 estrategias) |
-| RF020 | Ordenar resultados | CDU004.1 | `PropertySorters.js` (5 estrategias) |
-| RF021 | Gestionar favoritos | CDU004.0 | `PropertyCard.jsx` → `onToggleFavorite()` |
-| RF022 | Editar perfil | CDU004.2 | `modules/client/` |
-| RF023 | Carga de imágenes | CDU001.1, CDU005.0 | `adapters/storage/`, `utils/supabase-storage.ts`, `utils/base64.ts` |
-| RF024 | Registro de visitas | CDU004.0 | Tabla `record` en BD |
-
-### 7.3 Matriz de Trazabilidad de Requerimientos No Funcionales
+### 7.2 Matriz de Trazabilidad de Requerimientos No Funcionales
 
 | ID | Requerimiento | Categoría | Componentes que lo implementan | CDU impactados |
 |----|--------------|-----------|-------------------------------|----------------|
