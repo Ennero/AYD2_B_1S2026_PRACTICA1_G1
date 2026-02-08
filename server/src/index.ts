@@ -1,4 +1,4 @@
-import { connectDB } from './db/db.ts'
+import { DB_Connection } from './db/db.ts'
 import express from 'express'
 import cors from 'cors'
 import corsOptions from './config/cors.config.ts'
@@ -14,7 +14,7 @@ const port = EnvVars.instance.PORT;
 app.use(express.json())
 app.use(cors(corsOptions))
 app.use(express.urlencoded({ extended: true }))
-void connectDB()
+await DB_Connection.instance.connectDB()
 
 app.get('/', async (req, res) => {
     res.status(200).send("Server running well :3")

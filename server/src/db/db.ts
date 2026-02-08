@@ -3,29 +3,66 @@ import { PrismaPg } from '@prisma/adapter-pg'
 import pg from 'pg'
 import { EnvVars } from '../store/enviroment.ts'
 
-// TODO Falta aplicar patron singlenton (mañana lo hago xd)
-
-const pool = new pg.Pool({ connectionString: EnvVars.instance.DATABASE_URL })
-const adapter = new PrismaPg(pool)
-
 declare global {
     var prisma: PrismaClient | undefined
 }
 
-const DB = global.prisma ?? new PrismaClient({ adapter })
+export class DB_Connection {
+    static #instance: DB_Connection
+    readonly DB: PrismaClient
 
-if (EnvVars.instance.NODE_ENV === 'development') {
-    global.prisma = DB
-}
-
-export const connectDB = async (): Promise<void> => {
-    try {
-        await DB.$connect()
-        console.log('Database connected successfully')
-    } catch (error) {
-        console.error('Error connecting to the database:', error)
-        throw error
+    private constructor() {
+        const pool = new pg.Pool({ connectionString: EnvVars.instance.DATABASE_URL })
+        const adapter = new PrismaPg(pool)
+        this.DB = global.prisma ?? new PrismaClient({ adapter })
+        if (EnvVars.instance.NODE_ENV === 'development') {
+            global.prisma = this.DB
+        }
     }
+
+    public static get instance(): DB_Connection {
+        if (!DB_Connection.#instance) {
+            DB_Connection.#instance = new DB_Connection()
+        }
+        return DB_Connection.#instance;
+    }
+
+    async connectDB(): Promise<void> {
+        try {
+            await this.DB.$connect()
+            console.log('Database connected successfully')
+        } catch (error) {
+            console.error('Error connecting to the database:', error)
+            throw error
+        }
+    }
+
+
+
 }
 
-export default DB
+
+// const pool = new pg.Pool({ connectionString: EnvVars.instance.DATABASE_URL })
+// const adapter = new PrismaPg(pool)
+
+// declare global {
+//     var prisma: PrismaClient | undefined
+// }
+
+// const DB = global.prisma ?? new PrismaClient({ adapter })
+
+// if (EnvVars.instance.NODE_ENV === 'development') {
+//     global.prisma = DB
+// }
+
+// export const connectDB = async (): Promise<void> => {
+//     try {
+//         await DB.$connect()
+//         console.log('Database connected successfully')
+//     } catch (error) {
+//         console.error('Error connecting to the database:', error)
+//         throw error
+//     }
+// }
+
+export default DB_Connection.instance.DB
