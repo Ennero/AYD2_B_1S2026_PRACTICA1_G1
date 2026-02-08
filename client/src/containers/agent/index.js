@@ -3,3 +3,4 @@
  */
 
 export { default as AgentDashboardContainer } from './AgentDashboardContainer'
+export { default as AgentPropertiesContainer } from './AgentPropertiesContainer'
