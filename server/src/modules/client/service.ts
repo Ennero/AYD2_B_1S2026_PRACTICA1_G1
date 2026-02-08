@@ -2,6 +2,8 @@ import DB from '../../db/db.ts'
 import { hashPassword } from '../../lib/security.ts'
 import { normalizeEmail } from '../../utils/strings.ts'
 import { UserType } from '../../store/enums.ts'
+import { title } from 'node:process'
+import {InvitationState} from '../../store/enums.ts'
 
 export type UpdateClientInput = {
 	id_user?: number
@@ -82,7 +84,7 @@ export class ClientService {
 		})
 
 		return {
-			message: 'Cliente editado con exito',
+			message: 'Datos de perfil actualizados correctamente',
 			id_user: updated.id_user,
 		}
 	}
@@ -113,12 +115,23 @@ export class ClientService {
 
 	}
 
-	async deletepropertiesfavorites(id_user: number, id_favorite: number) {
+	async deletepropertiesfavorites(id_user: number, id_property: number) {
 		id_user = Number(id_user);
-		id_favorite = Number(id_favorite);
+		id_property = Number(id_property);
+
+		if (!Number.isFinite(id_property) || id_property <= 0) {
+			throw new Error('Invalid favorite id')
+		}
+
+		if (!Number.isFinite(id_user) || id_user <= 0) {
+			throw new Error('Invalid user id')
+		}
 
 		const deleteFavorite = await DB.favorite.deleteMany({
-			where: { id_favorite: id_favorite, id_client: id_user }
+			where: {
+				id_client: id_user,
+				id_property: id_property
+			}
 		})
 
 		if (deleteFavorite.count === 0) {
@@ -126,8 +139,8 @@ export class ClientService {
 		}
 
 		return {
-			message: 'Favorite property deleted successfully',
-			id_favorite: id_favorite
+			message: 'Propiedad eliminada de favoritos',
+			id_property: id_property
 		}
 	}
 
@@ -139,7 +152,7 @@ export class ClientService {
 			where: { id_property: id_property },
 			include: {
 				image: true,
-				// Traemos al agente directamente (asumiendo que la relación se llama USER)
+				// Traemos al agente directamente
 				USER: true, 
 				// Traemos el favorito solo si coincide con este usuario
 				favorite: {
@@ -191,6 +204,189 @@ export class ClientService {
 		return {
 			message: 'Propiedad añadida a favoritos',
 			id_favorite: newFavorite.id_favorite
+		}
+	}
+
+	async getallappointments(id_user: number) {
+		id_user = Number(id_user);
+
+		const appointments = await DB.invitation.findMany({
+			where: { id_client: id_user },
+			include: {
+				property: {
+					include: {
+						image: {
+							take: 1, // Solo traemos una imagen para mostrar en la lista
+							select: { url_img: true }
+						},
+						USER: true, // Traemos el agente para mostrar su nombre en la lista de citas
+					}
+				},
+			}
+		})
+
+		if (!appointments || appointments.length === 0) {
+			throw new Error('No appointments found for this user')
+		}
+		return appointments.map(app => ({
+			id_invitation: app.id_invitation,
+			id_property: app.id_property,
+			id_client: app.id_client,
+			title: app.property.title,
+			address: app.property.address,
+			id_agent: app.property.id_agent,
+			agent_name: app.property.USER.name,
+			img: app.property.image[0]?.url_img || 'placeholder.jpg',
+			status: app.status,
+			description: app.description,
+			expected_date: app.expected_date,
+			is_accepted: app.is_accepted?.toString() === '1'? true : app.is_accepted?.toString() === '0'? false : null,
+			justification: app.justification,
+		}))
+	}
+
+	async getfinalizedappointments(id_user: number) {
+		id_user = Number(id_user);
+
+		id_user = Number(id_user);
+
+		const appointments = await DB.invitation.findMany({
+			where: { id_client: id_user, 
+				OR: [
+					{status: InvitationState.Rejected },
+					{status: InvitationState.Accepted }
+				]
+			},
+			include: {
+				property: {
+					include: {
+						image: {
+							take: 1,
+							select: { url_img: true }
+						},
+						USER: true,
+					}
+				},
+			}
+		})
+
+		if (!appointments || appointments.length === 0) {
+			throw new Error('No appointments found for this user')
+		}
+		return appointments.map(app => ({
+			id_invitation: app.id_invitation,
+			id_property: app.id_property,
+			id_client: app.id_client,
+			title: app.property.title,
+			address: app.property.address,
+			id_agent: app.property.id_agent,
+			agent_name: app.property.USER.name,
+			img: app.property.image[0]?.url_img || 'placeholder.jpg',
+			status: app.status,
+			description: app.description,
+			expected_date: app.expected_date,
+			is_accepted: app.is_accepted?.toString() === '1'? true : app.is_accepted?.toString() === '0'? false : null,
+			justification: app.justification,
+		}))
+	}
+
+	async getpendingappointments(id_user: number) {
+		id_user = Number(id_user);
+
+		const appointments = await DB.invitation.findMany({
+			where: { id_client: id_user, status: InvitationState.Pending },
+			include: {
+				property: {
+					include: {
+						image: {
+							take: 1,
+							select: { url_img: true }
+						},
+						USER: true,
+					}
+				},
+			}
+		})
+
+		if (!appointments || appointments.length === 0) {
+			throw new Error('No appointments found for this user')
+		}
+		return appointments.map(app => ({
+			id_invitation: app.id_invitation,
+			id_property: app.id_property,
+			id_client: app.id_client,
+			title: app.property.title,
+			address: app.property.address,
+			id_agent: app.property.id_agent,
+			agent_name: app.property.USER.name,
+			img: app.property.image[0]?.url_img || 'placeholder.jpg',
+			status: app.status,
+			description: app.description,
+			expected_date: app.expected_date,
+			is_accepted: app.is_accepted?.toString() === '1'? true : app.is_accepted?.toString() === '0'? false : null,
+			justification: app.justification,
+		}))
+	}
+
+	async getacknowledgeappointments(id_user: number) {
+		id_user = Number(id_user);
+
+		const appointments = await DB.invitation.findMany({
+			where: { id_client: id_user, status: InvitationState.Acknowledge },
+			include: {
+				property: {
+					include: {
+						image: {
+							take: 1,
+							select: { url_img: true }
+						},
+						USER: true,
+					}
+				},
+			}
+		})
+
+		if (!appointments || appointments.length === 0) {
+			throw new Error('No appointments found for this user')
+		}
+		return appointments.map(app => ({
+			id_invitation: app.id_invitation,
+			id_property: app.id_property,
+			id_client: app.id_client,
+			title: app.property.title,
+			address: app.property.address,
+			id_agent: app.property.id_agent,
+			agent_name: app.property.USER.name,
+			img: app.property.image[0]?.url_img || 'placeholder.jpg',
+			status: app.status,
+			description: app.description,
+			expected_date: app.expected_date,
+			is_accepted: app.is_accepted?.toString() === '1'? true : app.is_accepted?.toString() === '0'? false : null,
+			justification: app.justification,
+		}))
+	}
+
+	async acknowledgeappointment(id_user: number, id_property: number, status: string, justification?: string) {
+		
+		const invitation = await DB.invitation.findFirst({
+			where: { id_client: id_user, id_property: id_property, status: InvitationState.Acknowledge }
+		})
+
+		if (!invitation) {
+			throw new Error('Appointment not found')
+		}
+
+		await DB.invitation.updateMany({
+			where: { id_client: id_user, id_property: id_property, status: InvitationState.Acknowledge },
+			data: {
+				status: status.toUpperCase(),
+				justification: justification || null,
+				is_accepted: status.toLowerCase() === 'accepted' ? 1 : 0,
+			}
+		})
+
+		return {
+			message: (status.toLowerCase() === 'accepted' ? 'Cita aceptada' : 'La cita ha sido rechazada'),
 		}
 	}
 	// =============================== DAVID ===============================
