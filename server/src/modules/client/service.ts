@@ -3,6 +3,7 @@ import { hashPassword } from '../../lib/security.ts'
 import { normalizeEmail } from '../../utils/strings.ts'
 import { UserType } from '../../store/enums.ts'
 import { title } from 'node:process'
+import {InvitationState} from '../../store/enums.ts'
 
 export type UpdateClientInput = {
 	id_user?: number
@@ -219,6 +220,51 @@ export class ClientService {
 							select: { url_img: true }
 						},
 						USER: true, // Traemos el agente para mostrar su nombre en la lista de citas
+					}
+				},
+			}
+		})
+
+		if (!appointments || appointments.length === 0) {
+			throw new Error('No appointments found for this user')
+		}
+		return appointments.map(app => ({
+			id_invitation: app.id_invitation,
+			id_property: app.id_property,
+			id_client: app.id_client,
+			title: app.property.title,
+			address: app.property.address,
+			id_agent: app.property.id_agent,
+			agent_name: app.property.USER.name,
+			img: app.property.image[0]?.url_img || 'placeholder.jpg',
+			status: app.status,
+			description: app.description,
+			expected_date: app.expected_date,
+			is_accepted: app.is_accepted?.toString() === '1'? true : app.is_accepted?.toString() === '0'? false : null,
+			justification: app.justification,
+		}))
+	}
+
+	async getfinalizedappointments(id_user: number) {
+		id_user = Number(id_user);
+
+		id_user = Number(id_user);
+
+		const appointments = await DB.invitation.findMany({
+			where: { id_client: id_user, 
+				OR: [
+					{status: InvitationState.Rejected },
+					{status: InvitationState.Accepted }
+				]
+			},
+			include: {
+				property: {
+					include: {
+						image: {
+							take: 1,
+							select: { url_img: true }
+						},
+						USER: true,
 					}
 				},
 			}

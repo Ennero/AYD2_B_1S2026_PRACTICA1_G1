@@ -91,6 +91,16 @@ clientRouter.get(
 	clientController.getallappointments,
 )
 
+// GET /api/client/appointment/finalized
+clientRouter.get(
+	'/appointment/finalized',
+	[
+		authMiddleware,
+		requireRole(UserType.Client),
+	],
+	clientController.getfinalizedappointments,
+)
+
 // =============================== DAVID ===============================
 
 export default clientRouter
