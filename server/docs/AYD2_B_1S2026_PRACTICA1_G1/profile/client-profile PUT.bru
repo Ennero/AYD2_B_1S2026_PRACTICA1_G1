@@ -1,0 +1,33 @@
+meta {
+  name: client/profile PUT
+  type: http
+  seq: 2
+}
+
+put {
+  url: {{URL}}/api/client/profile
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIyOCIsImVtYWlsIjoiZHZkYnJhbWlyZXo0NUBleGFtcGxlLmNvbSIsInR5cGUiOiJDTElFTlQiLCJpYXQiOjE3NzA1MDIyMzgsImV4cCI6MTc3MTEwNzAzOH0.5Jn-x266NUpJdGa0zw4Xwbd1Z_l7KeVNs2HiayfMxTU
+}
+
+body:json {
+  {
+    "id_user": 28,
+    "name": "Editado",
+    "last_name": "Editado",
+    "gender": "Male",
+    "phone": "987654321",
+    "email": "dvdbramirez45@example.com",
+    "url_img": "https://hrctwyfmjbsfpcxyfrpn.supabase.co/storage/v1/object/public/AYD2_B_1S2026_PRACTICA1_G1/users/users/d8385e8d-74b5-45b9-877d-ea1ffaa8e764.png",
+    "password": "$2b$10$SefnJTopeZnar8IxIMCP5eT51.XCQZziSUA28IK6woNJvWni8SCYK"
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
