@@ -9,6 +9,7 @@ import ProfilePage from './pages/ProfilePage'
 import AppointmentsPage from './pages/AppointmentsPage'
 import AdminAgentsPage from './pages/AdminAgentsPage'
 import FavoritesPage from './pages/FavoritesPage'
+import AgentDashboardPage from './pages/AgentDashboardPage'
 import './App.css'
 import { Toaster } from 'react-hot-toast'
 
@@ -50,6 +51,7 @@ function App() {
         <Route path="/appointments" element={<AppointmentsPage />} />
         <Route path="/favorites" element={<FavoritesPage />} />
         <Route path="/admin/agents" element={<AdminAgentsPage />} />
+        <Route path="/agent/dashboard" element={<AgentDashboardPage />} />
       </Routes>
     </BrowserRouter>
   )

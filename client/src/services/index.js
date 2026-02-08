@@ -1,14 +1,14 @@
+// Exporting for Client Services
 export { default as authService } from './auth.service'
 export { default as profileService } from './profile.service'
 export { default as propertyService } from './property.service'
 export { default as appointmentService } from './appointment.service'
 
-/**
- * Barrel export para servicios
- * Patrón Command encapsulado en servicios
- */
+// Exporting for Admin Services
+export { default as AgentService } from './admin.service'
 
-export { default as AgentService } from './AgentService'
+// Exporting for Agent Services
+export { AgentDashboardService } from './agent'
 export {
   AgentCommand,
   GetAgentsCommand,
@@ -16,4 +16,4 @@ export {
   UpdateAgentCommand,
   DeleteAgentCommand,
   AgentCommandInvoker,
-} from './AgentService'
+} from './admin.service'

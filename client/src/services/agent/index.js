@@ -1,0 +1,5 @@
+/**
+ * Barrel export para servicios de Agente
+ */
+
+export { default as AgentDashboardService } from './dashboard.service'

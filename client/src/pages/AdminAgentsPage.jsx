@@ -2,15 +2,11 @@ import { NavbarAdmin } from '../components/admin'
 import { AgentManagementContainer } from '../containers/admin'
 import { useNavigate } from 'react-router-dom'
 
-/**
- * Página de gestión de Agentes Inmobiliarios (Admin)
- * Solo accesible para usuarios administradores
- */
 const AdminAgentsPage = () => {
   const navigate = useNavigate()
 
   const handleLogout = () => {
-    // TODO: Lógica de logout real
+    // Falta logica para limpiar el token
     navigate('/login')
   }
 
