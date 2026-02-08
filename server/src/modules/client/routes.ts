@@ -111,6 +111,16 @@ clientRouter.get(
 	clientController.getpendingappointments,
 )
 
+// GET /api/client/appointment/acknowledge
+clientRouter.get(
+	'/appointment/acknowledge',
+	[
+		authMiddleware,
+		requireRole(UserType.Client),
+	],
+	clientController.getacknowledgeappointments,
+)
+
 // =============================== DAVID ===============================
 
 export default clientRouter
