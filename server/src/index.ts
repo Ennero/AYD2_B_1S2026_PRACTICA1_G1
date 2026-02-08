@@ -5,6 +5,7 @@ import cors from 'cors'
 import corsOptions from './config/cors.config.ts'
 import authRouter from './modules/auth/route.ts'
 import adminRouter from './modules/admin/routes.ts'
+import clientRouter from './modules/client/routes.ts'
 
 dotenv.config()
 
@@ -22,6 +23,7 @@ app.get('/', async (req, res) => {
 
 app.use('/api/auth', authRouter)
 app.use('/api/admin', adminRouter)
+app.use('/api/client', clientRouter)
 
 
 

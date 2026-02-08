@@ -1,0 +1,20 @@
+meta {
+  name: client/properties/favorite
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{URL}}/api/client/properties/favorite
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIyOCIsImVtYWlsIjoiZHZkYnJhbWlyZXo0NUBleGFtcGxlLmNvbSIsInR5cGUiOiJDTElFTlQiLCJpYXQiOjE3NzA1MDIyMzgsImV4cCI6MTc3MTEwNzAzOH0.5Jn-x266NUpJdGa0zw4Xwbd1Z_l7KeVNs2HiayfMxTU
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
