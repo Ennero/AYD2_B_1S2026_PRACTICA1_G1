@@ -1,16 +1,22 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { MapPin, Bed, Bath, Maximize, Heart } from 'lucide-react'
 
 /**
  * Tarjeta de propiedad para resultados de búsqueda
  */
-const PropertyCard = ({ property, onToggleFavorite, onViewDetails }) => {
+const PropertyCard = ({ property, onToggleFavorite }) => {
+  const navigate = useNavigate()
   const [isFavorite, setIsFavorite] = useState(property.isFavorite || false)
 
   const handleFavoriteClick = (e) => {
     e.stopPropagation()
     setIsFavorite(!isFavorite)
     onToggleFavorite?.(property.id)
+  }
+
+  const handleViewDetails = () => {
+    navigate(`/property/${property.id}`)
   }
 
   return (
@@ -20,7 +26,7 @@ const PropertyCard = ({ property, onToggleFavorite, onViewDetails }) => {
         transformStyle: 'preserve-3d',
         perspective: '1000px'
       }}
-      onClick={() => onViewDetails?.(property.id)}
+      onClick={handleViewDetails}
     >
    
       <div className="relative h-56 overflow-hidden">
@@ -84,7 +90,7 @@ const PropertyCard = ({ property, onToggleFavorite, onViewDetails }) => {
         <button
           onClick={(e) => {
             e.stopPropagation()
-            onViewDetails?.(property.id)
+            handleViewDetails()
           }}
           className="w-full mt-4 bg-gradient-to-r from-gray-900 to-gray-800 text-white py-3 rounded-lg font-semibold hover:from-orange-600 hover:to-orange-500 transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 active:scale-95 shadow-lg hover:shadow-xl relative overflow-hidden group/btn"
           style={{ transformStyle: 'preserve-3d' }}

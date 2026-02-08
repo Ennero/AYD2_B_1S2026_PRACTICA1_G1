@@ -197,11 +197,6 @@ const SearchContainer = () => {
     console.log('Toggle favorite:', propertyId)
   }
 
-  const handleViewDetails = (propertyId) => {
-    
-    console.log('View details:', propertyId)
-  }
-
   const sortOptions = [
     { value: 'recent', label: 'Más recientes' },
     { value: 'price-low', label: 'Precio: Menor a Mayor' },
@@ -219,12 +214,8 @@ const SearchContainer = () => {
         backgroundImage: "url('/images/client-background.png')",
       }}
     >
-   
-      <div className="absolute inset-0 bg-gradient-to-br from-white/85 via-orange-50/70 to-white/85 backdrop-blur-sm"></div>
+   <div className="relative z-10 flex max-w-full px-0 gap-6">
       
-    
-      <div className="relative z-10 flex max-w-full px-0 gap-6">
-        
         <div className="w-80 flex-shrink-0 pl-4 animate-slideInLeft">
           <div className="sticky top-28" style={{ transformStyle: 'preserve-3d' }}>
             <FilterPanel 
@@ -299,7 +290,6 @@ const SearchContainer = () => {
                 <PropertyCard
                   property={property}
                   onToggleFavorite={handleToggleFavorite}
-                  onViewDetails={handleViewDetails}
                 />
               </div>
             ))}
