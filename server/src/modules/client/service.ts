@@ -2,9 +2,6 @@ import DB from '../../db/db.ts'
 import { hashPassword } from '../../lib/security.ts'
 import { normalizeEmail } from '../../utils/strings.ts'
 import { UserType } from '../../store/enums.ts'
-import { title } from 'node:process'
-import { me } from '../auth/controller.ts'
-import { USER } from '../../generated/prisma/models/USER';
 
 export type UpdateClientInput = {
 	id_user?: number
@@ -167,6 +164,33 @@ export class ClientService {
 			image: property.image.map(img => img.url_img),
 			already_in_favorite: property.favorite.length > 0,
 			estate_agent: property.USER.name,
+		}
+	}
+
+	async addpropertytofavorite(id_user: number, id_property: number) {
+		id_user = Number(id_user);
+		id_property = Number(id_property);
+
+		const existingFavorite = await DB.favorite.findFirst({
+			where: { id_client: id_user, id_property: id_property }
+		})
+
+		if (existingFavorite) {
+			throw new Error('Property already in favorites')
+		}
+
+		// Anadimos creando la tabla de favoritos
+		const newFavorite = await DB.favorite.create({
+			data: {
+				created_at: new Date().toISOString(),
+				id_client: id_user,
+				id_property: id_property
+			}
+		})
+
+		return {
+			message: 'Propiedad añadida a favoritos',
+			id_favorite: newFavorite.id_favorite
 		}
 	}
 	// =============================== DAVID ===============================
