@@ -68,5 +68,27 @@ export class ClientController {
             })
         }
     }
+
+    deletepropertiesfavorites: RequestHandler = async (req, res) => {
+        try {
+            const userId = Number(req.user?.sub)
+            const id_favorite = Number(req.query.id)
+            if(!Number.isFinite(id_favorite) || id_favorite <= 0) {
+                return response_with_error(res, {
+                    statusCode: 400,
+                    message: 'Invalid favorite id',
+                })
+            }
+
+            const result = await this.clientService.deletepropertiesfavorites(userId, id_favorite);
+            return response_ok(res, result, 200);
+        } catch (error) {
+            return response_with_error(res, {
+                statusCode: 400,
+                message: 'Could not delete client favorite property',
+                details: error instanceof Error ? error.message : error,
+            })
+        }
+    }
     // =============================== DAVID ===============================
 }
