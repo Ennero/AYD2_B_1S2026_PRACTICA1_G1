@@ -60,6 +60,27 @@ clientRouter.delete(
 	clientController.deletepropertiesfavorites,
 )
 
+// GET /api/client/property/:id
+clientRouter.get(
+	'/property',
+	[
+		authMiddleware,
+		requireRole(UserType.Client),
+	],
+	clientController.getpropertybyid,
+)
+
+// POST /api/client/property/favorite
+clientRouter.post(
+	'/property/favorite',
+	[
+		authMiddleware,
+		requireRole(UserType.Client),
+		body('id_property').isInt({ gt: 0 }).withMessage('id_property must be a positive integer'),
+	],
+	clientController.addpropertytofavorite,
+)
+
 // =============================== DAVID ===============================
 
 export default clientRouter

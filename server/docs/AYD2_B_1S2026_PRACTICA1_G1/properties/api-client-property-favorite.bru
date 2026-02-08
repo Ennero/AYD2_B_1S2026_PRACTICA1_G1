@@ -1,0 +1,26 @@
+meta {
+  name: /api/client/property/favorite
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{URL}}/api/client/property/favorite
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIyOCIsImVtYWlsIjoiZHZkYnJhbWlyZXo0NUBleGFtcGxlLmNvbSIsInR5cGUiOiJDTElFTlQiLCJpYXQiOjE3NzA1MDIyMzgsImV4cCI6MTc3MTEwNzAzOH0.5Jn-x266NUpJdGa0zw4Xwbd1Z_l7KeVNs2HiayfMxTU
+}
+
+body:json {
+  {
+     "id_property": 1
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
