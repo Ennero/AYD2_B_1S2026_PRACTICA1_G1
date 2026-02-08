@@ -6,6 +6,9 @@ export { default as appointmentService } from './appointment.service'
 
 // Exporting for Admin Services
 export { default as AgentService } from './admin.service'
+
+// Exporting for Agent Services
+export { AgentDashboardService } from './agent'
 export {
   AgentCommand,
   GetAgentsCommand,
