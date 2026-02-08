@@ -175,5 +175,22 @@ export class ClientController {
             })
         }
     }
+
+    getpendingappointments: RequestHandler = async (req, res) => {
+        try {
+            const user_id = Number(req.user?.sub);
+            const result = await this.clientService.getpendingappointments(user_id);
+            return res.json({
+                appoinments: result,
+            })
+
+        } catch (error) {
+            return response_with_error(res, {
+                statusCode: 400,
+                message: 'Could not get client pending appointments',
+                details: error instanceof Error ? error.message : error,
+            })
+        }
+    }
     // =============================== DAVID ===============================
 }
