@@ -33,7 +33,7 @@ const NavbarClient = ({ isAuthenticated = false, onLogout }) => {
               <span className="absolute inset-x-0 -bottom-1 h-0.5 bg-orange-600 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></span>
             </Link>
             <Link 
-              to="/search" 
+              to="/appointments" 
               className="text-sm font-semibold text-gray-900 hover:text-orange-600 transition-all duration-300 relative group px-4 py-2"
             >
               <span className="relative z-10">Mis Citas</span>

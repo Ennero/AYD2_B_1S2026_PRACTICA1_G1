@@ -6,6 +6,7 @@ import RegisterPage from './pages/RegisterPage'
 import SearchPage from './pages/SearchPage'
 import PropertyDetailPage from './pages/PropertyDetailPage'
 import ProfilePage from './pages/ProfilePage'
+import AppointmentsPage from './pages/AppointmentsPage'
 import './App.css'
 import { Toaster } from 'react-hot-toast'
 
@@ -44,6 +45,7 @@ function App() {
         <Route path="/search" element={<SearchPage />} />
         <Route path="/property/:id" element={<PropertyDetailPage />} />
         <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/appointments" element={<AppointmentsPage />} />
       </Routes>
     </BrowserRouter>
   )
