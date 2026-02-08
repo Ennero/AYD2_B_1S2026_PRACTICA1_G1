@@ -12,12 +12,10 @@ import {
   BathroomsFilterStrategy,
   MinAreaFilterStrategy
 } from '../../strategies/PropertyFilters'
+import { propertyService } from '../../services'
 import { ChevronDown } from 'lucide-react'
+import toast from 'react-hot-toast'
 
-/**
- * Container que maneja la lógica de búsqueda y filtrado
- * Aplica patrón Strategy para filtrado y ordenamiento
- */
 const SearchContainer = () => {
   const [properties, setProperties] = useState([])
   const [filteredProperties, setFilteredProperties] = useState([])
@@ -25,110 +23,27 @@ const SearchContainer = () => {
   const [showSortMenu, setShowSortMenu] = useState(false)
   const [filters, setFilters] = useState({})
   const [searchQuery, setSearchQuery] = useState('')
+  const [isLoading, setIsLoading] = useState(true)
 
-  // Datos mock 
   useEffect(() => {
-    const mockProperties = [
-      {
-        id: 1,
-        title: 'Apartamento de Lujo en Malasaña',
-        price: 850000,
-        location: 'Calle Gran Vía, Madrid',
-        image: '/images/register-background.jpg',
-        bedrooms: 4,
-        bathrooms: 3,
-        area: 320,
-        isFavorite: false,
-        views: 150,
-        favorites: 25,
-        createdAt: '2026-02-01',
-        propertyType: 'apartamento',
-        zone: 'malasaña'
-      },
-      {
-        id: 2,
-        title: 'Loft Moderno Centro',
-        price: 450000,
-        location: 'Malasaña, Madrid',
-        image: '/images/login-background.jpg',
-        bedrooms: 2,
-        bathrooms: 2,
-        area: 115,
-        isFavorite: true,
-        views: 200,
-        favorites: 40,
-        createdAt: '2026-02-03',
-        propertyType: 'loft',
-        zone: 'centro'
-      },
-      {
-        id: 3,
-        title: 'Casa Familiar con Jardín',
-        price: 320000,
-        location: 'Retiro de Alarcón',
-        image: '/images/home-background.png',
-        bedrooms: 3,
-        bathrooms: 2,
-        area: 180,
-        isFavorite: false,
-        views: 80,
-        favorites: 10,
-        createdAt: '2026-01-28',
-        propertyType: 'casa',
-        zone: 'retiro'
-      },
-      {
-        id: 4,
-        title: 'Ático de Diseño en Retiro',
-        price: 675000,
-        location: 'Barrio de Salamanca',
-        image: '/images/register-background.jpg',
-        bedrooms: 4,
-        bathrooms: 3,
-        area: 250,
-        isFavorite: false,
-        views: 120,
-        favorites: 18,
-        createdAt: '2026-02-05',
-        propertyType: 'apartamento',
-        zone: 'salamanca'
-      },
-      {
-        id: 5,
-        title: 'Chalet con Vistas a la Sierra',
-        price: 395000,
-        location: 'Las Rozas, Madrid',
-        image: '/images/home-background.png',
-        bedrooms: 3,
-        bathrooms: 2,
-        area: 220,
-        isFavorite: false,
-        views: 90,
-        favorites: 15,
-        createdAt: '2026-02-04',
-        propertyType: 'chalet',
-        zone: 'las rozas'
-      },
-      {
-        id: 6,
-        title: 'Mansión Exclusiva La Moraleja',
-        price: 1250000,
-        location: 'La Moraleja, Alcobendas',
-        image: '/images/login-background.jpg',
-        bedrooms: 5,
-        bathrooms: 4,
-        area: 450,
-        isFavorite: true,
-        views: 300,
-        favorites: 55,
-        createdAt: '2026-02-02',
-        propertyType: 'casa',
-        zone: 'moraleja'
-      }
-    ]
-    setProperties(mockProperties)
-    setFilteredProperties(mockProperties)
+    loadProperties()
   }, [])
+
+  const loadProperties = async () => {
+    try {
+      setIsLoading(true)
+      const result = await propertyService.getProperties()
+      if (result.success) {
+        setProperties(result.properties)
+        setFilteredProperties(result.properties)
+      }
+    } catch (error) {
+      toast.error('Error al cargar propiedades')
+      console.error(error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   //  Aplicar filtros usando patrón Strategy
   const applyFilters = useCallback((propsToFilter = properties, currentFilters = filters, searchTerm = searchQuery) => {
@@ -192,9 +107,20 @@ const SearchContainer = () => {
     applyFilters(properties, newFilters, searchQuery)
   }
 
-  const handleToggleFavorite = (propertyId) => {
-    
-    console.log('Toggle favorite:', propertyId)
+  const handleToggleFavorite = async (propertyId) => {
+    try {
+      const result = await propertyService.toggleFavorite(propertyId)
+      if (result.success) {
+        setProperties(prevProps =>
+          prevProps.map(p =>
+            p.id === propertyId ? { ...p, isFavorite: result.isFavorite } : p
+          )
+        )
+        applyFilters()
+      }
+    } catch (error) {
+      toast.error('Error al actualizar favorito')
+    }
   }
 
   const sortOptions = [
@@ -278,27 +204,36 @@ const SearchContainer = () => {
             </div>
           </div>
 
+          {/* Loading */}
+          {isLoading && (
+            <div className="flex items-center justify-center py-20">
+              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-orange-600"></div>
+            </div>
+          )}
+
           {/* Grid de propiedades */}
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-            {filteredProperties.map((property, index) => (
-              <div
-                key={property.id}
-                className="animate-fadeInUp"
-                style={{
-                  animationDelay: `${index * 100}ms`,
-                  transformStyle: 'preserve-3d'
-                }}
-              >
-                <PropertyCard
-                  property={property}
-                  onToggleFavorite={handleToggleFavorite}
-                />
-              </div>
-            ))}
-          </div>
+          {!isLoading && (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+              {filteredProperties.map((property, index) => (
+                <div
+                  key={property.id}
+                  className="animate-fadeInUp"
+                  style={{
+                    animationDelay: `${index * 100}ms`,
+                    transformStyle: 'preserve-3d'
+                  }}
+                >
+                  <PropertyCard
+                    property={property}
+                    onToggleFavorite={handleToggleFavorite}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
 
           {/* Mensaje sin resultados */}
-          {filteredProperties.length === 0 && (
+          {!isLoading && filteredProperties.length === 0 && (
             <div className="text-center py-20 animate-fadeInUp">
               <div className="inline-block p-8 bg-white rounded-2xl shadow-xl transform transition-all duration-500 hover:scale-105" style={{ transformStyle: 'preserve-3d' }}>
                 <p className="text-gray-500 text-lg mb-4">No se encontraron propiedades con los criterios seleccionados.</p>
