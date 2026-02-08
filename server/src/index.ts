@@ -1,16 +1,15 @@
 import { connectDB } from './db/db.ts'
 import express from 'express'
-import dotenv from 'dotenv'
 import cors from 'cors'
 import corsOptions from './config/cors.config.ts'
 import authRouter from './modules/auth/route.ts'
 import adminRouter from './modules/admin/routes.ts'
 import clientRouter from './modules/client/routes.ts'
+import { EnvVars } from './store/enviroment.ts'
 
-dotenv.config()
 
 const app = express()
-const port = process.env.PORT || 3000;
+const port = EnvVars.instance.PORT;
 
 app.use(express.json())
 app.use(cors(corsOptions))
