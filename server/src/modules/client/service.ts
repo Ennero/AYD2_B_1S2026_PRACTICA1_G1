@@ -2,8 +2,6 @@ import DB from '../../db/db.ts'
 import { hashPassword } from '../../lib/security.ts'
 import { normalizeEmail } from '../../utils/strings.ts'
 import { UserType } from '../../store/enums.ts'
-import { title } from 'node:process'
-import { me } from '../auth/controller.ts'
 
 export type UpdateClientInput = {
 	id_user?: number
@@ -130,6 +128,69 @@ export class ClientService {
 		return {
 			message: 'Favorite property deleted successfully',
 			id_favorite: id_favorite
+		}
+	}
+
+	async getpropertybyid(id_user: number, id_property: number) {
+		id_user = Number(id_user);
+		id_property = Number(id_property);
+
+		const property = await DB.property.findUnique({
+			where: { id_property: id_property },
+			include: {
+				image: true,
+				// Traemos al agente directamente (asumiendo que la relación se llama USER)
+				USER: true, 
+				// Traemos el favorito solo si coincide con este usuario
+				favorite: {
+					where: { id_client: id_user }
+				}
+			}
+		});
+
+		if (!property) throw new Error('Property not found');
+
+		return {
+			id_property: property.id_property,
+			title: property.title,
+			address: property.address,
+			price: property.price,
+			description: property.description,
+			zone: property.zone,
+			num_rooms: property.num_rooms,
+			num_bathrooms: property.num_bathrooms,
+			square_meters: property.square_meters,
+			type: property.type,
+			image: property.image.map(img => img.url_img),
+			already_in_favorite: property.favorite.length > 0,
+			estate_agent: property.USER.name,
+		}
+	}
+
+	async addpropertytofavorite(id_user: number, id_property: number) {
+		id_user = Number(id_user);
+		id_property = Number(id_property);
+
+		const existingFavorite = await DB.favorite.findFirst({
+			where: { id_client: id_user, id_property: id_property }
+		})
+
+		if (existingFavorite) {
+			throw new Error('Property already in favorites')
+		}
+
+		// Anadimos creando la tabla de favoritos
+		const newFavorite = await DB.favorite.create({
+			data: {
+				created_at: new Date().toISOString(),
+				id_client: id_user,
+				id_property: id_property
+			}
+		})
+
+		return {
+			message: 'Propiedad añadida a favoritos',
+			id_favorite: newFavorite.id_favorite
 		}
 	}
 	// =============================== DAVID ===============================
