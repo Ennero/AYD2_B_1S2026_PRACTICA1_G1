@@ -1110,11 +1110,15 @@ async function main() {
     // Crear invitaciones
     console.log('📅 Creating invitations...');
     const invitations = [];
-    const invitationStatuses = [
-        InvitationState.Pending,
-        InvitationState.Accepted,
-        InvitationState.Rejected,
-        InvitationState.Acknowledge
+    
+    // Razones comunes para rechazar una invitación
+    const rejectionReasons = [
+        'Cambio de planes',
+        'Conflicto de horarios',
+        'Propiedad no cumple requisitos',
+        'Presupuesto insuficiente',
+        'Ubicación no conveniente',
+        'Ya encontré otra propiedad'
     ];
 
     for (let i = 0; i < 40; i++) {
@@ -1124,7 +1128,19 @@ async function main() {
         
         if (!randomClient || !randomProperty) continue;
         
-        const status = invitationStatuses[Math.floor(Math.random() * invitationStatuses.length)];
+        // Distribuir los estados de manera más lógica
+        const statusDistribution = i % 4;
+        let status: InvitationState;
+        
+        if (statusDistribution === 0) {
+            status = InvitationState.Pending;
+        } else if (statusDistribution === 1) {
+            status = InvitationState.Acknowledge;
+        } else if (statusDistribution === 2) {
+            status = InvitationState.Accepted;
+        } else {
+            status = InvitationState.Rejected;
+        }
         
         const createdAt = randomDate(new Date('2026-01-20'), new Date('2026-02-05'));
         const updatedAt = new Date(createdAt.getTime() + Math.random() * (new Date('2026-02-06').getTime() - createdAt.getTime()));
@@ -1134,27 +1150,37 @@ async function main() {
             id_property: randomProperty.id_property,
             status: status,
             created_at: createdAt,
-            updated_at: updatedAt,
-            description: `Solicitud de visita para ${randomProperty.title}`
+            updated_at: updatedAt
         };
 
-        // Agregar campos según el estado
+        // Agregar campos según el estado del flujo de invitación
         if (status === InvitationState.Pending) {
+            // Estado inicial: cliente solicita visita, agente aún no ha respondido
+            // Todo está vacío esperando respuesta del agente
+            invitationData.description = null;
+            invitationData.expected_date = null;
             invitationData.is_accepted = null;
             invitationData.justification = null;
-            invitationData.expected_date = null;
-        } else if (status === InvitationState.Accepted) {
-            invitationData.is_accepted = 1;
-            invitationData.justification = null;
-            invitationData.expected_date = randomDate(updatedAt, new Date('2026-03-01'));
-        } else if (status === InvitationState.Rejected) {
-            invitationData.is_accepted = 0;
-            invitationData.justification = 'No puedo asistir en las fechas propuestas';
-            invitationData.expected_date = null;
         } else if (status === InvitationState.Acknowledge) {
-            invitationData.is_accepted = 1;
+            // Agente confirma que puede atender la solicitud y propone una fecha
+            // is_accepted y justification siguen null (cliente no ha respondido)
+            invitationData.description = `Solicitud de visita para ${randomProperty.title}`;
+            invitationData.expected_date = randomDate(new Date('2026-02-08'), new Date('2026-02-20'));
+            invitationData.is_accepted = null;
             invitationData.justification = null;
-            invitationData.expected_date = randomDate(new Date('2026-01-25'), updatedAt);
+        } else if (status === InvitationState.Accepted) {
+            // Cliente acepta la cita propuesta por el agente
+            invitationData.description = `Solicitud de visita para ${randomProperty.title}`;
+            invitationData.expected_date = randomDate(new Date('2026-02-10'), new Date('2026-02-25'));
+            invitationData.is_accepted = 1; // true
+            invitationData.justification = null;
+        } else if (status === InvitationState.Rejected) {
+            // Cliente rechaza la cita propuesta por el agente
+            // Todos los campos deben tener valor para contexto completo
+            invitationData.description = `Solicitud de visita para ${randomProperty.title}`;
+            invitationData.expected_date = randomDate(new Date('2026-02-08'), new Date('2026-02-20'));
+            invitationData.is_accepted = 0; // false
+            invitationData.justification = rejectionReasons[Math.floor(Math.random() * rejectionReasons.length)];
         }
 
         const invitation = await DB.invitation.create({
