@@ -1,26 +1,11 @@
-/**
- * Patrón Command - Servicio de Agentes Inmobiliarios
- * Encapsula las operaciones CRUD como comandos independientes
- * Cada comando implementa execute() para ser intercambiable
- */
-
-// ==================== COMMAND BASE ====================
-
-/**
- * Comando base abstracto
- * Todos los comandos deben implementar execute()
- */
+// Clase Base
 class AgentCommand {
   execute() {
     throw new Error('El método execute() debe ser implementado')
   }
 }
 
-// ==================== COMANDOS CONCRETOS ====================
-
-/**
- * Comando para obtener todos los agentes
- */
+// Comando Get
 class GetAgentsCommand extends AgentCommand {
   constructor(apiUrl) {
     super()
@@ -29,12 +14,7 @@ class GetAgentsCommand extends AgentCommand {
 
   async execute() {
     try {
-      // TODO: Reemplazar con llamada real a la API
-      // const response = await fetch(`${this.apiUrl}/admin/agents`)
-      // const data = await response.json()
-      // return data
-
-      // Datos quemados por ahora
+      //Quemados mientras
       return [
         {
           id: 1,
@@ -84,9 +64,7 @@ class GetAgentsCommand extends AgentCommand {
   }
 }
 
-/**
- * Comando para crear un nuevo agente
- */
+// Comando Post
 class CreateAgentCommand extends AgentCommand {
   constructor(apiUrl, agentData) {
     super()
@@ -96,16 +74,7 @@ class CreateAgentCommand extends AgentCommand {
 
   async execute() {
     try {
-      // TODO: Reemplazar con llamada real a la API
-      // const response = await fetch(`${this.apiUrl}/admin/agents`, {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(this.agentData),
-      // })
-      // const data = await response.json()
-      // return data
-
-      // Simulación
+      // Simulación de creación de agente
       return {
         id: Date.now(),
         ...this.agentData,
@@ -118,9 +87,7 @@ class CreateAgentCommand extends AgentCommand {
   }
 }
 
-/**
- * Comando para actualizar un agente existente
- */
+// Comando Put
 class UpdateAgentCommand extends AgentCommand {
   constructor(apiUrl, agentId, agentData) {
     super()
@@ -131,16 +98,7 @@ class UpdateAgentCommand extends AgentCommand {
 
   async execute() {
     try {
-      // TODO: Reemplazar con llamada real a la API
-      // const response = await fetch(`${this.apiUrl}/admin/agents/${this.agentId}`, {
-      //   method: 'PUT',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(this.agentData),
-      // })
-      // const data = await response.json()
-      // return data
-
-      // Simulación
+      // Simulación de actualización de agente
       return {
         id: this.agentId,
         ...this.agentData,
@@ -152,9 +110,7 @@ class UpdateAgentCommand extends AgentCommand {
   }
 }
 
-/**
- * Comando para eliminar un agente
- */
+// Comando Delete
 class DeleteAgentCommand extends AgentCommand {
   constructor(apiUrl, agentId) {
     super()
@@ -164,14 +120,7 @@ class DeleteAgentCommand extends AgentCommand {
 
   async execute() {
     try {
-      // TODO: Reemplazar con llamada real a la API
-      // const response = await fetch(`${this.apiUrl}/admin/agents/${this.agentId}`, {
-      //   method: 'DELETE',
-      // })
-      // const data = await response.json()
-      // return data
-
-      // Simulación
+      // Simulación de eliminación de agente
       return { success: true, deletedId: this.agentId }
     } catch (error) {
       console.error('Error al eliminar agente:', error)
@@ -180,12 +129,7 @@ class DeleteAgentCommand extends AgentCommand {
   }
 }
 
-// ==================== INVOKER ====================
-
-/**
- * Invoker del patrón Command
- * Se encarga de ejecutar los comandos y mantener un historial
- */
+// Invocador
 class AgentCommandInvoker {
   constructor() {
     this.history = []
@@ -202,14 +146,8 @@ class AgentCommandInvoker {
   }
 }
 
-// ==================== SERVICE FACADE ====================
-
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
 
-/**
- * Servicio de Agentes - Fachada que usa el patrón Command internamente
- * Abstrae la complejidad de los comandos para los componentes
- */
 const AgentService = {
   invoker: new AgentCommandInvoker(),
 
