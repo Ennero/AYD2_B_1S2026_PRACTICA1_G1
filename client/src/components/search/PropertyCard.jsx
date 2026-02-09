@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { MapPin, Bed, Bath, Maximize, Heart } from 'lucide-react'
 
@@ -8,6 +8,11 @@ import { MapPin, Bed, Bath, Maximize, Heart } from 'lucide-react'
 const PropertyCard = ({ property, onToggleFavorite }) => {
   const navigate = useNavigate()
   const [isFavorite, setIsFavorite] = useState(property.isFavorite || false)
+
+  // Sincronizar el estado local cuando la prop cambie desde el container
+  useEffect(() => {
+    setIsFavorite(property.isFavorite || false)
+  }, [property.isFavorite, property.id])
 
   const handleFavoriteClick = (e) => {
     e.stopPropagation()

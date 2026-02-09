@@ -406,7 +406,7 @@ export class ClientService {
        p.num_bathrooms,
        p.square_meters,
 	   case
-        when (select count(*) from favorite f where f.id_client = 9 and f.id_property = p.id_property) > 0 then true
+        when (select count(*) from favorite f where f.id_client = ${idUser} and f.id_property = p.id_property) > 0 then true
         else false
         end as already_in_favorite
 from property p where `)

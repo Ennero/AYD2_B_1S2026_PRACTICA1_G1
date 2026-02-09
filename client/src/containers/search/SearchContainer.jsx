@@ -115,16 +115,19 @@ const SearchContainer = () => {
     try {
       const result = await propertyService.toggleFavorite(propertyId)
       if (result.success) {
+        // Si shouldRemove es true, significa que YA estaba en favoritos (según backend)
+        const newFavoriteState = !result.shouldRemove
+        
         setProperties(prevProps =>
           prevProps.map(p =>
-            p.id === propertyId ? { ...p, isFavorite: result.isFavorite } : p
+            p.id === propertyId ? { ...p, isFavorite: newFavoriteState } : p
           )
         )
         applyFilters()
-        toast.success(result.isFavorite ? 'Agregado a favoritos' : 'Eliminado de favoritos')
+        toast.success(newFavoriteState ? 'Agregado a favoritos' : 'Eliminado de favoritos')
       }
     } catch (error) {
-      toast.error('Error al actualizar favorito')
+      toast.error(error.message || 'Error al actualizar favorito')
     }
   }
 
