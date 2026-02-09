@@ -409,18 +409,18 @@ export class ClientService {
 		}))
 	}
 
-	async acknowledgeappointment(id_user: number, id_property: number, status: string, justification?: string) {
+	async acknowledgeappointment(id_user: number, id_invitation: number, status: string, justification?: string) {
 
 		const invitation = await DB.invitation.findFirst({
-			where: { id_client: id_user, id_property: id_property, status: InvitationState.Acknowledge }
+			where: { id_invitation: id_invitation, id_client: id_user, status: InvitationState.Acknowledge }
 		})
 
 		if (!invitation) {
 			throw new Error('Appointment not found')
 		}
 
-		await DB.invitation.updateMany({
-			where: { id_client: id_user, id_property: id_property, status: InvitationState.Acknowledge },
+		await DB.invitation.update({
+			where: { id_invitation: id_invitation },
 			data: {
 				status: status.toUpperCase(),
 				justification: justification || null,
