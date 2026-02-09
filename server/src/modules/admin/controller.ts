@@ -57,4 +57,61 @@ export class AdminController {
             })
         }
     }
+    //helado
+    getAgents: RequestHandler = async (req, res) => {
+        try {
+            const result = await this.adminService.getAgents()
+            return response_ok(res, result)
+        } catch (error) {
+            return response_with_error(res, {
+                statusCode: 400,
+                message: 'Could not get agents',
+                details: error instanceof Error ? error.message : error,
+            })
+        }
+    }
+
+    getAgentById: RequestHandler = async (req, res) => {
+        try {
+            const agentId = Number(req.params.id)
+            if (!Number.isFinite(agentId) || agentId <= 0) {
+                return response_with_error(res, {
+                    statusCode: 400,
+                    message: 'Invalid agent id',
+                })
+            }
+
+            const result = await this.adminService.getAgentById(agentId)
+            return response_ok(res, result)
+        } catch (error) {
+            return response_with_error(res, {
+                statusCode: 404,
+                message: 'Agent not found',
+                details: error instanceof Error ? error.message : error,
+            })
+        }
+    }
+
+    deleteAgent: RequestHandler = async (req, res) => {
+        try {
+            const agentId = Number(req.params.id)
+            if (!Number.isFinite(agentId) || agentId <= 0) {
+                return response_with_error(res, {
+                    statusCode: 400,
+                    message: 'Invalid agent id',
+                })
+            }
+
+            const result = await this.adminService.deleteAgent(agentId)
+            return response_ok(res, result)
+        } catch (error) {
+            return response_with_error(res, {
+                statusCode: 400,
+                message: 'Could not delete agent',
+                details: error instanceof Error ? error.message : error,
+            })
+        }
+    }
+
+    //fin helado
 }

@@ -1,0 +1,31 @@
+meta {
+  name: /api/admin/agents
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{URL}}/api/admin/agents
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{TOKEN}}
+}
+
+body:json {
+  {
+    "email": "agente.base64@test.com",
+    "name": "Carlos",
+    "last_name": "García",
+    "phone": "12345678",
+    "img_mime": "image/png",
+    "img_base64": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO9q0QAAAABJRU5ErkJggg=="
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

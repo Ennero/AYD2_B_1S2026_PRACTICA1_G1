@@ -4,11 +4,7 @@ import { AgentService } from '../../services'
 import toast from 'react-hot-toast'
 import { UserPlus, Users, Shield } from 'lucide-react'
 
-/**
- * Container que maneja la lógica de negocio del CRUD de agentes
- * Aplica patrón Command a través de AgentService
- * Separa lógica (container) de presentación (components)
- */
+// Container para el manejo del CRUD
 const AgentManagementContainer = () => {
   const [agents, setAgents] = useState([])
   const [loading, setLoading] = useState(true)
@@ -61,12 +57,12 @@ const AgentManagementContainer = () => {
     setSelectedAgent(null)
   }
 
-  // Enviar formulario de creación o edición (Command: CreateAgentCommand / UpdateAgentCommand)
+  // Enviar formulario de creación o edición
   const handleFormSubmit = async (formData) => {
     setActionLoading(true)
     try {
       if (selectedAgent) {
-        // Editar agente - Command: UpdateAgentCommand
+        // Editar agente
         const updatedAgent = await AgentService.updateAgent(selectedAgent.id, formData)
         setAgents(prev =>
           prev.map(a => (a.id === selectedAgent.id ? { ...a, ...formData, ...updatedAgent } : a))
@@ -76,7 +72,7 @@ const AgentManagementContainer = () => {
           { duration: 4000 }
         )
       } else {
-        // Crear agente - Command: CreateAgentCommand
+        // Crear agente
         const newAgent = await AgentService.createAgent(formData)
         setAgents(prev => [...prev, newAgent])
         toast.success(
@@ -92,7 +88,7 @@ const AgentManagementContainer = () => {
     }
   }
 
-  // Confirmar eliminación (Command: DeleteAgentCommand)
+  // Confirmar eliminación
   const handleConfirmDelete = async (agentId) => {
     setActionLoading(true)
     try {

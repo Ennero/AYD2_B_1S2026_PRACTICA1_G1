@@ -1,0 +1,27 @@
+meta {
+  name: /api/admin/agents/:id
+  type: http
+  seq: 2
+}
+
+put {
+  url: {{URL}}/api/admin/agents/30
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{TOKEN}}
+}
+
+body:json {
+  {
+    "img_mime": "image/png",
+    "img_base64": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO9q0QAAAABJRU5ErkJggg=="
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

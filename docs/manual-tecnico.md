@@ -122,33 +122,204 @@ Se implementaron patrones de diseño reconocidos tanto en el frontend como en el
 
 ### 3.1 Patrones en el Frontend
 
-#### 3.1.1 Container/Presentational
+#### 3.1.1 Strategy
 
-**Problema que resuelve**: En aplicaciones React, mezclar lógica de negocio/estado con código de renderizado produce componentes difíciles de probar y reutilizar.
+**Problema que resuelve**: 
+El sistema necesita aplicar 8 tipos de filtros diferentes (texto, tipo, precio min/max, zona, habitaciones, baños, área) y 5 ordenamientos (reciente, precio asc/desc, área, popularidad) sobre las propiedades. Implementar esto con condicionales `if/else` o `switch` en un solo método produciría:
+- Función monolítica de 200+ líneas
+- Difícil de testear cada filtro individualmente
+- Imposible agregar nuevos filtros sin modificar código existente (viola Open/Closed)
 
-**Solución implementada**: Se separan los componentes en dos capas:
-- **Containers** (`containers/`): Manejan estado, efectos secundarios y llamadas a la API. Ejemplo: `LoginContainer.jsx` gestiona el estado de email/password, la llamada al endpoint `/api/auth/login` y el manejo de errores.
-- **Presentational** (`components/`): Solo reciben props y renderizan UI. Ejemplo: `LoginForm.jsx` renderiza el formulario sin saber de dónde vienen los datos.
+**Implementación**:
 
-**Beneficio**: Los componentes presentacionales son reutilizables y testeables de forma aislada. La lógica de negocio se concentra en un solo lugar.
+**Filtros de Propiedades** (`strategies/PropertyFilters.js`):
+- Cada estrategia implementa `execute(properties, filterValue)` que retorna array filtrado
+- Estrategias disponibles:
+  - `TextSearchStrategy`: Busca en título, ubicación y zona
+  - `TypeFilterStrategy`: Filtra por tipo de inmueble
+  - `MinPriceFilterStrategy` / `MaxPriceFilterStrategy`: Rango de precio
+  - `ZoneFilterStrategy`: Filtra por zona específica
+  - `BedroomsFilterStrategy` / `BathroomsFilterStrategy`: Cantidad de habitaciones/baños
+  - `MinAreaFilterStrategy`: Área mínima en m²
+- Contexto `PropertyFilterContext`: Permite cambiar estrategia en runtime con `setStrategy()`
 
-#### 3.1.2 Strategy (Patrón de Estrategia)
+**Uso en SearchContainer.jsx**:
+```javascript
+const filterContext = new PropertyFilterContext(TextSearchStrategy)
+let result = properties
 
-**Problema que resuelve**: El sistema necesita 8 filtros y 5 criterios de ordenamiento diferentes para las propiedades. Implementarlos con condicionales `if/else` o `switch` generaría un código monolítico e imposible de extender.
+// Cambio dinámico de estrategia
+filterContext.setStrategy(TextSearchStrategy)
+result = filterContext.applyFilter(result, searchQuery)
 
-**Solución implementada**:
-- `strategies/PropertyFilters.js`: Define 8 estrategias de filtrado intercambiables (texto, tipo, precio mín/máx, zona, habitaciones, baños, área). Cada estrategia implementa el método `execute(properties, filterValue)`.
-- `strategies/PropertySorters.js`: Define 5 estrategias de ordenamiento (reciente, precio asc/desc, área, popularidad) con una clase base `SortStrategy` y una clase contexto `PropertySorter`.
+filterContext.setStrategy(TypeFilterStrategy)
+result = filterContext.applyFilter(result, filters.propertyType)
+// ... continúa con más estrategias
+```
 
-**Beneficio**: Para agregar un nuevo filtro, solo se crea un nuevo objeto con `execute()`. No se modifica ningún código existente (principio Open/Closed).
+**Ordenamiento** (`strategies/PropertySorters.js`):
+- Clase base `SortStrategy` con método abstracto `sort(properties)`
+- 5 estrategias concretas heredan de la base
+- `PropertySorter` es el contexto que ejecuta la estrategia actual
+- `getSortStrategy(sortType)` factory method que retorna la estrategia según string
 
-#### 3.1.3 State
+**Estados de Citas** (`strategies/AppointmentStatus.strategy.js`):
+- Define estrategias para los 4 estados de citas (confirmada, pendiente agente, pendiente cliente, rechazada)
+- Cada estrategia retorna configuración de UI (colores, íconos, botones visibles)
 
-Gestión del estado mediante hooks de React (`useState`, `useEffect`, `useCallback`). `SearchContainer.jsx` gestiona centralizadamente el estado de propiedades, filtros activos, tipo de ordenamiento y resultados.
+**Beneficio**: Para agregar un nuevo filtro "Filtrar por año de construcción", solo se crea:
+```javascript
+export const YearFilterStrategy = {
+  execute: (properties, year) => properties.filter(p => p.year >= year)
+}
+```
+Cero cambios en código existente.
 
-#### 3.1.4 Module (Barrel Exports)
+---
 
-Cada carpeta de componentes tiene un `index.js` que re-exporta sus componentes, simplificando las importaciones: `import { LoginForm, RegisterForm } from '../components/auth'`.
+#### 3.1.2 State
+
+**Problema que resuelve**: 
+Las citas tienen 4 estados diferentes (nueva solicitud, en espera, confirmada, cancelada) y cada estado determina:
+- Colores y badges a mostrar
+- Acciones disponibles (proponer horario, aceptar, rechazar)
+- Tipo de panel a renderizar
+- Si se muestra fecha propuesta o motivo de rechazo
+
+Sin el patrón State, esto requeriría condicionales `if/else` en cada render, duplicando lógica en múltiples componentes.
+
+**Implementación** (`context/AgentAppointmentState.js`):
+
+**Clase base abstracta**:
+```javascript
+class AgentAppointmentState {
+  getName() { throw new Error() }           // Nombre del estado
+  getBadgeConfig() { throw new Error() }   // Colores y estilos del badge
+  getTabKey() { throw new Error() }        // Tab donde aparece
+  getPanelType() { throw new Error() }     // Tipo de panel a renderizar
+  canPropose() { return false }            // ¿Puede proponer horario?
+  hasProposedDate() { return false }       // ¿Tiene fecha propuesta?
+  hasRejectionReason() { return false }    // ¿Tiene motivo de rechazo?
+}
+```
+
+**Estados concretos**:
+- `NuevaSolicitudState`: Cliente solicitó cita, agente puede proponer horario
+- `EnEsperaState`: Agente propuso horario, esperando respuesta del cliente
+- `ConfirmadaState`: Cita confirmada por ambas partes
+- `CanceladaState`: Cita rechazada, muestra motivo
+
+**Contexto que maneja transiciones**:
+```javascript
+class AgentAppointmentContext {
+  constructor(appointment) {
+    this.state = AgentAppointmentContext.resolveState(appointment.status)
+  }
+  
+  transitionTo(newStatus) {
+    this.state = AgentAppointmentContext.resolveState(newStatus)
+    // Actualiza comportamiento sin cambiar el objeto appointment
+  }
+}
+```
+
+**Uso en componentes**:
+```javascript
+const context = new AgentAppointmentContext(appointment)
+const config = context.state.getBadgeConfig()  // Obtiene colores según estado
+if (context.state.canPropose()) {
+  // Mostrar formulario de propuesta
+}
+```
+
+**Beneficio**: Agregar nuevo estado "Reprogramada" solo requiere crear clase `ReprogramadaState` sin tocar estados existentes.
+
+---
+
+#### 3.1.3 Command
+
+**Problema que resuelve**: 
+La gestión de agentes (módulo admin) requiere operaciones CRUD que necesitan:
+- Encapsular cada operación como objeto independiente
+- Mantener historial de operaciones ejecutadas (auditoría)
+- Posibilidad futura de deshacer/rehacer acciones
+- Desacoplar el invocador (UI) del ejecutor (servicio)
+
+**Implementación** (`services/admin.service.js`):
+
+**Clase base Command**:
+```javascript
+class AgentCommand {
+  execute() { throw new Error('Método abstracto') }
+}
+```
+
+**Comandos concretos**:
+- `GetAgentsCommand`: Obtiene lista de agentes
+- `CreateAgentCommand`: Crea nuevo agente con datos proporcionados
+- `UpdateAgentCommand`: Actualiza agente existente por ID
+- `DeleteAgentCommand`: Elimina agente del sistema
+
+Cada comando encapsula toda la información necesaria para ejecutar la operación:
+```javascript
+class CreateAgentCommand extends AgentCommand {
+  constructor(apiUrl, agentData) {
+    super()
+    this.apiUrl = apiUrl
+    this.agentData = agentData  // Datos necesarios para crear
+  }
+  
+  async execute() {
+    // Lógica de creación (validación, hash password, llamada API)
+    return { id: Date.now(), ...this.agentData }
+  }
+}
+```
+
+**Invoker con historial**:
+```javascript
+class AgentCommandInvoker {
+  constructor() {
+    this.history = []  // Historial de comandos ejecutados
+  }
+  
+  async executeCommand(command) {
+    const result = await command.execute()
+    this.history.push(command)  // Guarda en historial
+    return result
+  }
+  
+  getHistory() { return this.history }  // Para auditoría
+}
+```
+
+**Servicio que usa el Invoker**:
+```javascript
+const AgentService = {
+  invoker: new AgentCommandInvoker(),
+  
+  async createAgent(agentData) {
+    const command = new CreateAgentCommand(API_URL, agentData)
+    return await this.invoker.executeCommand(command)
+  }
+}
+```
+
+**Uso en Container**:
+```javascript
+const handleCreateAgent = async (formData) => {
+  const newAgent = await AgentService.createAgent(formData)
+  // El comando se ejecutó y quedó registrado en el historial
+}
+```
+
+**Beneficio**: 
+- Operaciones como objetos permiten serializarlas, guardarlas en localStorage para offline
+- Historial completo de operaciones para debugging/auditoría
+- Base para implementar undo/redo en futuras versiones
+- Testing simple: mock del command y verificar que se ejecuta
+
+---
 
 ### 3.2 Patrones en el Backend
 
@@ -200,12 +371,26 @@ El backend se organiza en **módulos por dominio** (`auth`, `admin`, `agent`, `c
 
 ### 4.2 Frontend
 
-| Capa | Directorio | Descripción |
-|------|-----------|-------------|
-| **Pages** | `src/pages/` | Vistas por ruta (HomePage, LoginPage, RegisterPage, SearchPage) |
-| **Containers** | `src/containers/` | Lógica de estado y llamadas a la API |
-| **Components** | `src/components/` | Componentes presentacionales reutilizables (auth, layout, search, ui) |
-| **Strategies** | `src/strategies/` | Patrón Strategy para filtrado y ordenamiento |
+**Stack Tecnológico**:
+- **React 19.2**: Librería UI con componentes reactivos y Virtual DOM
+- **Vite**: Bundler moderno con HMR instantáneo y builds optimizados
+- **Tailwind CSS**: Framework utility-first para estilos responsivos
+- **React Router DOM**: Navegación SPA declarativa sin recarga
+- **Lucide React**: Librería de íconos moderna y tree-shakeable
+- **React Hot Toast**: Sistema de notificaciones toast no intrusivas
+- **date-fns**: Manipulación de fechas ligera y modular
+
+**Arquitectura por Capas**:
+
+| Capa | Responsabilidad | Ejemplos |
+|------|----------------|----------|
+| **Pages** | Vistas completas por ruta, composición de containers | `HomePage.jsx`, `SearchPage.jsx`, `ProfilePage.jsx` |
+| **Containers** | Lógica de negocio, estado, llamadas API | `SearchContainer.jsx`, `LoginContainer.jsx`, `ProfileContainer.jsx` |
+| **Components** | Presentación UI pura, sin estado complejo | `PropertyCard.jsx`, `FilterPanel.jsx`, `Button.jsx` |
+| **Services** | Comunicación con backend, encapsulación de endpoints | `property.service.js`, `auth.service.js`, `appointment.service.js` |
+| **Strategies** | Algoritmos intercambiables (filtros, ordenamiento) | `PropertyFilters.js`, `PropertySorters.js`, `AppointmentStatus.strategy.js` |
+| **Context** | Estado global compartido con patrón State | `AgentAppointmentState.js` |
+
 
 ### 4.3 Backend
 
@@ -225,34 +410,31 @@ El backend se organiza en **módulos por dominio** (`auth`, `admin`, `agent`, `c
 
 ```
 client/
-├── public/images/             # Recursos estáticos
+├── public/images/              # Assets estáticos
 ├── src/
-│   ├── assets/                # Assets internos
-│   ├── components/            # Componentes presentacionales
-│   │   ├── auth/              #   LoginForm, RegisterForm
-│   │   ├── layout/            #   NavbarClient
-│   │   ├── search/            #   FilterPanel, PropertyCard
-│   │   └── ui/                #   Button, Input, InfoBox
-│   ├── containers/            # Contenedores con lógica de estado
-│   │   ├── auth/              #   LoginContainer, RegisterContainer
-│   │   └── search/            #   SearchContainer
-│   ├── pages/                 # Vistas/Rutas
-│   │   ├── HomePage.jsx
-│   │   ├── LoginPage.jsx
-│   │   ├── RegisterPage.jsx
-│   │   └── SearchPage.jsx
-│   ├── strategies/            # Patrón Strategy
-│   │   ├── PropertyFilters.js #   8 estrategias de filtrado
-│   │   └── PropertySorters.js #   5 estrategias de ordenamiento
-│   ├── App.jsx                # Router principal
-│   ├── App.css                # Estilos globales
-│   ├── index.css              # Tailwind + animaciones
-│   └── main.jsx               # Entry point
-├── package.json
-├── vite.config.js
-├── tailwind.config.js
-└── postcss.config.js
+│   ├── components/             # Presentational por módulo
+│   │   ├── admin/, agent/, appointments/, auth/, favorites/
+│   │   ├── layout/, profile/, property/, search/, ui/
+│   ├── containers/             # Lógica y estado
+│   │   ├── admin/, agent/, appointments/, auth/, favorites/
+│   │   ├── profile/, property/, search/
+│   ├── context/                # Estado global (State pattern)
+│   ├── pages/                  # 12 páginas con routing
+│   │   ├── HomePage, LoginPage, RegisterPage, SearchPage
+│   │   ├── PropertyDetailPage, FavoritesPage, ProfilePage
+│   │   ├── AppointmentsPage, AdminAgentsPage
+│   │   ├── AgentDashboardPage, AgentPropertiesPage, AgentAppointmentsPage
+│   ├── services/               # API communication
+│   │   ├── auth, property, appointment, profile, admin
+│   │   ├── agent/ (3 servicios específicos)
+│   ├── strategies/             # Strategy pattern
+│   │   ├── PropertyFilters (8 estrategias)
+│   │   ├── PropertySorters (5 estrategias)
+│   │   └── AppointmentStatus (4 estados)
+│   ├── App.jsx, main.jsx, index.css
+├── vite.config.js, tailwind.config.js
 ```
+
 
 #### 4.4.2 Estructura del Backend
 
@@ -545,7 +727,7 @@ A continuación se presenta la especificación detallada de cada caso de uso exp
 | RNF010 | Integridad referencial | Confiabilidad | La base de datos debe mantener integridad referencial con eliminación en cascada donde corresponda. | Foreign keys con ON DELETE CASCADE configuradas en Prisma |
 | RNF011 | Migraciones de base de datos | Mantenibilidad | Los cambios en el esquema de la base de datos deben gestionarse mediante migraciones versionadas. | Prisma Migrate con historial de migraciones |
 | RNF012 | Modularidad del código | Mantenibilidad | El código debe organizarse en módulos independientes con responsabilidades bien definidas. | Módulos por dominio (auth, admin, agent, client) con separación route/controller/service |
-| RNF013 | Patrones de diseño | Mantenibilidad | El sistema debe implementar patrones de diseño reconocidos para facilitar la extensibilidad y mantenimiento. | Strategy, Adapter, Singleton, Container/Presentational, Module |
+| RNF013 | Patrones de diseño | Mantenibilidad | El sistema debe implementar patrones de diseño reconocidos para facilitar la extensibilidad y mantenimiento. | Strategy, Adapter, Singleton, State, Command |
 | RNF014 | Almacenamiento externo | Escalabilidad | Las imágenes y archivos deben almacenarse en un servicio externo de objetos, no en el servidor de aplicación. | Supabase Storage con URLs públicas |
 | RNF015 | Tipado estático | Mantenibilidad | El backend debe utilizar tipado estático para reducir errores en tiempo de desarrollo. | TypeScript con tipos generados por Prisma para queries type-safe |
 
@@ -594,8 +776,8 @@ A continuación se presenta la especificación detallada de cada caso de uso exp
 | RNF009 | Retroalimentación visual | Usabilidad | `react-hot-toast`, estados `loading` en Button.jsx, mensajes de error | CDU005.0, CDU005.1, CDU004.1 |
 | RNF010 | Integridad referencial | Confiabilidad | `schema.prisma` → `onDelete: Cascade`, foreign keys | CDU001.3, CDU003.4 |
 | RNF011 | Migraciones de BD | Mantenibilidad | `prisma/migrations/`, `prisma migrate dev` | Todos (esquema de BD) |
-| RNF012 | Modularidad del código | Mantenibilidad | Estructura `modules/{auth,admin,agent,client}/`, barrel exports en frontend | Todos |
-| RNF013 | Patrones de diseño | Mantenibilidad | Strategy (filtros/sort), Adapter (storage), Singleton (DB), Container/Presentational | CDU004.1, CDU001.1, Todos |
+| RNF012 | Modularidad del código | Mantenibilidad | Estructura `modules/{auth,admin,agent,client}/` con separación de responsabilidades | Todos |
+| RNF013 | Patrones de diseño | Mantenibilidad | Strategy (filtros/sort), Adapter (storage), Singleton (DB), State (citas), Command (admin) | CDU004.1, CDU001.1, Todos |
 | RNF014 | Almacenamiento externo | Escalabilidad | `adapters/storage/`, Supabase Storage | CDU001.1, CDU005.0 |
 | RNF015 | Tipado estático | Mantenibilidad | TypeScript, Prisma Client generado, tipos en `types/express.d.ts` | Todos (backend) |
 
