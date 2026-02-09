@@ -4,6 +4,11 @@ import { normalizeEmail } from '../../utils/strings.ts'
 import { UserType } from '../../store/enums.ts'
 import { Prisma } from '../../generated/prisma/client.ts'
 import { InvitationState } from '../../store/enums.ts'
+import { decodeBase64ToBytes, guessExtensionFromMime } from '../../utils/base64.ts'
+import { getPublicObjectStorage } from '../../adapters/storage/index.ts'
+import { buildPublicBucketPath } from '../../utils/supabase-storage.ts'
+import { getOptionalEnv } from '../../utils/env.ts'
+import crypto from 'node:crypto'
 
 export type UpdateClientInput = {
 	id_user?: number
@@ -68,6 +73,35 @@ export class ClientService {
 			}
 		}
 
+		// Procesar imagen si es base64 (data:image/...)
+		let finalUrlImg = input.url_img
+		if (input.url_img && input.url_img.startsWith('data:image/')) {
+			console.log('[CLIENT SERVICE] Detectado base64, subiendo a Supabase...')
+			
+			// Extraer mime type del data URL
+			const mimeMatch = input.url_img.match(/^data:(image\/[^;]+);base64,/)
+			const mime = mimeMatch ? mimeMatch[1] : 'image/jpeg'
+			const ext = guessExtensionFromMime(mime)
+			
+			// Decodificar base64 a bytes
+			const bytes = decodeBase64ToBytes(input.url_img)
+			
+			// Subir a Supabase Storage
+			const storage = getPublicObjectStorage()
+			const bucket = getOptionalEnv('SUPABASE_BUCKET_USERS', 'user-images') ?? 'user-images'
+			const objectPath = buildPublicBucketPath(['users', `${crypto.randomUUID()}.${ext}`])
+			
+			const uploaded = await storage.uploadObject({
+				bucket,
+				path: objectPath,
+				contentType: mime,
+				data: bytes,
+			})
+			
+			finalUrlImg = uploaded.publicUrl
+			console.log('[CLIENT SERVICE] Imagen subida correctamente:', finalUrlImg)
+		}
+
 		const updated = await DB.uSER.update({
 			where: { id_user: clientid },
 			data: {
@@ -76,7 +110,7 @@ export class ClientService {
 				...(input.gender !== undefined ? { gender: (input.gender.toLowerCase() === 'male' ? 1 : 2) } : {}),
 				...(input.phone !== undefined ? { phone: String(input.phone) } : {}),
 				...(input.email !== undefined ? { email: normalizedEmail } : {}),
-				...(input.url_img !== undefined ? { url_img: input.url_img } : {}),
+				...(finalUrlImg !== undefined ? { url_img: finalUrlImg } : {}),
 				...(input.password !== undefined ? { password: await hashPassword(input.password) } : {}),
 				type: UserType.Client,
 			},

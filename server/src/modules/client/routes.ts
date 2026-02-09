@@ -33,7 +33,7 @@ clientRouter.put(
 		body('gender').notEmpty().withMessage('gender must not be empty'),
 		body('phone').notEmpty().withMessage('phone must not be empty'),
 		body('email').isEmail().withMessage('email must be valid'),
-		body('url_img').optional({ nullable: true }).isURL().withMessage('url_img must be a valid URL'),
+		body('url_img').optional({ nullable: true }),
 		body('password').optional().isString().isLength({ min: 8 }).withMessage('password must be at least 8 characters long'),
 		validateFields,
 	],
