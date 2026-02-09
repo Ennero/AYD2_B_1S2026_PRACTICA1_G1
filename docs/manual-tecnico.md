@@ -120,109 +120,9 @@ Se seleccionaron frameworks y tecnologías que en conjunto cumplen con los reque
 
 Se implementaron patrones de diseño reconocidos tanto en el frontend como en el backend para resolver problemas concretos de diseño, mejorar la mantenibilidad y facilitar la extensión del sistema.
 
-### 3.1 Patrones en el Frontend
+### 3.1 Patrones en el Backend
 
-#### 3.1.1 Strategy
-
-![Diagrama Strategy - Filtros de Propiedades](imgs/strategy1.png)
-
-![Diagrama Strategy - Ordenamiento de Propiedades](imgs/strategy2.png)
-
-![Diagrama Strategy - Estados de Citas](imgs/strategy3.png)
-
-**Problema que resuelve**: El sistema necesita aplicar 8 filtros y 5 ordenamientos sobre propiedades. Sin Strategy, esto produciría funciones monolíticas imposibles de extender sin modificar código existente (viola Open/Closed).
-
-**Implementación**:
-
-**Filtros** (`strategies/PropertyFilters.js`): 8 estrategias con método `execute(properties, filterValue)` — `TextSearchStrategy`, `TypeFilterStrategy`, `MinPriceFilterStrategy`, `MaxPriceFilterStrategy`, `ZoneFilterStrategy`, `BedroomsFilterStrategy`, `BathroomsFilterStrategy`, `MinAreaFilterStrategy`. El contexto `PropertyFilterContext` permite cambiar estrategia en runtime:
-
-```javascript
-const filterContext = new PropertyFilterContext(TextSearchStrategy)
-filterContext.setStrategy(TypeFilterStrategy)
-result = filterContext.applyFilter(result, filters.propertyType)
-```
-
-**Ordenamiento** (`strategies/PropertySorters.js`): Clase base `SortStrategy` con 5 concretas: `MostRecentStrategy`, `PriceLowToHighStrategy`, `PriceHighToLowStrategy`, `AreaLowToHighStrategy`, `AreaHighToLowStrategy`. `getSortStrategy(sortType)` actúa como factory method.
-
-**Estados de Citas** (`strategies/AppointmentStatus.strategy.js`): 4 estrategias (confirmada, pendiente agente, pendiente cliente, rechazada) que retornan configuración de UI. `AppointmentStatusFactory` selecciona la estrategia según el estado.
-
-**Beneficio**: Agregar un nuevo filtro solo requiere crear una nueva estrategia, cero cambios en código existente.
-
----
-
-#### 3.1.2 State
-
-> *Imagen del diagrama del patrón State pendiente de agregar.*
-
-**Problema que resuelve**: Las citas tienen 4 estados (nueva solicitud, en espera, confirmada, cancelada) que determinan colores, acciones disponibles, tipo de panel y datos visibles. Sin State, habría condicionales `if/else` duplicados en cada componente.
-
-**Implementación** (`context/AgentAppointmentState.js`):
-
-Clase base `AgentAppointmentState` con métodos: `getName()`, `getBadgeConfig()`, `getTabKey()`, `getPanelType()`, `canPropose()`, `hasProposedDate()`, `hasRejectionReason()`.
-
-**4 estados concretos**: `NuevaSolicitudState` (agente puede proponer horario), `EnEsperaState` (esperando respuesta del cliente), `ConfirmadaState` (cita confirmada), `CanceladaState` (rechazada, muestra motivo).
-
-**Contexto con transiciones**:
-```javascript
-class AgentAppointmentContext {
-  constructor(appointment) {
-    this.state = AgentAppointmentContext.resolveState(appointment.status)
-  }
-  transitionTo(newStatus) {
-    this.state = AgentAppointmentContext.resolveState(newStatus)
-  }
-}
-
-// Uso
-const context = new AgentAppointmentContext(appointment)
-const config = context.state.getBadgeConfig()
-if (context.state.canPropose()) { /* Mostrar formulario */ }
-```
-
-**Beneficio**: Agregar nuevo estado solo requiere crear una nueva clase sin tocar estados existentes.
-
----
-
-#### 3.1.3 Command
-
-> *Imagen del diagrama del patrón Command pendiente de agregar.*
-
-**Problema que resuelve**: Las operaciones CRUD necesitan encapsularse como objetos independientes para mantener historial de auditoría, desacoplar UI del servicio y permitir undo/redo futuro.
-
-**Implementación** (`services/admin.service.js`):
-
-Clase base `AgentCommand` con método abstracto `execute()`. **4 comandos concretos**: `GetAgentsCommand`, `CreateAgentCommand`, `UpdateAgentCommand`, `DeleteAgentCommand`.
-
-El `AgentCommandInvoker` ejecuta comandos y mantiene historial:
-
-```javascript
-class AgentCommandInvoker {
-  constructor() { this.history = [] }
-  async executeCommand(command) {
-    const result = await command.execute()
-    this.history.push(command)
-    return result
-  }
-}
-
-// El servicio crea y ejecuta comandos a través del Invoker
-const AgentService = {
-  invoker: new AgentCommandInvoker(),
-  async createAgent(agentData) {
-    return await this.invoker.executeCommand(new CreateAgentCommand(API_URL, agentData))
-  }
-}
-```
-
-Este patrón se replica en otros servicios: `auth.service.js`, `property.service.js` y `agent/property.service.js`.
-
-**Beneficio**: Historial de operaciones para auditoría, base para undo/redo, y testing simplificado.
-
----
-
-### 3.2 Patrones en el Backend
-
-#### 3.2.1 Singleton
+#### 3.1.1 Singleton
 
 ![Diagrama Singleton - DB_Connection](imgs/singleton1.png)
 
@@ -266,7 +166,7 @@ export class EnvVars {
 
 ---
 
-#### 3.2.2 Adapter
+#### 3.1.2 Adapter
 
 ![Diagrama Adapter - Storage](imgs/adapter.png)
 
@@ -303,6 +203,109 @@ export function getPublicObjectStorage(): PublicObjectStorage {
 ```
 
 **Beneficio**: Para cambiar a AWS S3, solo se crea un nuevo adapter y se actualiza la factory. Los servicios nunca importan Supabase directamente.
+
+---
+
+### 3.2 Patrones en el Frontend
+
+#### 3.1.1 Strategy
+
+![Diagrama Strategy - Filtros de Propiedades](imgs/strategy1.png)
+
+![Diagrama Strategy - Ordenamiento de Propiedades](imgs/strategy2.png)
+
+![Diagrama Strategy - Estados de Citas](imgs/strategy3.png)
+
+**Problema que resuelve**: El sistema necesita aplicar 8 filtros y 5 ordenamientos sobre propiedades. Sin Strategy, esto produciría funciones monolíticas imposibles de extender sin modificar código existente (viola Open/Closed).
+
+**Implementación**:
+
+**Filtros** (`strategies/PropertyFilters.js`): 8 estrategias con método `execute(properties, filterValue)` — `TextSearchStrategy`, `TypeFilterStrategy`, `MinPriceFilterStrategy`, `MaxPriceFilterStrategy`, `ZoneFilterStrategy`, `BedroomsFilterStrategy`, `BathroomsFilterStrategy`, `MinAreaFilterStrategy`. El contexto `PropertyFilterContext` permite cambiar estrategia en runtime:
+
+```javascript
+const filterContext = new PropertyFilterContext(TextSearchStrategy)
+filterContext.setStrategy(TypeFilterStrategy)
+result = filterContext.applyFilter(result, filters.propertyType)
+```
+
+**Ordenamiento** (`strategies/PropertySorters.js`): Clase base `SortStrategy` con 5 concretas: `MostRecentStrategy`, `PriceLowToHighStrategy`, `PriceHighToLowStrategy`, `AreaLowToHighStrategy`, `AreaHighToLowStrategy`. `getSortStrategy(sortType)` actúa como factory method.
+
+**Estados de Citas** (`strategies/AppointmentStatus.strategy.js`): 4 estrategias (confirmada, pendiente agente, pendiente cliente, rechazada) que retornan configuración de UI. `AppointmentStatusFactory` selecciona la estrategia según el estado.
+
+**Beneficio**: Agregar un nuevo filtro solo requiere crear una nueva estrategia, cero cambios en código existente.
+
+---
+
+#### 3.2.2 State
+
+![Diagrama State](imgs/state.png)
+
+**Problema que resuelve**: Las citas tienen 4 estados (nueva solicitud, en espera, confirmada, cancelada) que determinan colores, acciones disponibles, tipo de panel y datos visibles. Sin State, habría condicionales `if/else` duplicados en cada componente.
+
+**Implementación** (`context/AgentAppointmentState.js`):
+
+Clase base `AgentAppointmentState` con métodos: `getName()`, `getBadgeConfig()`, `getTabKey()`, `getPanelType()`, `canPropose()`, `hasProposedDate()`, `hasRejectionReason()`.
+
+**4 estados concretos**: `NuevaSolicitudState` (agente puede proponer horario), `EnEsperaState` (esperando respuesta del cliente), `ConfirmadaState` (cita confirmada), `CanceladaState` (rechazada, muestra motivo).
+
+**Contexto con transiciones**:
+```javascript
+class AgentAppointmentContext {
+  constructor(appointment) {
+    this.state = AgentAppointmentContext.resolveState(appointment.status)
+  }
+  transitionTo(newStatus) {
+    this.state = AgentAppointmentContext.resolveState(newStatus)
+  }
+}
+
+// Uso
+const context = new AgentAppointmentContext(appointment)
+const config = context.state.getBadgeConfig()
+if (context.state.canPropose()) { /* Mostrar formulario */ }
+```
+
+**Beneficio**: Agregar nuevo estado solo requiere crear una nueva clase sin tocar estados existentes.
+
+---
+
+#### 3.2.3 Command
+
+![Diagrama Command](imgs/Command1.png)
+![Diagrama Command](imgs/Command2.png)
+![Diagrama Command](imgs/Command3.png)
+![Diagrama Command](imgs/Command4.png)
+
+**Problema que resuelve**: Las operaciones CRUD necesitan encapsularse como objetos independientes para mantener historial de auditoría, desacoplar UI del servicio y permitir undo/redo futuro.
+
+**Implementación** (`services/admin.service.js`):
+
+Clase base `AgentCommand` con método abstracto `execute()`. **4 comandos concretos**: `GetAgentsCommand`, `CreateAgentCommand`, `UpdateAgentCommand`, `DeleteAgentCommand`.
+
+El `AgentCommandInvoker` ejecuta comandos y mantiene historial:
+
+```javascript
+class AgentCommandInvoker {
+  constructor() { this.history = [] }
+  async executeCommand(command) {
+    const result = await command.execute()
+    this.history.push(command)
+    return result
+  }
+}
+
+// El servicio crea y ejecuta comandos a través del Invoker
+const AgentService = {
+  invoker: new AgentCommandInvoker(),
+  async createAgent(agentData) {
+    return await this.invoker.executeCommand(new CreateAgentCommand(API_URL, agentData))
+  }
+}
+```
+
+Este patrón se replica en otros servicios: `auth.service.js`, `property.service.js` y `agent/property.service.js`.
+
+**Beneficio**: Historial de operaciones para auditoría, base para undo/redo, y testing simplificado.
 
 ---
 
