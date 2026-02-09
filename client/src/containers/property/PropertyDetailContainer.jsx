@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { ImageGallery, PropertyInfo, AgentCard } from '../../components/property'
+import { propertyService } from '../../services'
 import { ArrowLeft } from 'lucide-react'
+import toast from 'react-hot-toast'
 
 /**
  * Container para el detalle de propiedad
@@ -12,57 +14,28 @@ const PropertyDetailContainer = () => {
   const [property, setProperty] = useState(null)
   const [loading, setLoading] = useState(true)
 
-  
   useEffect(() => {
-   
-    const mockProperty = {
-      id: parseInt(id),
-      title: 'Casa Moderna en Condominio El Naranjo',
-      price: 2500000,
-      location: 'Zona 16, Guatemala',
-      zone: 'El Naranjo',
-      propertyType: 'Casa',
-      bedrooms: 4,
-      bathrooms: 3,
-      area: 280,
-      description: 'Hermosa casa de 280 m² ubicada en el exclusivo Condominio El Naranjo, Zona 16. Esta propiedad cuenta con acabados de primera calidad, incluyendo pisos de madera natural en toda la casa, cocina integral con electrodomésticos de línea blanca, y amplios ventanales que permiten entrada de luz natural. El condominio ofrece seguridad 24/7, áreas verdes, gimnasio, piscina y salón de eventos.',
-      features: [
-        'Cocina integral equipada',
-        'Pisos de madera natural',
-        'Amplios ventanales',
-        'Closets empotrados',
-        'Jardín privado',
-        'Garaje para 2 vehículos',
-        'Sistema de seguridad',
-        'Calentador solar'
-      ],
-      images: [
-        '/images/home-background.png',
-        '/images/login-background.jpg',
-        '/images/register-background.jpg',
-        '/images/client-background.png'
-      ],
-      agent: {
-        name: 'María Andrade',
-        title: 'Agente Inmobiliario',
-        phone: '+502 1234-5678',
-        email: 'maria.andrade@homefinder.com',
-        avatar: '/images/logo-HomeFinder.png'
-      },
-      amenities: {
-        parking: 2,
-        floors: 2,
-        yearBuilt: 2023,
-        lotSize: 400
-      }
-    }
-
-    
-    setTimeout(() => {
-      setProperty(mockProperty)
-      setLoading(false)
-    }, 500)
+    loadPropertyDetail()
   }, [id])
+
+  const loadPropertyDetail = async () => {
+    try {
+      setLoading(true)
+      console.log('[DETAIL] Cargando propiedad ID:', id)
+      
+      const result = await propertyService.getPropertyById(id)
+      
+      if (result.success) {
+        setProperty(result.property)
+      }
+    } catch (error) {
+      console.error('[DETAIL] Error al cargar propiedad:', error)
+      toast.error(error.message || 'Error al cargar la propiedad')
+      setProperty(null)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const handleRequestAppointment = () => {
     

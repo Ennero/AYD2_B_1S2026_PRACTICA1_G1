@@ -165,11 +165,77 @@ class GetPropertyByIdCommand extends PropertyCommand {
 
   async execute() {
     try {
-      await new Promise(resolve => setTimeout(resolve, 800))
+      console.log('[PROPERTY] Obteniendo detalle de propiedad:', this.propertyId)
       
-      // TODO: Implementar llamada real al backend
-      throw new Error('Propiedad no encontrada')
+      const token = localStorage.getItem('authToken')
+      if (!token) {
+        throw new Error('No hay sesión activa')
+      }
+
+      const response = await fetch(`${this.apiUrl}/client/property/?id=${this.propertyId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      })
+
+      console.log('[PROPERTY] Response status:', response.status)
+      const data = await response.json()
+      console.log('[PROPERTY] Response data:', data)
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Propiedad no encontrada')
+      }
+
+      // Transformar datos del backend al formato del frontend
+      const backendToFrontendTypeMap = {
+        'APARTMENT': 'Apartamento',
+        'HOUSE': 'Casa',
+        'LAND': 'Terreno',
+        'RETAIL SPACE': 'Local Comercial'
+      }
+
+      // El backend retorna las imágenes como array de strings base64
+      const images = data.image || []
+
+      const property = {
+        id: data.id_property,
+        title: data.title,
+        price: Number(data.price),
+        location: data.address,
+        zone: data.zone,
+        propertyType: backendToFrontendTypeMap[data.type] || 'Casa',
+        bedrooms: Number(data.num_rooms) || 0,
+        bathrooms: Number(data.num_bathrooms) || 0,
+        area: Number(data.square_meters) || 0,
+        description: data.description || '',
+        features: [], // El backend no retorna features, dejamos array vacío
+        images: images.length > 0 ? images : ['/images/home-background.png'],
+        isFavorite: data.already_in_favorite || false,
+        agent: {
+          name: data.estate_agent || 'Agente Inmobiliario',
+          title: 'Agente Inmobiliario',
+          phone: '+502 0000-0000', // El backend no retorna teléfono del agente
+          email: 'contacto@homefinder.com', // El backend no retorna email del agente
+          avatar: '/images/logo-HomeFinder.png'
+        },
+        amenities: {
+          parking: 0,
+          floors: 0,
+          yearBuilt: new Date().getFullYear(),
+          lotSize: Number(data.square_meters) || 0
+        }
+      }
+
+      console.log('[PROPERTY] Propiedad transformada:', property)
+
+      return {
+        success: true,
+        property: property
+      }
     } catch (error) {
+      console.error('[PROPERTY] Error:', error)
       throw error
     }
   }
