@@ -132,8 +132,8 @@ const SearchContainer = () => {
     { value: 'recent', label: 'Más recientes' },
     { value: 'price-low', label: 'Precio: Menor a Mayor' },
     { value: 'price-high', label: 'Precio: Mayor a Menor' },
-    { value: 'area', label: 'Área: Mayor a menor' },
-    { value: 'popular', label: 'Más Populares' }
+    { value: 'area-low', label: 'Área: Menor a mayor' },
+    { value: 'area-high', label: 'Área: Mayor a menor' }
   ]
 
   const currentSortLabel = sortOptions.find(opt => opt.value === sortType)?.label

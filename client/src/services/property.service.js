@@ -1,162 +1,28 @@
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
 
-const MOCK_PROPERTIES = [
-  {
-    id: 1,
-    title: 'Apartamento de Lujo en Malasaña',
-    price: 850000,
-    location: 'Calle Gran Vía, Madrid',
-    image: '/images/register-background.jpg',
-    bedrooms: 4,
-    bathrooms: 3,
-    area: 320,
-    isFavorite: true,
-    hasAppointment: true,
-    views: 150,
-    favorites: 25,
-    createdAt: '2026-02-01',
-    propertyType: 'apartamento',
-    zone: 'malasaña',
-    description: 'Espectacular apartamento de lujo completamente renovado',
-    features: ['Terraza', 'Garaje', 'Ascensor', 'Aire acondicionado'],
-    agent: {
-      id: 1,
-      name: 'María González',
-      email: 'maria@agency.com',
-      phone: '+34 600 123 456'
-    }
-  },
-  {
-    id: 2,
-    title: 'Loft Moderno Centro',
-    price: 450000,
-    location: 'Malasaña, Madrid',
-    image: '/images/login-background.jpg',
-    bedrooms: 2,
-    bathrooms: 2,
-    area: 115,
-    isFavorite: true,
-    hasAppointment: false,
-    views: 200,
-    favorites: 40,
-    createdAt: '2026-02-03',
-    propertyType: 'loft',
-    zone: 'centro',
-    description: 'Loft de diseño en el corazón de Madrid',
-    features: ['Doble altura', 'Cocina integrada', 'Luz natural'],
-    agent: {
-      id: 2,
-      name: 'Carlos Ramírez',
-      email: 'carlos@agency.com',
-      phone: '+34 600 234 567'
-    }
-  },
-  {
-    id: 3,
-    title: 'Casa Familiar con Jardín',
-    price: 320000,
-    location: 'Retiro de Alarcón',
-    image: '/images/home-background.png',
-    bedrooms: 3,
-    bathrooms: 2,
-    area: 180,
-    isFavorite: false,
-    hasAppointment: false,
-    views: 80,
-    favorites: 10,
-    createdAt: '2026-01-28',
-    propertyType: 'casa',
-    zone: 'retiro',
-    description: 'Casa familiar con amplio jardín y zona de juegos',
-    features: ['Jardín', 'Garaje doble', 'Chimenea', 'Sótano'],
-    agent: {
-      id: 3,
-      name: 'Ana Martínez',
-      email: 'ana@agency.com',
-      phone: '+34 600 345 678'
-    }
-  },
-  {
-    id: 4,
-    title: 'Ático de Diseño en Retiro',
-    price: 675000,
-    location: 'Barrio de Salamanca',
-    image: '/images/register-background.jpg',
-    bedrooms: 4,
-    bathrooms: 3,
-    area: 250,
-    isFavorite: false,
-    hasAppointment: false,
-    views: 120,
-    favorites: 18,
-    createdAt: '2026-02-05',
-    propertyType: 'apartamento',
-    zone: 'salamanca',
-    description: 'Ático de diseño exclusivo con espectaculares vistas',
-    features: ['Terraza panorámica', 'Jacuzzi', 'Smart home', 'Gimnasio'],
-    agent: {
-      id: 2,
-      name: 'Carlos Ramírez',
-      email: 'carlos@agency.com',
-      phone: '+34 600 234 567'
-    }
-  },
-  {
-    id: 5,
-    title: 'Chalet con Vistas a la Sierra',
-    price: 395000,
-    location: 'Las Rozas, Madrid',
-    image: '/images/home-background.png',
-    bedrooms: 3,
-    bathrooms: 2,
-    area: 220,
-    isFavorite: false,
-    hasAppointment: false,
-    views: 90,
-    favorites: 15,
-    createdAt: '2026-02-04',
-    propertyType: 'chalet',
-    zone: 'las rozas',
-    description: 'Chalet independiente con impresionantes vistas',
-    features: ['Piscina', 'Barbacoa', 'Porche', 'Zona verde'],
-    agent: {
-      id: 1,
-      name: 'María González',
-      email: 'maria@agency.com',
-      phone: '+34 600 123 456'
-    }
-  },
-  {
-    id: 6,
-    title: 'Mansión Exclusiva La Moraleja',
-    price: 1250000,
-    location: 'La Moraleja, Alcobendas',
-    image: '/images/login-background.jpg',
-    bedrooms: 5,
-    bathrooms: 4,
-    area: 450,
-    isFavorite: true,
-    hasAppointment: false,
-    views: 300,
-    favorites: 55,
-    createdAt: '2026-02-02',
-    propertyType: 'casa',
-    zone: 'moraleja',
-    description: 'Mansión de lujo en la zona más exclusiva',
-    features: ['Piscina climatizada', 'Bodega', 'Cine privado', 'Seguridad 24h'],
-    agent: {
-      id: 3,
-      name: 'Ana Martínez',
-      email: 'ana@agency.com',
-      phone: '+34 600 345 678'
-    }
-  }
-]
+/**
+ * PATRÓN COMMAND - GESTIÓN DE PROPIEDADES
+ * Encapsula cada operación como un objeto Command independiente
+ */
 
-const propertyService = {
-  getProperties: async (filters = {}) => {
+// Clase base Command
+class PropertyCommand {
+  execute() {
+    throw new Error('El método execute() debe ser implementado')
+  }
+}
+
+// Comando: Obtener propiedades con filtros
+class GetPropertiesCommand extends PropertyCommand {
+  constructor(apiUrl, filters = {}) {
+    super()
+    this.apiUrl = apiUrl
+    this.filters = filters
+  }
+
+  async execute() {
     try {
-      console.log('[PROPERTY] Obteniendo propiedades con filtros:', filters)
+      console.log('[PROPERTY] Obteniendo propiedades con filtros:', this.filters)
       
       const token = localStorage.getItem('authToken')
       if (!token) {
@@ -166,56 +32,61 @@ const propertyService = {
       // Preparar el body con los filtros opcionales del backend
       const requestBody = {}
       
-      if (filters.searchQuery) {
-        requestBody.title = filters.searchQuery
+      if (this.filters.searchQuery) {
+        requestBody.title = this.filters.searchQuery
       }
       
-      if (filters.propertyType) {
+      if (this.filters.propertyType) {
         // Mapear tipos del frontend al backend
         const typeMap = {
           'apartamento': 'APARTMENT',
           'casa': 'HOUSE',
-          'loft': 'APARTMENT', // Loft se considera como apartamento
+          'loft': 'APARTMENT',
           'chalet': 'HOUSE',
           'terreno': 'LAND',
           'local': 'RETAIL SPACE'
         }
-        requestBody.type = typeMap[filters.propertyType] || filters.propertyType.toUpperCase()
+        requestBody.type = typeMap[this.filters.propertyType] || this.filters.propertyType.toUpperCase()
       }
       
-      if (filters.maxPrice) {
-        requestBody.price = filters.maxPrice
+      if (this.filters.maxPrice) {
+        requestBody.price = this.filters.maxPrice
       }
       
-      if (filters.bedrooms) {
-        requestBody.rooms = filters.bedrooms
+      if (this.filters.bedrooms) {
+        requestBody.rooms = this.filters.bedrooms
       }
       
-      if (filters.bathrooms) {
-        requestBody.bathrooms = filters.bathrooms
+      if (this.filters.bathrooms) {
+        requestBody.bathrooms = this.filters.bathrooms
       }
       
-      if (filters.minArea) {
-        requestBody.meter = filters.minArea
+      if (this.filters.minArea) {
+        requestBody.meter = this.filters.minArea
       }
       
       // Ordenamiento
-      if (filters.sortBy) {
-        if (filters.sortBy === 'price-low') {
+      if (this.filters.sortBy) {
+        if (this.filters.sortBy === 'price-low') {
           requestBody.is_ascendent_price = true
-        } else if (filters.sortBy === 'price-high') {
+        } else if (this.filters.sortBy === 'price-high') {
           requestBody.is_ascendent_price = false
-        } else if (filters.sortBy === 'title-asc') {
+        } else if (this.filters.sortBy === 'title-asc') {
           requestBody.is_ascendent_title = true
-        } else if (filters.sortBy === 'title-desc') {
+        } else if (this.filters.sortBy === 'title-desc') {
           requestBody.is_ascendent_title = false
+        } else if (this.filters.sortBy === 'recent') {
+          requestBody.is_ascendente_date = true
+        } else if (this.filters.sortBy === 'area-low') {
+          requestBody.is_ascendente_area = true
+        } else if (this.filters.sortBy === 'area-high') {
+          requestBody.is_ascendente_area = false
         }
-        // 'recent', 'area', 'popular' se manejan en el backend por defecto o no están soportados
       }
 
       console.log('[PROPERTY] Request body:', requestBody)
 
-      const response = await fetch(`${API_URL}/client/dashboard`, {
+      const response = await fetch(`${this.apiUrl}/client/dashboard`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -245,7 +116,6 @@ const propertyService = {
       }
       
       const properties = propertiesArray.map(prop => {
-        // Debug: log de la propiedad original
         if (prop.zone === 'Zona 16') {
           console.log('[PROPERTY] Zona 16 encontrada:', {
             title: prop.title,
@@ -282,104 +152,120 @@ const propertyService = {
       console.error('[PROPERTY] Error:', error)
       throw new Error(error.message || 'Error al cargar propiedades')
     }
-  },
+  }
+}
 
-  getPropertyById: async (propertyId) => {
+// Comando: Obtener propiedad por ID
+class GetPropertyByIdCommand extends PropertyCommand {
+  constructor(apiUrl, propertyId) {
+    super()
+    this.apiUrl = apiUrl
+    this.propertyId = propertyId
+  }
+
+  async execute() {
     try {
       await new Promise(resolve => setTimeout(resolve, 800))
       
-      const property = MOCK_PROPERTIES.find(p => p.id === parseInt(propertyId))
-      
-      if (!property) {
-        throw new Error('Propiedad no encontrada')
-      }
-      
-      return {
-        success: true,
-        property: property
-      }
+      // TODO: Implementar llamada real al backend
+      throw new Error('Propiedad no encontrada')
     } catch (error) {
       throw error
     }
-  },
+  }
+}
 
-  searchProperties: async (searchQuery) => {
+// Comando: Buscar propiedades por texto
+class SearchPropertiesCommand extends PropertyCommand {
+  constructor(apiUrl, searchQuery) {
+    super()
+    this.apiUrl = apiUrl
+    this.searchQuery = searchQuery
+  }
+
+  async execute() {
     try {
       await new Promise(resolve => setTimeout(resolve, 800))
       
-      const query = searchQuery.toLowerCase()
-      const results = MOCK_PROPERTIES.filter(p =>
-        p.title.toLowerCase().includes(query) ||
-        p.location.toLowerCase().includes(query) ||
-        p.zone.toLowerCase().includes(query)
-      )
-      
+      // TODO: Implementar búsqueda real
       return {
         success: true,
-        properties: results,
-        total: results.length
+        properties: [],
+        total: 0
       }
     } catch (error) {
       throw new Error('Error en la búsqueda')
     }
-  },
+  }
+}
 
-  toggleFavorite: async (propertyId) => {
+// Comando: Toggle favorito
+class ToggleFavoriteCommand extends PropertyCommand {
+  constructor(apiUrl, propertyId) {
+    super()
+    this.apiUrl = apiUrl
+    this.propertyId = propertyId
+  }
+
+  async execute() {
     try {
       await new Promise(resolve => setTimeout(resolve, 500))
       
-      const property = MOCK_PROPERTIES.find(p => p.id === propertyId)
-      
-      if (!property) {
-        throw new Error('Propiedad no encontrada')
-      }
-      
-      property.isFavorite = !property.isFavorite
-      
+      // TODO: Implementar llamada real al backend
       return {
         success: true,
-        isFavorite: property.isFavorite
+        isFavorite: true
       }
     } catch (error) {
       throw error
     }
-  },
+  }
+}
 
-  getFavorites: async () => {
+// Comando: Obtener favoritos
+class GetFavoritesCommand extends PropertyCommand {
+  constructor(apiUrl) {
+    super()
+    this.apiUrl = apiUrl
+  }
+
+  async execute() {
     try {
       await new Promise(resolve => setTimeout(resolve, 800))
       
-      const favorites = MOCK_PROPERTIES.filter(p => p.isFavorite)
-      
+      // TODO: Implementar llamada real al backend
       return {
         success: true,
-        properties: favorites,
-        total: favorites.length
+        properties: [],
+        total: 0
       }
     } catch (error) {
       throw new Error('Error al cargar favoritos')
     }
-  },
+  }
+}
 
-  requestAppointment: async (propertyId, appointmentData) => {
+// Comando: Solicitar cita
+class RequestAppointmentCommand extends PropertyCommand {
+  constructor(apiUrl, propertyId, appointmentData) {
+    super()
+    this.apiUrl = apiUrl
+    this.propertyId = propertyId
+    this.appointmentData = appointmentData
+  }
+
+  async execute() {
     try {
       await new Promise(resolve => setTimeout(resolve, 1500))
       
-      const property = MOCK_PROPERTIES.find(p => p.id === propertyId)
-      
-      if (!property) {
-        throw new Error('Propiedad no encontrada')
-      }
-      
+      // TODO: Implementar llamada real al backend
       return {
         success: true,
         appointment: {
           id: Date.now(),
-          propertyId: propertyId,
-          propertyTitle: property.title,
-          agentName: property.agent.name,
+          propertyId: this.propertyId,
           status: 'pending_agent',
-          ...appointmentData,
+          ...this.appointmentData,
           createdAt: new Date().toISOString()
         }
       }
@@ -389,4 +275,75 @@ const propertyService = {
   }
 }
 
+// Invoker con historial de comandos
+class PropertyCommandInvoker {
+  constructor() {
+    this.history = []
+  }
+
+  async executeCommand(command) {
+    const result = await command.execute()
+    this.history.push({
+      command: command.constructor.name,
+      timestamp: new Date().toISOString(),
+      params: command
+    })
+    return result
+  }
+
+  getHistory() {
+    return this.history
+  }
+
+  clearHistory() {
+    this.history = []
+  }
+}
+
+// Servicio que usa el patrón Command
+const propertyService = {
+  invoker: new PropertyCommandInvoker(),
+
+  async getProperties(filters = {}) {
+    const command = new GetPropertiesCommand(API_URL, filters)
+    return await this.invoker.executeCommand(command)
+  },
+
+  async getPropertyById(propertyId) {
+    const command = new GetPropertyByIdCommand(API_URL, propertyId)
+    return await this.invoker.executeCommand(command)
+  },
+
+  async searchProperties(searchQuery) {
+    const command = new SearchPropertiesCommand(API_URL, searchQuery)
+    return await this.invoker.executeCommand(command)
+  },
+
+  async toggleFavorite(propertyId) {
+    const command = new ToggleFavoriteCommand(API_URL, propertyId)
+    return await this.invoker.executeCommand(command)
+  },
+
+  async getFavorites() {
+    const command = new GetFavoritesCommand(API_URL)
+    return await this.invoker.executeCommand(command)
+  },
+
+  async requestAppointment(propertyId, appointmentData) {
+    const command = new RequestAppointmentCommand(API_URL, propertyId, appointmentData)
+    return await this.invoker.executeCommand(command)
+  }
+}
+
 export default propertyService
+
+export {
+  PropertyCommand,
+  GetPropertiesCommand,
+  GetPropertyByIdCommand,
+  SearchPropertiesCommand,
+  ToggleFavoriteCommand,
+  GetFavoritesCommand,
+  RequestAppointmentCommand,
+  PropertyCommandInvoker
+}
