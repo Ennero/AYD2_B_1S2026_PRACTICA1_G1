@@ -12,9 +12,9 @@ import { EnvVars } from './store/enviroment.ts'
 const app = express()
 const port = EnvVars.instance.PORT;
 
-app.use(express.json())
+app.use(express.json({ limit: '10mb' }))
 app.use(cors(corsOptions))
-app.use(express.urlencoded({ extended: true }))
+app.use(express.urlencoded({ extended: true, limit: '10mb' }))
 await DB_Connection.instance.connectDB()
 
 app.get('/', async (req, res) => {
