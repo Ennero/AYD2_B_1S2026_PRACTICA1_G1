@@ -10,6 +10,9 @@ import AppointmentsPage from './pages/AppointmentsPage'
 import AdminAgentsPage from './pages/AdminAgentsPage'
 import FavoritesPage from './pages/FavoritesPage'
 import AgentDashboardPage from './pages/AgentDashboardPage'
+import AgentPropertiesPage from './pages/AgentPropertiesPage'
+import AgentAppointmentsPage from './pages/AgentAppointmentsPage'
+import { ProtectedRoute } from './components/auth'
 import './App.css'
 import { Toaster } from 'react-hot-toast'
 
@@ -42,16 +45,88 @@ function App() {
         }}
       />
       <Routes>
+        {/* Rutas públicas */}
         <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
-        <Route path="/search" element={<SearchPage />} />
-        <Route path="/property/:id" element={<PropertyDetailPage />} />
-        <Route path="/profile" element={<ProfilePage />} />
-        <Route path="/appointments" element={<AppointmentsPage />} />
-        <Route path="/favorites" element={<FavoritesPage />} />
-        <Route path="/admin/agents" element={<AdminAgentsPage />} />
-        <Route path="/agent/dashboard" element={<AgentDashboardPage />} />
+        
+        {/* Rutas de Cliente */}
+        <Route 
+          path="/search" 
+          element={
+            <ProtectedRoute allowedRoles={['CLIENT']}>
+              <SearchPage />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/property/:id" 
+          element={
+            <ProtectedRoute allowedRoles={['CLIENT']}>
+              <PropertyDetailPage />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/profile" 
+          element={
+            <ProtectedRoute allowedRoles={['CLIENT']}>
+              <ProfilePage />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/appointments" 
+          element={
+            <ProtectedRoute allowedRoles={['CLIENT']}>
+              <AppointmentsPage />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/favorites" 
+          element={
+            <ProtectedRoute allowedRoles={['CLIENT']}>
+              <FavoritesPage />
+            </ProtectedRoute>
+          } 
+        />
+
+        {/* Rutas de Agente */}
+        <Route 
+          path="/agent/dashboard" 
+          element={
+            <ProtectedRoute allowedRoles={['AGENT']}>
+              <AgentDashboardPage />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/agent/properties" 
+          element={
+            <ProtectedRoute allowedRoles={['AGENT']}>
+              <AgentPropertiesPage />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/agent/requests" 
+          element={
+            <ProtectedRoute allowedRoles={['AGENT']}>
+              <AgentAppointmentsPage />
+            </ProtectedRoute>
+          } 
+        />
+
+        {/* Rutas de Admin */}
+        <Route 
+          path="/admin/agents" 
+          element={
+            <ProtectedRoute allowedRoles={['ADMIN']}>
+              <AdminAgentsPage />
+            </ProtectedRoute>
+          } 
+        />
       </Routes>
     </BrowserRouter>
   )

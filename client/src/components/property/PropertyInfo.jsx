@@ -1,5 +1,4 @@
 import { MapPin, Bed, Bath, Maximize, Heart, Calendar, Home } from 'lucide-react'
-import { useState } from 'react'
 
 /**
  * Información detallada de la propiedad
@@ -16,12 +15,10 @@ const PropertyInfo = ({
   description,
   features,
   amenities,
+  isFavorite = false,
   onAddToFavorites
 }) => {
-  const [isFavorite, setIsFavorite] = useState(false)
-
   const handleFavoriteClick = () => {
-    setIsFavorite(!isFavorite)
     onAddToFavorites?.()
   }
 

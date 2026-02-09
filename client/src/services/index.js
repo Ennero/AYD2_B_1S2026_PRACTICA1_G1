@@ -9,6 +9,7 @@ export { default as AgentService } from './admin.service'
 
 // Exporting for Agent Services
 export { AgentDashboardService } from './agent'
+export { AgentPropertyService } from './agent'
 export {
   AgentCommand,
   GetAgentsCommand,
