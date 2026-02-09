@@ -68,19 +68,12 @@ const AppointmentsContainer = () => {
       const result = await appointmentService.acceptAppointment(appointmentId)
       
       if (result.success) {
-        // Actualizar estado local
-        setAppointments(prevAppointments =>
-          prevAppointments.map(app =>
-            app.id === appointmentId
-              ? { ...app, ...result.appointment }
-              : app
-          )
-        )
-        
-        toast.success('¡Cita confirmada exitosamente!')
+        toast.success(result.message || '¡Cita confirmada exitosamente!')
+        // Recargar citas para obtener datos actualizados del backend
+        await loadAppointments()
       }
     } catch (error) {
-      toast.error('Error al confirmar la cita')
+      toast.error(error.message || 'Error al confirmar la cita')
       console.error(error)
     }
   }
@@ -113,20 +106,13 @@ const AppointmentsContainer = () => {
       )
       
       if (result.success) {
-        // Actualizar estado local
-        setAppointments(prevAppointments =>
-          prevAppointments.map(app =>
-            app.id === selectedAppointmentId
-              ? { ...app, ...result.appointment }
-              : app
-          )
-        )
-        
-        toast.success('Cita rechazada')
+        toast.success(result.message || 'Cita rechazada')
         handleCloseRejectModal()
+        // Recargar citas para obtener datos actualizados del backend
+        await loadAppointments()
       }
     } catch (error) {
-      toast.error('Error al rechazar la cita')
+      toast.error(error.message || 'Error al rechazar la cita')
       console.error(error)
     }
   }
