@@ -52,7 +52,7 @@ El sistema implementa tres roles de usuario (Cliente, Agente, Administrador) con
 | **Clientes** | Usuarios finales | Buscar, filtrar y contactar agentes para evaluar propiedades |
 | **Agentes Inmobiliarios** | Profesionales inmobiliarios | Publicar propiedades, gestionar citas y visualizar estadísticas |
 | **Administrador del Sistema** | Operador interno | Gestionar los agentes inmobiliarios activos en la plataforma |
-| **Equipo de Desarrollo** | Desarrolladores | Construir, mantener y escalar la plataforma |
+
 
 ### 1.5 Usuarios del Sistema
 
