@@ -5,6 +5,7 @@ import corsOptions from './config/cors.config.ts'
 import authRouter from './modules/auth/route.ts'
 import adminRouter from './modules/admin/routes.ts'
 import clientRouter from './modules/client/routes.ts'
+import { agentRouter } from './modules/agent/routes.ts'
 import { EnvVars } from './store/enviroment.ts'
 
 
@@ -23,6 +24,7 @@ app.get('/', async (req, res) => {
 app.use('/api/auth', authRouter)
 app.use('/api/admin', adminRouter)
 app.use('/api/client', clientRouter)
+app.use('/api/agent', agentRouter)
 
 
 

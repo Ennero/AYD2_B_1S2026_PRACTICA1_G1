@@ -136,4 +136,32 @@ clientRouter.post(
 
 // =============================== DAVID ===============================
 
+clientRouter.post('/dashboard',
+	[
+		authMiddleware,
+		requireRole(UserType.Client),
+		body('title').isString().optional(),
+		body('type').isString().optional(),
+		body('price').isNumeric().optional(),
+		body('rooms').isNumeric().optional(),
+		body('meter').isNumeric().optional(),
+		body('bathrooms').isNumeric().optional(),
+		body('is_ascendent_price').isBoolean().optional(),
+		body('is_ascendent_title').isBoolean().optional(),
+		validateFields
+	],
+	clientController.filter
+)
+
+clientRouter.post('/property/lookup',
+	[
+		authMiddleware,
+		requireRole(UserType.Client),
+		body('id_property').isNumeric().withMessage('id_property must be a positive integer'),
+		validateFields
+	],
+	clientController.lookUpProperty
+)
+
+
 export default clientRouter

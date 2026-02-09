@@ -122,44 +122,7 @@ Se implementaron patrones de diseño reconocidos tanto en el frontend como en el
 
 ### 3.1 Patrones en el Frontend
 
-#### 3.1.1 Container/Presentational
-
-**Problema que resuelve**: 
-Cuando los componentes React mezclan lógica de negocio (estado, llamadas API, efectos) con código de renderizado, se vuelven difíciles de probar, reutilizar y mantener. Un componente que hace "todo" viola el principio de responsabilidad única.
-
-**Implementación**:
-
-**Containers** (Smart Components):
-- Ubicación: `containers/` organizados por módulo funcional
-- Responsabilidades:
-  - Gestión de estado con hooks (`useState`, `useReducer`)
-  - Efectos secundarios (`useEffect` para cargar datos)
-  - Llamadas a servicios/API
-  - Lógica de negocio (validaciones, transformaciones)
-  - Manejo de eventos del usuario
-- Ejemplo `SearchContainer.jsx`: Carga propiedades, aplica filtros Strategy, maneja estado de búsqueda, ordena resultados
-
-**Presentational** (Dumb Components):
-- Ubicación: `components/` organizados por módulo
-- Responsabilidades:
-  - Solo renderizar UI basándose en props
-  - Emitir eventos mediante callbacks (ej: `onClick`, `onChange`)
-  - Sin lógica de negocio ni estado complejo
-  - Componentes stateless o con estado UI mínimo (hover, focus)
-- Ejemplo `PropertyCard.jsx`: Recibe `property` como prop, renderiza card, emite `onToggleFavorite` al hacer clic
-
-**Flujo de datos**:
-```
-SearchPage → SearchContainer (state + logic) → PropertyCard (UI pura)
-             ↓ carga datos
-        propertyService.getProperties()
-```
-
-**Beneficio**: Los presentational son 100% reutilizables en diferentes contextos. Se pueden testear con props mock sin montar servicios reales.
-
----
-
-#### 3.1.2 Strategy
+#### 3.1.1 Strategy
 
 **Problema que resuelve**: 
 El sistema necesita aplicar 8 tipos de filtros diferentes (texto, tipo, precio min/max, zona, habitaciones, baños, área) y 5 ordenamientos (reciente, precio asc/desc, área, popularidad) sobre las propiedades. Implementar esto con condicionales `if/else` o `switch` en un solo método produciría:
@@ -214,7 +177,7 @@ Cero cambios en código existente.
 
 ---
 
-#### 3.1.3 State
+#### 3.1.2 State
 
 **Problema que resuelve**: 
 Las citas tienen 4 estados diferentes (nueva solicitud, en espera, confirmada, cancelada) y cada estado determina:
@@ -273,7 +236,7 @@ if (context.state.canPropose()) {
 
 ---
 
-#### 3.1.4 Command
+#### 3.1.3 Command
 
 **Problema que resuelve**: 
 La gestión de agentes (módulo admin) requiere operaciones CRUD que necesitan:
@@ -357,45 +320,6 @@ const handleCreateAgent = async (formData) => {
 - Testing simple: mock del command y verificar que se ejecuta
 
 ---
-
-#### 3.1.5 Module (Barrel Exports)
-
-**Problema que resuelve**: 
-Sin organización modular, los imports se vuelven verbosos y difíciles de mantener:
-```javascript
-// Sin barrel exports ❌
-import LoginForm from '../../components/auth/LoginForm'
-import RegisterForm from '../../components/auth/RegisterForm'
-import ForgotPasswordForm from '../../components/auth/ForgotPasswordForm'
-```
-
-**Implementación**: 
-Cada carpeta de componentes tiene un `index.js` que re-exporta todo:
-```javascript
-// components/auth/index.js
-export { default as LoginForm } from './LoginForm'
-export { default as RegisterForm } from './RegisterForm'
-export { default as ForgotPasswordForm } from './ForgotPasswordForm'
-```
-
-**Uso limpio**:
-```javascript
-// Con barrel exports 
-import { LoginForm, RegisterForm } from '../../components/auth'
-import { PropertyCard, FilterPanel } from '../../components/search'
-import { propertyService, authService } from '../../services'
-```
-
-**Estructura modular aplicada**:
-- `components/auth/index.js`, `components/search/index.js`, `components/ui/index.js`
-- `containers/auth/index.js`, `containers/search/index.js`
-- `services/index.js`, `services/agent/index.js`
-- `strategies/index.js`
-
-**Beneficio**: 
-- Imports más legibles y cortos
-- Fácil refactorizar: mover archivos sin cambiar imports externos
-- API de módulo clara: el `index.js` define qué es público
 
 ### 3.2 Patrones en el Backend
 
@@ -803,7 +727,7 @@ A continuación se presenta la especificación detallada de cada caso de uso exp
 | RNF010 | Integridad referencial | Confiabilidad | La base de datos debe mantener integridad referencial con eliminación en cascada donde corresponda. | Foreign keys con ON DELETE CASCADE configuradas en Prisma |
 | RNF011 | Migraciones de base de datos | Mantenibilidad | Los cambios en el esquema de la base de datos deben gestionarse mediante migraciones versionadas. | Prisma Migrate con historial de migraciones |
 | RNF012 | Modularidad del código | Mantenibilidad | El código debe organizarse en módulos independientes con responsabilidades bien definidas. | Módulos por dominio (auth, admin, agent, client) con separación route/controller/service |
-| RNF013 | Patrones de diseño | Mantenibilidad | El sistema debe implementar patrones de diseño reconocidos para facilitar la extensibilidad y mantenimiento. | Strategy, Adapter, Singleton, Container/Presentational, Module |
+| RNF013 | Patrones de diseño | Mantenibilidad | El sistema debe implementar patrones de diseño reconocidos para facilitar la extensibilidad y mantenimiento. | Strategy, Adapter, Singleton, State, Command |
 | RNF014 | Almacenamiento externo | Escalabilidad | Las imágenes y archivos deben almacenarse en un servicio externo de objetos, no en el servidor de aplicación. | Supabase Storage con URLs públicas |
 | RNF015 | Tipado estático | Mantenibilidad | El backend debe utilizar tipado estático para reducir errores en tiempo de desarrollo. | TypeScript con tipos generados por Prisma para queries type-safe |
 
@@ -852,8 +776,8 @@ A continuación se presenta la especificación detallada de cada caso de uso exp
 | RNF009 | Retroalimentación visual | Usabilidad | `react-hot-toast`, estados `loading` en Button.jsx, mensajes de error | CDU005.0, CDU005.1, CDU004.1 |
 | RNF010 | Integridad referencial | Confiabilidad | `schema.prisma` → `onDelete: Cascade`, foreign keys | CDU001.3, CDU003.4 |
 | RNF011 | Migraciones de BD | Mantenibilidad | `prisma/migrations/`, `prisma migrate dev` | Todos (esquema de BD) |
-| RNF012 | Modularidad del código | Mantenibilidad | Estructura `modules/{auth,admin,agent,client}/`, barrel exports en frontend | Todos |
-| RNF013 | Patrones de diseño | Mantenibilidad | Strategy (filtros/sort), Adapter (storage), Singleton (DB), Container/Presentational | CDU004.1, CDU001.1, Todos |
+| RNF012 | Modularidad del código | Mantenibilidad | Estructura `modules/{auth,admin,agent,client}/` con separación de responsabilidades | Todos |
+| RNF013 | Patrones de diseño | Mantenibilidad | Strategy (filtros/sort), Adapter (storage), Singleton (DB), State (citas), Command (admin) | CDU004.1, CDU001.1, Todos |
 | RNF014 | Almacenamiento externo | Escalabilidad | `adapters/storage/`, Supabase Storage | CDU001.1, CDU005.0 |
 | RNF015 | Tipado estático | Mantenibilidad | TypeScript, Prisma Client generado, tipos en `types/express.d.ts` | Todos (backend) |
 
