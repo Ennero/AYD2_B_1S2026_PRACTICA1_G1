@@ -4,7 +4,7 @@ import { response_ok, response_with_error } from '../../utils/response.ts'
 import { ClientService } from './service.ts'
 
 export class ClientController {
-    constructor(private readonly clientService = new ClientService()) {}
+    constructor(private readonly clientService = new ClientService()) { }
 
     // =============================== DAVID ===============================
     profileClient: RequestHandler = async (req, res) => {
@@ -27,7 +27,7 @@ export class ClientController {
         try {
             const userId = Number(req.user?.sub)
 
-            if(!Number.isFinite(userId) || userId <= 0) {
+            if (!Number.isFinite(userId) || userId <= 0) {
                 return response_with_error(res, {
                     statusCode: 400,
                     message: 'Invalid user id',
@@ -79,7 +79,7 @@ export class ClientController {
         try {
             const userId = Number(req.user?.sub)
             const id_favorite = Number(req.query.id)
-            if(!Number.isFinite(id_favorite) || id_favorite <= 0) {
+            if (!Number.isFinite(id_favorite) || id_favorite <= 0) {
                 return response_with_error(res, {
                     statusCode: 400,
                     message: 'Invalid favorite id',
@@ -102,7 +102,7 @@ export class ClientController {
         try {
             const user_id = Number(req.user?.sub);
             const id_property = Number(req.query.id)
-            if(!Number.isFinite(id_property) || id_property <= 0) {
+            if (!Number.isFinite(id_property) || id_property <= 0) {
                 return response_with_error(res, {
                     statusCode: 400,
                     message: 'Invalid property id',
@@ -125,7 +125,7 @@ export class ClientController {
         try {
             const user_id = Number(req.user?.sub);
             const id_property = Number(req.body.id_property)
-            if(!Number.isFinite(id_property) || id_property <= 0) {
+            if (!Number.isFinite(id_property) || id_property <= 0) {
                 return response_with_error(res, {
                     statusCode: 400,
                     message: 'Invalid property id',
@@ -227,4 +227,31 @@ export class ClientController {
         }
     }
     // =============================== DAVID ===============================
+
+    filter: RequestHandler = async (req, res) => {
+        try {
+            const result = await this.clientService.filterFromDB(req.body?.title, req.body?.type, req.body?.price, req.body?.rooms, req.body?.meter, req.body?.bathrooms, req.body?.is_ascendent_price, req.body?.is_ascendent_title)
+            res.status(200).json(result)
+        } catch (error) {
+            return response_with_error(res, {
+                statusCode: 400,
+                message: 'Could not filter properties',
+                details: error instanceof Error ? error.message : error,
+            })
+        }
+    }
+
+    lookUpProperty: RequestHandler = async (req, res) => {
+        try {
+            const result = await this.clientService.lookUpPropertyFromDB(Number(req.user?.sub), req.body.id_property)
+            res.status(200).json({ message: "Información guardada..." })
+        } catch (error) {
+            return response_with_error(res, {
+                statusCode: 400,
+                message: 'Could not filter properties',
+                details: error instanceof Error ? error.message : error,
+            })
+        }
+    }
 }
+
