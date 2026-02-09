@@ -391,7 +391,7 @@ export class ClientService {
 		}
 	}
 	// =============================== DAVID ===============================
-	async filterFromDB(title: string | undefined, type: string | undefined, price: number | undefined, num_rooms: number | undefined, square_meters: number | undefined, num_bathrooms: number | undefined, asc_price: boolean | undefined, asc_title: boolean | undefined) {
+	async filterFromDB(idUser: number, title: string | undefined, type: string | undefined, price: number | undefined, num_rooms: number | undefined, square_meters: number | undefined, num_bathrooms: number | undefined, asc_price: boolean | undefined, asc_title: boolean | undefined, asc_date: boolean | undefined, asc_area: boolean | undefined) {
 
 		let query: Prisma.Sql[] = [];
 		query.push(Prisma.sql`select p.id_property,
@@ -404,7 +404,11 @@ export class ClientService {
        p.state,
        p.num_rooms,
        p.num_bathrooms,
-       p.square_meters
+       p.square_meters,
+	   case
+        when (select count(*) from favorite f where f.id_client = 9 and f.id_property = p.id_property) > 0 then true
+        else false
+        end as already_in_favorite
 from property p where `)
 
 		if (title) {
@@ -432,6 +436,12 @@ from property p where `)
 		}
 		if (asc_title !== undefined) {
 			query.push(Prisma.sql`p.title ${asc_title ? Prisma.raw('') : Prisma.raw('DESC')},`)
+		}
+		if (asc_date !== undefined) {
+			query.push(Prisma.sql`p.created_at ${asc_date ? Prisma.raw('') : Prisma.raw('DESC')},`)
+		}
+		if (asc_area !== undefined) {
+			query.push(Prisma.sql`p.square_meters ${asc_area ? Prisma.raw('') : Prisma.raw('DESC')},`)
 		}
 		query.push(Prisma.sql`p.id_property`)
 		const result = await DB.$queryRaw<unknown[]>(Prisma.join(query, ' '))

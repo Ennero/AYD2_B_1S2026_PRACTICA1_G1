@@ -230,7 +230,7 @@ export class ClientController {
 
     filter: RequestHandler = async (req, res) => {
         try {
-            const result = await this.clientService.filterFromDB(req.body?.title, req.body?.type, req.body?.price, req.body?.rooms, req.body?.meter, req.body?.bathrooms, req.body?.is_ascendent_price, req.body?.is_ascendent_title)
+            const result = await this.clientService.filterFromDB(Number(req.user?.sub), req.body?.title, req.body?.type, req.body?.price, req.body?.rooms, req.body?.meter, req.body?.bathrooms, req.body?.is_ascendent_price, req.body?.is_ascendent_title, req.body?.is_ascendent_date, req.body?.is_ascendent_area)
             res.status(200).json(result)
         } catch (error) {
             return response_with_error(res, {
