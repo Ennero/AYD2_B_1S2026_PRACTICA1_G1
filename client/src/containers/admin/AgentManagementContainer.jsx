@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { AgentTable, AgentFormModal, DeleteConfirmModal } from '../../components/admin'
+import { AgentTable, AgentFormModal, DeleteConfirmModal, TemporaryPasswordModal } from '../../components/admin'
 import { AgentService } from '../../services'
 import toast from 'react-hot-toast'
 import { UserPlus, Users, Shield } from 'lucide-react'
@@ -13,7 +13,10 @@ const AgentManagementContainer = () => {
   // Estado de modales
   const [isFormModalOpen, setIsFormModalOpen] = useState(false)
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false)
   const [selectedAgent, setSelectedAgent] = useState(null)
+  const [temporaryPassword, setTemporaryPassword] = useState('')
+  const [newAgentName, setNewAgentName] = useState('')
 
   // Cargar agentes al montar (Command: GetAgentsCommand)
   const loadAgents = useCallback(async () => {
@@ -57,6 +60,13 @@ const AgentManagementContainer = () => {
     setSelectedAgent(null)
   }
 
+  // Cerrar modal de contraseña
+  const handleClosePasswordModal = () => {
+    setIsPasswordModalOpen(false)
+    setTemporaryPassword('')
+    setNewAgentName('')
+  }
+
   // Enviar formulario de creación o edición
   const handleFormSubmit = async (formData) => {
     setActionLoading(true)
@@ -75,6 +85,14 @@ const AgentManagementContainer = () => {
         // Crear agente
         const newAgent = await AgentService.createAgent(formData)
         setAgents(prev => [...prev, newAgent])
+        
+        // Si hay contraseña temporal, mostrar el modal
+        if (newAgent.temporaryPassword) {
+          setTemporaryPassword(newAgent.temporaryPassword)
+          setNewAgentName(`${formData.firstName} ${formData.lastName}`)
+          setIsPasswordModalOpen(true)
+        }
+        
         toast.success(
           `Agente creado exitosamente — ${formData.firstName} ${formData.lastName} (${formData.email})`,
           { duration: 4000 }
@@ -197,6 +215,13 @@ const AgentManagementContainer = () => {
         onConfirm={handleConfirmDelete}
         agent={selectedAgent}
         isLoading={actionLoading}
+      />
+
+      <TemporaryPasswordModal
+        isOpen={isPasswordModalOpen}
+        onClose={handleClosePasswordModal}
+        password={temporaryPassword}
+        agentName={newAgentName}
       />
     </div>
   )

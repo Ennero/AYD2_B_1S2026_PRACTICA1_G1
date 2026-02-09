@@ -64,16 +64,77 @@ class CreateAgentCommand extends AgentCommand {
 
   async execute() {
     try {
-      // Simulación de creación de agente
+      const token = localStorage.getItem('authToken')
+      
+      if (!token) {
+        throw new Error('No se encontró token de autenticación')
+      }
+
+      // Convertir imagen a base64 si existe
+      let imgBase64 = ''
+      if (this.agentData.photo) {
+        imgBase64 = await this.fileToBase64(this.agentData.photo)
+      }
+
+      // Mapear datos del frontend al formato del backend
+      const payload = {
+        email: this.agentData.email,
+        name: this.agentData.firstName,
+        last_name: this.agentData.lastName,
+        phone: this.agentData.phone,
+        img_base64: imgBase64,
+        type: 'agent'
+      }
+
+      const response = await fetch(`${this.apiUrl}/admin/agents`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.message || `Error ${response.status}: ${response.statusText}`)
+      }
+
+      const result = await response.json()
+
+      if (!result.ok) {
+        throw new Error(result.message || 'Error al crear el agente')
+      }
+
+      // Mapear la respuesta del backend al formato del frontend
+      const agent = result.data.agent
       return {
-        id: Date.now(),
-        ...this.agentData,
-        photo: '/images/logo-HomeFinder.png',
+        id: agent.id_user,
+        email: agent.email,
+        firstName: agent.name,
+        lastName: agent.last_name,
+        phone: agent.phone,
+        photo: agent.url_img || '/images/logo-HomeFinder.png',
+        temporaryPassword: result.data.temporaryPassword // Incluir contraseña temporal
       }
     } catch (error) {
       console.error('Error al crear agente:', error)
       throw error
     }
+  }
+
+  // Método auxiliar para convertir File a base64
+  fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        // Extraer solo la parte base64 (sin el prefijo data:image/...)
+        const base64 = reader.result.split(',')[1]
+        resolve(base64)
+      }
+      reader.onerror = reject
+      reader.readAsDataURL(file)
+    })
   }
 }
 
