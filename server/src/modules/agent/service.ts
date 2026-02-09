@@ -1,6 +1,6 @@
 import DB from '../../db/db.ts'
 import { resultCounts, resultChart1, resultChart2 } from './dto.ts'
-import { PrismaClient, Prisma } from '../../generated/prisma/client.ts'
+import { Prisma } from '../../generated/prisma/client.ts'
 
 export async function getStatsFromDB(idUser: number) {
     const resultCounts = await DB.$queryRaw<resultCounts[]>`
