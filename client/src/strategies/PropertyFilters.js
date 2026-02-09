@@ -45,7 +45,16 @@ export const MaxPriceFilterStrategy = {
 export const ZoneFilterStrategy = {
   execute: (properties, filterValue) => {
     if (!filterValue || filterValue === '') return properties
-    return properties.filter(p => p.zone.toLowerCase() === filterValue.toLowerCase())
+    console.log('[FILTER] Zona - Input:', filterValue)
+    const filtered = properties.filter(p => {
+      const match = p.zone && p.zone.toLowerCase() === filterValue.toLowerCase()
+      if (match) {
+        console.log('[FILTER] Zona match:', p.title, 'zone:', p.zone, 'bedrooms:', p.bedrooms, 'bathrooms:', p.bathrooms)
+      }
+      return match
+    })
+    console.log('[FILTER] Zona - Resultado:', filtered.length, 'propiedades')
+    return filtered
   }
 }
 
@@ -55,7 +64,17 @@ export const BedroomsFilterStrategy = {
     if (!filterValue || filterValue === '') return properties
     const bedroomValues = filterValue.split(',').map(v => parseInt(v.trim())).filter(v => !isNaN(v))
     if (bedroomValues.length === 0) return properties
-    return properties.filter(p => bedroomValues.includes(p.bedrooms) || p.bedrooms >= Math.min(...bedroomValues))
+    console.log('[FILTER] Habitaciones - Valores buscados:', bedroomValues)
+    console.log('[FILTER] Habitaciones - Propiedades entrantes:', properties.length)
+    const filtered = properties.filter(p => {
+      const match = bedroomValues.includes(p.bedrooms)
+      if (p.zone && p.zone.includes('16')) {
+        console.log('[FILTER] Habitaciones - Zona 16:', p.title, 'tiene', p.bedrooms, 'habitaciones, match:', match)
+      }
+      return match
+    })
+    console.log('[FILTER] Habitaciones - Resultado:', filtered.length, 'propiedades')
+    return filtered
   }
 }
 
@@ -65,7 +84,17 @@ export const BathroomsFilterStrategy = {
     if (!filterValue || filterValue === '') return properties
     const bathroomValues = filterValue.split(',').map(v => parseInt(v.trim())).filter(v => !isNaN(v))
     if (bathroomValues.length === 0) return properties
-    return properties.filter(p => bathroomValues.includes(p.bathrooms) || p.bathrooms >= Math.min(...bathroomValues))
+    console.log('[FILTER] Baños - Valores buscados:', bathroomValues)
+    console.log('[FILTER] Baños - Propiedades entrantes:', properties.length)
+    const filtered = properties.filter(p => {
+      const match = bathroomValues.includes(p.bathrooms)
+      if (p.zone && p.zone.includes('16')) {
+        console.log('[FILTER] Baños - Zona 16:', p.title, 'tiene', p.bathrooms, 'baños, match:', match)
+      }
+      return match
+    })
+    console.log('[FILTER] Baños - Resultado:', filtered.length, 'propiedades')
+    return filtered
   }
 }
 
@@ -73,7 +102,7 @@ export const BathroomsFilterStrategy = {
 export const MinAreaFilterStrategy = {
   execute: (properties, filterValue) => {
     if (!filterValue || filterValue === '') return properties
-    const areaValues = filterValue.split(',').map(v => parseInt(v.trim())).filter(v => !isNaN(v))
+    const areaValues = filterValue.split(',').map(v => parseFloat(v.trim())).filter(v => !isNaN(v))
     if (areaValues.length === 0) return properties
     const minArea = Math.min(...areaValues)
     return properties.filter(p => p.area >= minArea)

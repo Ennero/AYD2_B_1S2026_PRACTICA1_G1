@@ -1,20 +1,33 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { ProfileHeader, PersonalInfoForm, SecurityForm, ProfileActions } from '../../components/profile'
+import { profileService } from '../../services'
 import toast from 'react-hot-toast'
 
-/**
- * Container para el perfil de usuario
- */
 const ProfileContainer = () => {
  
   const [personalInfo, setPersonalInfo] = useState({
-    nombre: 'Juan Carlos',
-    apellido: 'Pérez García',
-    correo: 'juan.perez@mail.com',
-    genero: 'masculino',
-    telefono: '+502 1234-5678',
+    nombre: '',
+    apellido: '',
+    correo: '',
+    genero: '',
+    telefono: '',
     foto: null
   })
+
+  useEffect(() => {
+    loadProfile()
+  }, [])
+
+  const loadProfile = async () => {
+    try {
+      const result = await profileService.getProfile()
+      if (result.success) {
+        setPersonalInfo(result.profile)
+      }
+    } catch (error) {
+      toast.error('Error al cargar perfil')
+    }
+  }
 
  
   const [passwords, setPasswords] = useState({
@@ -78,15 +91,7 @@ const ProfileContainer = () => {
   }
 
   const handleCancel = () => {
-    // Resetear cambios
-    setPersonalInfo({
-      nombre: 'Juan Carlos',
-      apellido: 'Pérez García',
-      correo: 'juan.perez@mail.com',
-      genero: 'masculino',
-      telefono: '+502 1234-5678',
-      foto: null
-    })
+    loadProfile()
     setPasswords({
       nuevaContrasena: '',
       confirmarContrasena: ''
@@ -144,8 +149,11 @@ const ProfileContainer = () => {
 
     
     try {
-      await new Promise(resolve => setTimeout(resolve, 1500))
+      await profileService.updatePersonalInfo(personalInfo)
       
+      if (passwords.nuevaContrasena) {
+        await profileService.updatePassword('Test1234', passwords.nuevaContrasena)
+      }
 
       toast.success('Perfil actualizado correctamente')
       

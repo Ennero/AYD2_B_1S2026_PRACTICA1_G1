@@ -1,11 +1,13 @@
 
 import { useState } from 'react'
-import { Eye, EyeOff, Upload, User, Phone, Mail, Lock } from 'lucide-react'
+import { Eye, EyeOff, Upload, User, Phone, Mail, Lock, AlertCircle } from 'lucide-react'
 
 const RegisterForm = ({ onSubmit, isLoading }) => {
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [previewImage, setPreviewImage] = useState(null)
+  const [errors, setErrors] = useState({})
+  const [touched, setTouched] = useState({})
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -17,11 +19,79 @@ const RegisterForm = ({ onSubmit, isLoading }) => {
     photo: null
   })
 
+  const validateField = (name, value) => {
+    let error = ''
+    
+    switch(name) {
+      case 'email':
+        if (value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+          error = 'Correo electrónico inválido'
+        }
+        break
+      case 'password':
+        if (value && value.length < 8) {
+          error = 'Debe tener al menos 8 caracteres'
+        }
+        break
+      case 'confirmPassword':
+        if (value && value !== formData.password) {
+          error = 'Las contraseñas no coinciden'
+        }
+        break
+      case 'phone':
+        const phoneDigits = value.replace(/\D/g, '')
+        if (value && (phoneDigits.length < 8 || phoneDigits.length > 9)) {
+          error = 'Debe tener 8 o 9 dígitos'
+        }
+        break
+      case 'firstName':
+      case 'lastName':
+        if (value && value.length < 2) {
+          error = 'Debe tener al menos 2 caracteres'
+        }
+        break
+    }
+    
+    return error
+  }
+
   const handleChange = (e) => {
     const { name, value } = e.target
     setFormData(prev => ({
       ...prev,
       [name]: value
+    }))
+    
+    // Validar en tiempo real solo si el campo ya fue tocado
+    if (touched[name]) {
+      const error = validateField(name, value)
+      setErrors(prev => ({
+        ...prev,
+        [name]: error
+      }))
+    }
+    
+    // Si es confirmPassword, también validar cuando password cambia
+    if (name === 'password' && touched.confirmPassword) {
+      const confirmError = formData.confirmPassword !== value ? 'Las contraseñas no coinciden' : ''
+      setErrors(prev => ({
+        ...prev,
+        confirmPassword: confirmError
+      }))
+    }
+  }
+
+  const handleBlur = (e) => {
+    const { name, value } = e.target
+    setTouched(prev => ({
+      ...prev,
+      [name]: true
+    }))
+    
+    const error = validateField(name, value)
+    setErrors(prev => ({
+      ...prev,
+      [name]: error
     }))
   }
 
@@ -57,13 +127,22 @@ const RegisterForm = ({ onSubmit, isLoading }) => {
               name="firstName"
               value={formData.firstName}
               onChange={handleChange}
+              onBlur={(e) => handleBlur('firstName', e.target.value)}
               required
-              className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 hover:bg-gray-100 hover:shadow-lg hover:-translate-y-0.5 focus:shadow-xl focus:-translate-y-1"
+              className={`w-full pl-10 pr-4 py-2.5 bg-gray-50 border rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 hover:bg-gray-100 hover:shadow-lg hover:-translate-y-0.5 focus:shadow-xl focus:-translate-y-1 ${
+                errors.firstName && touched.firstName ? 'border-red-300 bg-red-50' : 'border-gray-200'
+              }`}
               placeholder="Michel"
               style={{ boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.05)' }}
             />
             <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-blue-500/0 via-blue-500/5 to-blue-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
           </div>
+          {errors.firstName && touched.firstName && (
+            <p className="text-red-500 text-sm flex items-center gap-1 mt-1">
+              <AlertCircle className="w-4 h-4" />
+              {errors.firstName}
+            </p>
+          )}
         </div>
 
         <div className="transform transition-all duration-500 hover:scale-105 hover:rotate-y-2" style={{ transformStyle: 'preserve-3d' }}>
@@ -77,13 +156,22 @@ const RegisterForm = ({ onSubmit, isLoading }) => {
               name="lastName"
               value={formData.lastName}
               onChange={handleChange}
+              onBlur={(e) => handleBlur('lastName', e.target.value)}
               required
-              className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 hover:bg-gray-100 hover:shadow-lg hover:-translate-y-0.5 focus:shadow-xl focus:-translate-y-1"
+              className={`w-full pl-10 pr-4 py-2.5 bg-gray-50 border rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 hover:bg-gray-100 hover:shadow-lg hover:-translate-y-0.5 focus:shadow-xl focus:-translate-y-1 ${
+                errors.lastName && touched.lastName ? 'border-red-300 bg-red-50' : 'border-gray-200'
+              }`}
               placeholder="Mosiak"
               style={{ boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.05)' }}
             />
             <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-blue-500/0 via-blue-500/5 to-blue-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
           </div>
+          {errors.lastName && touched.lastName && (
+            <p className="text-red-500 text-sm flex items-center gap-1 mt-1">
+              <AlertCircle className="w-4 h-4" />
+              {errors.lastName}
+            </p>
+          )}
         </div>
       </div>
 
@@ -132,13 +220,22 @@ const RegisterForm = ({ onSubmit, isLoading }) => {
             name="phone"
             value={formData.phone}
             onChange={handleChange}
+            onBlur={(e) => handleBlur('phone', e.target.value)}
             required
-            className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 hover:bg-gray-100 hover:shadow-lg hover:-translate-y-0.5 focus:shadow-xl focus:-translate-y-1"
+            className={`w-full pl-10 pr-4 py-2.5 bg-gray-50 border rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 hover:bg-gray-100 hover:shadow-lg hover:-translate-y-0.5 focus:shadow-xl focus:-translate-y-1 ${
+              errors.phone && touched.phone ? 'border-red-300 bg-red-50' : 'border-gray-200'
+            }`}
             placeholder="+502 1234-5678"
             style={{ boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.05)' }}
           />
           <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-blue-500/0 via-blue-500/5 to-blue-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
         </div>
+        {errors.phone && touched.phone && (
+          <p className="text-red-500 text-sm flex items-center gap-1 mt-1">
+            <AlertCircle className="w-4 h-4" />
+            {errors.phone}
+          </p>
+        )}
       </div>
 
       {/* Correo Electrónico */}
@@ -153,13 +250,22 @@ const RegisterForm = ({ onSubmit, isLoading }) => {
             name="email"
             value={formData.email}
             onChange={handleChange}
+            onBlur={(e) => handleBlur('email', e.target.value)}
             required
-            className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 hover:bg-gray-100 hover:shadow-lg hover:-translate-y-0.5 focus:shadow-xl focus:-translate-y-1"
+            className={`w-full pl-10 pr-4 py-2.5 bg-gray-50 border rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 hover:bg-gray-100 hover:shadow-lg hover:-translate-y-0.5 focus:shadow-xl focus:-translate-y-1 ${
+              errors.email && touched.email ? 'border-red-300 bg-red-50' : 'border-gray-200'
+            }`}
             placeholder="michel.mosiak@gmail.com"
             style={{ boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.05)' }}
           />
           <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-blue-500/0 via-blue-500/5 to-blue-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
         </div>
+        {errors.email && touched.email && (
+          <p className="text-red-500 text-sm flex items-center gap-1 mt-1">
+            <AlertCircle className="w-4 h-4" />
+            {errors.email}
+          </p>
+        )}
       </div>
 
       {/* Contraseña */}
@@ -174,8 +280,11 @@ const RegisterForm = ({ onSubmit, isLoading }) => {
             name="password"
             value={formData.password}
             onChange={handleChange}
+            onBlur={(e) => handleBlur('password', e.target.value)}
             required
-            className="w-full pl-10 pr-12 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 hover:bg-gray-100 hover:shadow-lg hover:-translate-y-0.5 focus:shadow-xl focus:-translate-y-1"
+            className={`w-full pl-10 pr-12 py-2.5 bg-gray-50 border rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 hover:bg-gray-100 hover:shadow-lg hover:-translate-y-0.5 focus:shadow-xl focus:-translate-y-1 ${
+              errors.password && touched.password ? 'border-red-300 bg-red-50' : 'border-gray-200'
+            }`}
             placeholder="••••••••"
             style={{ boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.05)' }}
           />
@@ -188,6 +297,12 @@ const RegisterForm = ({ onSubmit, isLoading }) => {
             {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
           </button>
         </div>
+        {errors.password && touched.password && (
+          <p className="text-red-500 text-sm flex items-center gap-1 mt-1">
+            <AlertCircle className="w-4 h-4" />
+            {errors.password}
+          </p>
+        )}
       </div>
 
       {/* Confirmar Contraseña */}
@@ -202,8 +317,11 @@ const RegisterForm = ({ onSubmit, isLoading }) => {
             name="confirmPassword"
             value={formData.confirmPassword}
             onChange={handleChange}
+            onBlur={(e) => handleBlur('confirmPassword', e.target.value)}
             required
-            className="w-full pl-10 pr-12 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 hover:bg-gray-100 hover:shadow-lg hover:-translate-y-0.5 focus:shadow-xl focus:-translate-y-1"
+            className={`w-full pl-10 pr-12 py-2.5 bg-gray-50 border rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 hover:bg-gray-100 hover:shadow-lg hover:-translate-y-0.5 focus:shadow-xl focus:-translate-y-1 ${
+              errors.confirmPassword && touched.confirmPassword ? 'border-red-300 bg-red-50' : 'border-gray-200'
+            }`}
             placeholder="••••••••"
             style={{ boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.05)' }}
           />
@@ -216,6 +334,12 @@ const RegisterForm = ({ onSubmit, isLoading }) => {
             {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
           </button>
         </div>
+        {errors.confirmPassword && touched.confirmPassword && (
+          <p className="text-red-500 text-sm flex items-center gap-1 mt-1">
+            <AlertCircle className="w-4 h-4" />
+            {errors.confirmPassword}
+          </p>
+        )}
       </div>
 
       {/* Subir Fotografía */}

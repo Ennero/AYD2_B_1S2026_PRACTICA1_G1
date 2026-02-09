@@ -1,7 +1,8 @@
 import * as bcryptModule from 'bcryptjs'
 import * as jwtModule from 'jsonwebtoken'
+import { EnvVars } from '../store/enviroment.ts'
 
-import { getRequiredEnv } from '../utils/env.ts'
+// import { getRequiredEnv } from '../utils/env.ts'
 
 export type AuthTokenPayload = {
     sub: string
@@ -24,12 +25,12 @@ export async function verifyPassword(plainPassword: string, passwordHash: string
 }
 
 export function signAuthToken(payload: AuthTokenPayload, expiresIn: jwtModule.SignOptions['expiresIn'] = '7d') {
-    const secret = getRequiredEnv('JWT_SECRET')
+    const secret = EnvVars.instance.JWT_SECRET
     return jwt.sign(payload, secret, { expiresIn })
 }
 
 export function verifyAuthToken(token: string): AuthTokenPayload {
-    const secret = getRequiredEnv('JWT_SECRET')
+    const secret = EnvVars.instance.JWT_SECRET
     const decoded = jwt.verify(token, secret)
 
     if (typeof decoded !== 'object' || decoded === null) {

@@ -1,0 +1,29 @@
+meta {
+  name: /api/auth/register
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{URL}}/api/auth/register
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "email": "jajaasdfjaja@example.com",
+    "password": "123456",
+    "name": "Test",
+    "last_name": "User",
+    "phone": "123456789",
+    "gender": 1,
+    "img_mime": "image/png",
+    "img_base64": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGP4z8AAAAMBAQDJ/pLvAAAAAElFTkSuQmCC"
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
