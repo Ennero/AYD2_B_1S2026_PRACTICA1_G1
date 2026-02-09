@@ -15,6 +15,8 @@ export class AdminController {
                 last_name: req.body.last_name,
                 phone: req.body.phone,
                 url_img: req.body.url_img,
+                img_base64: req.body.img_base64,
+                img_mime: req.body.img_mime,
                 type: req.body.type,
             })
 
@@ -45,6 +47,8 @@ export class AdminController {
                 last_name: req.body.last_name,
                 phone: req.body.phone,
                 url_img: req.body.url_img,
+                img_base64: req.body.img_base64,
+                img_mime: req.body.img_mime,
                 type: req.body.type,
             })
 
