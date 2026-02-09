@@ -77,27 +77,27 @@ export class ClientService {
 		let finalUrlImg = input.url_img
 		if (input.url_img && input.url_img.startsWith('data:image/')) {
 			console.log('[CLIENT SERVICE] Detectado base64, subiendo a Supabase...')
-			
+
 			// Extraer mime type del data URL
 			const mimeMatch = input.url_img.match(/^data:(image\/[^;]+);base64,/)
-			const mime = mimeMatch ? mimeMatch[1] : 'image/jpeg'
+			const mime: string = (mimeMatch && mimeMatch[1]) ? mimeMatch[1] : 'image/jpeg';
 			const ext = guessExtensionFromMime(mime)
-			
+
 			// Decodificar base64 a bytes
 			const bytes = decodeBase64ToBytes(input.url_img)
-			
+
 			// Subir a Supabase Storage
 			const storage = getPublicObjectStorage()
 			const bucket = getOptionalEnv('SUPABASE_BUCKET_USERS', 'user-images') ?? 'user-images'
 			const objectPath = buildPublicBucketPath(['users', `${crypto.randomUUID()}.${ext}`])
-			
+
 			const uploaded = await storage.uploadObject({
 				bucket,
 				path: objectPath,
 				contentType: mime,
 				data: bytes,
 			})
-			
+
 			finalUrlImg = uploaded.publicUrl
 			console.log('[CLIENT SERVICE] Imagen subida correctamente:', finalUrlImg)
 		}
@@ -129,7 +129,7 @@ export class ClientService {
 
 		const properties = await DB.favorite.findMany({
 			where: { id_client: id_user },
-			include: { 
+			include: {
 				property: {
 					include: { image: true }
 				}
