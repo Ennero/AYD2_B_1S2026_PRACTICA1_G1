@@ -21,15 +21,12 @@ const PropertyDetailContainer = () => {
   const loadPropertyDetail = async () => {
     try {
       setLoading(true)
-      console.log('[DETAIL] Cargando propiedad ID:', id)
-      
       const result = await propertyService.getPropertyById(id)
       
       if (result.success) {
         setProperty(result.property)
       }
     } catch (error) {
-      console.error('[DETAIL] Error al cargar propiedad:', error)
       toast.error(error.message || 'Error al cargar la propiedad')
       setProperty(null)
     } finally {
@@ -40,12 +37,26 @@ const PropertyDetailContainer = () => {
   const handleRequestAppointment = () => {
     
     console.log('Solicitar cita para propiedad:', id)
-    alert('Funcionalidad de solicitar cita en desarrollo')
+    toast.info('Funcionalidad de solicitar cita en desarrollo')
   }
 
-  const handleAddToFavorites = () => {
-    console.log('Agregar a favoritos:', id)
-    alert('Agregado a favoritos')
+  const handleAddToFavorites = async () => {
+    try {
+      const result = await propertyService.toggleFavorite(id)
+      
+      if (result.success) {
+        const newFavoriteState = !result.shouldRemove
+        
+        setProperty(prev => ({
+          ...prev,
+          isFavorite: newFavoriteState
+        }))
+        
+        toast.success(newFavoriteState ? 'Agregado a favoritos' : 'Eliminado de favoritos')
+      }
+    } catch (error) {
+      toast.error(error.message || 'Error al actualizar favorito')
+    }
   }
 
   const handleGoBack = () => {
@@ -125,6 +136,7 @@ const PropertyDetailContainer = () => {
             description={property.description}
             features={property.features}
             amenities={property.amenities}
+            isFavorite={property.isFavorite}
             onAddToFavorites={handleAddToFavorites}
           />
         </div>

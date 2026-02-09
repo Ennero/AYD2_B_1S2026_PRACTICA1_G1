@@ -116,15 +116,6 @@ class GetPropertiesCommand extends PropertyCommand {
       }
       
       const properties = propertiesArray.map(prop => {
-        if (prop.zone === 'Zona 16') {
-          console.log('[PROPERTY] Zona 16 encontrada:', {
-            title: prop.title,
-            num_rooms: prop.num_rooms,
-            num_bathrooms: prop.num_bathrooms,
-            square_meters: prop.square_meters
-          })
-        }
-
         return {
           id: prop.id_property,
           title: prop.title,
@@ -135,7 +126,7 @@ class GetPropertiesCommand extends PropertyCommand {
           bedrooms: prop.num_rooms ? Number(prop.num_rooms) : 0,
           bathrooms: prop.num_bathrooms ? Number(prop.num_bathrooms) : 0,
           area: prop.square_meters ? Number(prop.square_meters) : 0,
-          isFavorite: prop.already_in_favorite || false,
+          isFavorite: prop.already_in_favorite === true, // Ser explícito con el valor booleano
           propertyType: backendToFrontendTypeMap[prop.type] || 'apartamento'
         }
       })
@@ -275,14 +266,46 @@ class ToggleFavoriteCommand extends PropertyCommand {
 
   async execute() {
     try {
-      await new Promise(resolve => setTimeout(resolve, 500))
+      console.log('[PROPERTY] Toggle favorito para propiedad:', this.propertyId)
       
-      // TODO: Implementar llamada real al backend
+      const token = localStorage.getItem('authToken')
+      if (!token) {
+        throw new Error('No hay sesión activa')
+      }
+
+      const response = await fetch(`${this.apiUrl}/client/property/favorite`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          id_property: this.propertyId
+        })
+      })
+
+      const data = await response.json()
+
+      if (response.status === 400 && data.details?.includes('already in favorites')) {
+        return {
+          success: true,
+          message: 'Favorito actualizado',
+          shouldRemove: true 
+        }
+      }
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Error al actualizar favorito')
+      }
+
+      // Si la respuesta es exitosa, significa que se AGREGÓ a favoritos
       return {
         success: true,
-        isFavorite: true
+        message: data.message || 'Favorito actualizado',
+        shouldRemove: false // Se agregó, no se removió
       }
     } catch (error) {
+      console.error('[PROPERTY] Error:', error)
       throw error
     }
   }
@@ -299,7 +322,7 @@ class GetFavoritesCommand extends PropertyCommand {
     try {
       await new Promise(resolve => setTimeout(resolve, 800))
       
-      // TODO: Implementar llamada real al backend
+      
       return {
         success: true,
         properties: [],
