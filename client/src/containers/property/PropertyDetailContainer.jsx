@@ -25,6 +25,8 @@ const PropertyDetailContainer = () => {
       
       if (result.success) {
         setProperty(result.property)
+        // Registrar que el usuario visitó esta propiedad
+        await propertyService.registerPropertyLookup(id)
       }
     } catch (error) {
       toast.error(error.message || 'Error al cargar la propiedad')

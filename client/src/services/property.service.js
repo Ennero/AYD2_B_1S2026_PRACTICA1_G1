@@ -311,6 +311,53 @@ class ToggleFavoriteCommand extends PropertyCommand {
   }
 }
 
+// Comando: Registrar visita a propiedad (lookup)
+class PropertyLookupCommand extends PropertyCommand {
+  constructor(apiUrl, propertyId) {
+    super()
+    this.apiUrl = apiUrl
+    this.propertyId = propertyId
+  }
+
+  async execute() {
+    try {
+      const token = localStorage.getItem('authToken')
+      if (!token) {
+        throw new Error('No hay sesión activa')
+      }
+
+      const response = await fetch(`${this.apiUrl}/client/property/lookup`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          id_property: this.propertyId
+        })
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Error al registrar visita')
+      }
+
+      return {
+        success: true,
+        message: data.message || 'Visita registrada'
+      }
+    } catch (error) {
+      console.error('[PROPERTY] Error en lookup:', error)
+      // No lanzamos el error para que no bloquee la carga de la página
+      return {
+        success: false,
+        message: error.message
+      }
+    }
+  }
+}
+
 // Comando: Obtener favoritos
 class GetFavoritesCommand extends PropertyCommand {
   constructor(apiUrl) {
@@ -421,6 +468,11 @@ const propertyService = {
   async requestAppointment(propertyId, appointmentData) {
     const command = new RequestAppointmentCommand(API_URL, propertyId, appointmentData)
     return await this.invoker.executeCommand(command)
+  },
+
+  async registerPropertyLookup(propertyId) {
+    const command = new PropertyLookupCommand(API_URL, propertyId)
+    return await this.invoker.executeCommand(command)
   }
 }
 
@@ -433,6 +485,7 @@ export {
   SearchPropertiesCommand,
   ToggleFavoriteCommand,
   GetFavoritesCommand,
+  PropertyLookupCommand,
   RequestAppointmentCommand,
   PropertyCommandInvoker
 }
