@@ -1,0 +1,30 @@
+meta {
+  name: Filter
+  type: http
+  seq: 1
+}
+
+post {
+  url: http://localhost:3000/api/agent/filter
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+  //   "title": "oder"  
+  //   "type": "HOUSE"
+  //   "price": 650000.00,
+    "rooms": 2,
+  //   "meter": 60
+    "bathrooms":2,
+    "is_ascendent_price": false
+  //   "is_ascendent_title": true
+  
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

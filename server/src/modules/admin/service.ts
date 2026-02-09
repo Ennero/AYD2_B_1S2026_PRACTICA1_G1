@@ -1,11 +1,13 @@
-
-
 import crypto from 'node:crypto'
 
 import DB from '../../db/db.ts'
 import { hashPassword } from '../../lib/security.ts'
 import { normalizeEmail } from '../../utils/strings.ts'
 import { UserType } from '../../store/enums.ts'
+import { decodeBase64ToBytes, guessExtensionFromMime } from '../../utils/base64.ts'
+import { getPublicObjectStorage } from '../../adapters/storage/index.ts'
+import { buildPublicBucketPath } from '../../utils/supabase-storage.ts'
+import { getOptionalEnv } from '../../utils/env.ts'
 
 export type CreateAgentInput = {
 	id_user?: number
@@ -14,6 +16,8 @@ export type CreateAgentInput = {
 	last_name: string
 	phone: string | number
 	url_img?: string | null
+	img_base64?: string
+	img_mime?: string
 	type?: string
 }
 
@@ -24,6 +28,8 @@ export type UpdateAgentInput = {
 	last_name?: string
 	phone?: string | number
 	url_img?: string | null
+	img_base64?: string
+	img_mime?: string
 	type?: string
 }
 
@@ -45,6 +51,26 @@ export class AdminService {
 		// we set a neutral default (0). If your domain requires otherwise, change it.
 		const genderDefault = 0
 
+		// If client provided an image in base64, upload it to Supabase Storage and use its public URL.
+		let url_img: string | null = input.url_img ?? null
+		if (input.img_base64) {
+			const storage = getPublicObjectStorage()
+			const bucket = getOptionalEnv('SUPABASE_BUCKET_USERS', 'user-images') ?? 'user-images'
+			const mime = input.img_mime ?? 'application/octet-stream'
+			const ext = guessExtensionFromMime(mime)
+			const bytes = decodeBase64ToBytes(input.img_base64)
+			const objectPath = buildPublicBucketPath(['users', `${crypto.randomUUID()}.${ext}`])
+
+			const uploaded = await storage.uploadObject({
+				bucket,
+				path: objectPath,
+				contentType: mime,
+				data: bytes,
+			})
+
+			url_img = uploaded.publicUrl
+		}
+
 		const created = await DB.uSER.create({
 			data: {
 				...(input.id_user ? { id_user: input.id_user } : {}),
@@ -54,7 +80,7 @@ export class AdminService {
 				type: UserType.Agent,
 				name: input.name,
 				last_name: input.last_name,
-				url_img: input.url_img ?? null,
+				url_img,
 				phone: String(input.phone),
 				created_at: new Date(),
 			},
@@ -103,6 +129,25 @@ export class AdminService {
 			}
 		}
 
+		let url_img: string | null | undefined = input.url_img
+		if (input.img_base64) {
+			const storage = getPublicObjectStorage()
+			const bucket = getOptionalEnv('SUPABASE_BUCKET_USERS', 'user-images') ?? 'user-images'
+			const mime = input.img_mime ?? 'application/octet-stream'
+			const ext = guessExtensionFromMime(mime)
+			const bytes = decodeBase64ToBytes(input.img_base64)
+			const objectPath = buildPublicBucketPath(['users', `${crypto.randomUUID()}.${ext}`])
+
+			const uploaded = await storage.uploadObject({
+				bucket,
+				path: objectPath,
+				contentType: mime,
+				data: bytes,
+			})
+
+			url_img = uploaded.publicUrl
+		}
+
 		const updated = await DB.uSER.update({
 			where: { id_user: agentId },
 			data: {
@@ -110,7 +155,7 @@ export class AdminService {
 				...(input.name !== undefined ? { name: input.name } : {}),
 				...(input.last_name !== undefined ? { last_name: input.last_name } : {}),
 				...(input.phone !== undefined ? { phone: String(input.phone) } : {}),
-				...(input.url_img !== undefined ? { url_img: input.url_img } : {}),
+				...(url_img !== undefined ? { url_img } : {}),
 				// Force AGENT type regardless of payload
 				type: UserType.Agent,
 			},
@@ -122,4 +167,67 @@ export class AdminService {
 			id_user: updated.id_user,
 		}
 	}
+
+
+	//Helado
+	async getAgents() {
+		const agents = await DB.uSER.findMany({
+			where: {
+				type: UserType.Agent,
+			},
+			select: {
+				id_user: true,
+				email: true,
+				name: true,
+				last_name: true,
+				phone: true,
+				url_img: true,
+				type: true,
+			},
+		})
+
+		return { list: agents }
+	}
+
+	async getAgentById(agentId: number) {
+		const agent = await DB.uSER.findUnique({
+			where: {
+				id_user: agentId,
+			},
+			select: {
+				id_user: true,
+				email: true,
+				name: true,
+				last_name: true,
+				phone: true,
+				url_img: true,
+				type: true,
+			},
+		})
+
+		if (!agent) throw new Error('Agent not found')
+		if (agent.type !== UserType.Agent) throw new Error('User is not an agent')
+
+		return agent
+	}
+
+	async deleteAgent(agentId: number) {
+		const existingAgent = await DB.uSER.findUnique({
+			where: { id_user: agentId },
+			select: { id_user: true, type: true },
+		})
+
+		if (!existingAgent) throw new Error('Agent not found')
+		if (existingAgent.type !== UserType.Agent) throw new Error('User is not an agent')
+
+		await DB.uSER.delete({
+			where: { id_user: agentId },
+		})
+
+		return {
+			message: 'Se ha eliminado el agente',
+		}
+	}
+
+// fin helado
 }
