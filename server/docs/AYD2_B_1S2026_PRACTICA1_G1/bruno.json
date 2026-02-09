@@ -1,0 +1,9 @@
+{
+  "version": "1",
+  "name": "AYD2_B_1S2026_PRACTICA1_G1",
+  "type": "collection",
+  "ignore": [
+    "node_modules",
+    ".git"
+  ]
+}

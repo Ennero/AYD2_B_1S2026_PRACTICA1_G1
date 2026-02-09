@@ -1,5 +1,6 @@
 
 import { LoginContainer } from '../containers/auth';
+import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import Particles from '@tsparticles/react';
 import { loadSlim } from '@tsparticles/slim';
@@ -18,7 +19,7 @@ const LoginPage = () => {
         backgroundImage: "url('/images/login-background.jpg')",
       }}
     >
-      {/* Partículas de fondo */}
+
       <Particles
         id="tsparticles"
         init={particlesInit}
@@ -93,9 +94,6 @@ const LoginPage = () => {
             transition={{ duration: 0.6, delay: 0.2 }}
           >
           <div className="flex flex-col lg:flex-row" style={{ minHeight: '775px' }}>
-            {/* ========================================
-                LADO IZQUIERDO - TEXTO BIENVENIDA
-                ======================================== */}
             <motion.div 
               className="lg:w-1/2 relative p-8 flex items-start justify-start min-h-[500px]"
               style={{ minHeight: '775px' }}
@@ -104,7 +102,6 @@ const LoginPage = () => {
               transition={{ duration: 0.6, delay: 0.4 }}
             >
               
-            {/* Contenedor de la imagen con diagonal en el lado derecho */}
             <div 
             className="absolute inset-6 overflow-hidden transition-all duration-700 hover:shadow-2xl"
             style={{
@@ -123,15 +120,13 @@ const LoginPage = () => {
                     backgroundImage: "url('/images/login-background.jpg')"
                 }}
                 >
-                {/* Overlay oscuro */}
                 <div className="absolute inset-0 bg-black/60"></div>
                 </div>
             </div>
             </div>
               
-              {/* Contenedor superior con logo y texto */}
               <div className="relative z-10 p-4 flex justify-between items-start w-full">
-                {/* Texto BIENVENIDO A */}
+               
                 <motion.div 
                   className="text-white"
                   initial={{ opacity: 0, y: 20 }}
@@ -149,35 +144,33 @@ const LoginPage = () => {
                 </motion.div>
                 
                 {/* Logo HomeFinder */}
-                <motion.div 
-                  className="flex-shrink-0 ml-4"
-                  initial={{ opacity: 0, scale: 0 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ 
-                    duration: 0.5, 
-                    delay: 0.8,
-                    type: "spring",
-                    stiffness: 200
-                  }}
-                  whileHover={{ 
-                    scale: 1.1,
-                    rotate: [0, -10, 10, -10, 0],
-                    transition: { duration: 0.5 }
-                  }}
-                >
-                  <div className="bg-white/90 backdrop-blur-sm p-2 rounded-xl shadow-lg transition-all duration-300">
-                    <img 
-                      src="/images/logo-HomeFinder.png" 
-                      alt="HomeFinder Pro" 
-                      className="h-10 w-auto"
-                    />
-                  </div>
-                </motion.div>
+                <Link to="/" className="flex-shrink-0 ml-4 cursor-pointer">
+                  <motion.div 
+                    initial={{ opacity: 0, scale: 0 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ 
+                      duration: 0.5, 
+                      delay: 0.8,
+                      type: "spring",
+                      stiffness: 200
+                    }}
+                    whileHover={{ 
+                      scale: 1.1,
+                      rotate: [0, -10, 10, -10, 0],
+                      transition: { duration: 0.5 }
+                    }}
+                  >
+                    <div className="bg-white/90 backdrop-blur-sm p-2 rounded-xl shadow-lg transition-all duration-300">
+                      <img 
+                        src="/images/logo-HomeFinder.png" 
+                        alt="HomeFinder Pro" 
+                        className="h-10 w-auto"
+                      />
+                    </div>
+                  </motion.div>
+                </Link>
               </div>
             </motion.div>
-            {/* ========================================
-                LADO DERECHO - FORMULARIO
-                ======================================== */}
             <motion.div 
               className="lg:w-1/2 p-8 lg:p-12 flex items-center justify-center bg-white min-h-[500px]" 
               style={{ minHeight: '775px' }}
