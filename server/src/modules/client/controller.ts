@@ -253,5 +253,18 @@ export class ClientController {
             })
         }
     }
+
+    getZones: RequestHandler = async (req, res) => {
+        try {
+            const zones = await this.clientService.getAvailableZones()
+            res.status(200).json({ zones })
+        } catch (error) {
+            return response_with_error(res, {
+                statusCode: 400,
+                message: 'Could not get zones',
+                details: error instanceof Error ? error.message : error,
+            })
+        }
+    }
 }
 

@@ -401,7 +401,10 @@ export class ClientService {
        p.zone,
        p.address,
        p.price,
-       p.state
+       p.state,
+       p.num_rooms,
+       p.num_bathrooms,
+       p.square_meters
 from property p where `)
 
 		if (title) {
@@ -444,6 +447,20 @@ from property p where `)
 				id_property: id_property
 			}
 		})
+	}
+
+	async getAvailableZones() {
+		const zones = await DB.property.findMany({
+			where: {
+				state: 'AVAILABLE'
+			},
+			select: {
+				zone: true
+			},
+			distinct: ['zone']
+		})
+
+		return zones.map(z => z.zone).filter(z => z !== null).sort()
 	}
 
 }

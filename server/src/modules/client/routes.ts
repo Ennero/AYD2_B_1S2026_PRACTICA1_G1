@@ -163,5 +163,13 @@ clientRouter.post('/property/lookup',
 	clientController.lookUpProperty
 )
 
+clientRouter.get('/zones',
+	[
+		authMiddleware,
+		requireRole(UserType.Client),
+	],
+	clientController.getZones
+)
+
 
 export default clientRouter

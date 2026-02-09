@@ -32,20 +32,24 @@ const SearchContainer = () => {
   const loadProperties = async () => {
     try {
       setIsLoading(true)
-      const result = await propertyService.getProperties()
+      
+      // Carga inicial: traer TODAS las propiedades (sin filtros)
+      console.log('[SEARCH] Cargando todas las propiedades...')
+      
+      const result = await propertyService.getProperties({})
       if (result.success) {
         setProperties(result.properties)
         setFilteredProperties(result.properties)
       }
     } catch (error) {
-      toast.error('Error al cargar propiedades')
-      console.error(error)
+      toast.error(error.message || 'Error al cargar propiedades')
+      console.error('[SEARCH] Error:', error)
     } finally {
       setIsLoading(false)
     }
   }
 
-  //  Aplicar filtros usando patrón Strategy
+  // Aplicar filtros usando patrón Strategy (filtrado adicional en el cliente)
   const applyFilters = useCallback((propsToFilter = properties, currentFilters = filters, searchTerm = searchQuery) => {
     let result = [...propsToFilter]
 
@@ -56,7 +60,7 @@ const SearchContainer = () => {
     filterContext.setStrategy(TextSearchStrategy)
     result = filterContext.applyFilter(result, searchTerm)
 
-    // 2. Aplicar Estrategia de Tipo de Inmueble (Cambiamos la estrategia dinámicamente)
+    // 2. Aplicar Estrategia de Tipo de Inmueble
     filterContext.setStrategy(TypeFilterStrategy)
     result = filterContext.applyFilter(result, currentFilters.propertyType)
 
@@ -92,7 +96,7 @@ const SearchContainer = () => {
     setFilteredProperties(result)
   }, [properties, filters, sortType, searchQuery])
 
-  // Re-aplicar filtros cuando cambia el ordenamiento
+  // Re-aplicar filtros cuando cambia el ordenamiento o las propiedades
   useEffect(() => {
     applyFilters()
   }, [sortType, applyFilters])
@@ -117,6 +121,7 @@ const SearchContainer = () => {
           )
         )
         applyFilters()
+        toast.success(result.isFavorite ? 'Agregado a favoritos' : 'Eliminado de favoritos')
       }
     } catch (error) {
       toast.error('Error al actualizar favorito')
@@ -241,7 +246,7 @@ const SearchContainer = () => {
                   onClick={() => {
                     setFilters({})
                     setSearchQuery('')
-                    applyFilters(properties, {}, '')
+                    loadProperties()
                   }}
                   className="px-6 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg hover:from-orange-600 hover:to-orange-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 hover:-translate-y-1 active:scale-95 font-semibold"
                   style={{ transformStyle: 'preserve-3d' }}
