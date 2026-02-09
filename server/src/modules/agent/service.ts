@@ -280,4 +280,4 @@ export async function deleteProperty(agentId: number, propertyId: number) {
         message: 'Se ha eliminado la propiedad',
     }
 }
-//termina helado
+//termina heladoo
