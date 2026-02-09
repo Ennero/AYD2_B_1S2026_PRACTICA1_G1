@@ -148,6 +148,8 @@ clientRouter.post('/dashboard',
 		body('bathrooms').isNumeric().optional(),
 		body('is_ascendent_price').isBoolean().optional(),
 		body('is_ascendent_title').isBoolean().optional(),
+		body('is_ascendent_date').isBoolean().optional(),
+		body('is_ascendent_area').isBoolean().optional(),
 		validateFields
 	],
 	clientController.filter

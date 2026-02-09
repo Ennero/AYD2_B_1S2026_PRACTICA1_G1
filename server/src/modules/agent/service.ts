@@ -326,4 +326,148 @@ export async function deleteProperty(agentId: number, propertyId: number) {
         message: 'Se ha eliminado la propiedad',
     }
 }
+
+export type ProposeInvitationInput = {
+    expected_date: string
+    description: string
+}
+
+function getInvitationState(invitation: any): string {
+    // Solicitud del cliente: is_accepted = null y expected_date = null
+    if (invitation.is_accepted === null && invitation.expected_date === null) {
+        return 'Solicitud del cliente'
+    }
+    // Cancelado por el cliente: is_accepted = false
+    if (invitation.is_accepted !== null && Number(invitation.is_accepted) === 0) {
+        return 'Cancelado por el cliente'
+    }
+    // Cita agendada: expected_date != null o is_accepted = true
+    if (invitation.expected_date !== null || (invitation.is_accepted !== null && Number(invitation.is_accepted) === 1)) {
+        return 'Cita agendada'
+    }
+    return 'Desconocido'
+}
+
+export async function getInvitations(agentId: number, type: string) {
+    // Validar el tipo
+    const validTypes = ['all', 'Pending', 'Accepted', 'Rejected']
+    if (!validTypes.includes(type)) {
+        throw new Error(`Invalid type. Valid types: ${validTypes.join(', ')}`)
+    }
+
+    // Construir la condición WHERE según el tipo
+    let whereCondition: any = {
+        property: {
+            id_agent: agentId,
+        },
+    }
+
+    if (type === 'Pending') {
+        // Solicitud del cliente: is_accepted = null y expected_date = null
+        whereCondition.is_accepted = null
+        whereCondition.expected_date = null
+    } else if (type === 'Accepted') {
+        // Cita agendada: expected_date != null O is_accepted = true
+        whereCondition.OR = [
+            { expected_date: { not: null } },
+            { is_accepted: 1 },
+        ]
+    } else if (type === 'Rejected') {
+        // Cancelado: is_accepted = false
+        whereCondition.is_accepted = 0
+    }
+    // Si es 'all', no agregamos filtros adicionales
+
+    const invitations = await DB.invitation.findMany({
+        where: whereCondition,
+        include: {
+            property: {
+                select: {
+                    title: true,
+                    address: true,
+                    zone: true,
+                    price: true,
+                    image: {
+                        select: {
+                            url_img: true,
+                        },
+                        take: 1,
+                        orderBy: {
+                            correlative: 'asc',
+                        },
+                    },
+                },
+            },
+            USER: {
+                select: {
+                    name: true,
+                    last_name: true,
+                },
+            },
+        },
+        orderBy: {
+            created_at: 'desc',
+        },
+    })
+
+    const formattedInvitations = invitations.map((inv) => ({
+        id_invitation: inv.id_invitation,
+        title: inv.property.title,
+        address: inv.property.address,
+        zone: inv.property.zone.toString(),
+        price: Number(inv.property.price),
+        client_name: `${inv.USER.name} ${inv.USER.last_name}`,
+        url_img: inv.property.image[0]?.url_img || null,
+        state: getInvitationState(inv),
+        expected_date: inv.expected_date ? inv.expected_date.toISOString().replace('T', ' ').substring(0, 16) : null,
+        description: inv.description,
+        justification: inv.justification,
+        created_at: inv.created_at.toISOString().split('T')[0],
+        is_accepted: inv.is_accepted !== null ? Number(inv.is_accepted) === 1 : null,
+    }))
+
+    return { list: formattedInvitations }
+}
+
+export async function proposeInvitation(agentId: number, invitationId: number, input: ProposeInvitationInput) {
+    // Buscar la invitación y verificar que pertenezca a una propiedad del agente
+    const invitation = await DB.invitation.findUnique({
+        where: { id_invitation: invitationId },
+        include: {
+            property: {
+                select: {
+                    id_agent: true,
+                },
+            },
+        },
+    })
+
+    if (!invitation) {
+        throw new Error('Invitation not found')
+    }
+
+    if (invitation.property.id_agent !== agentId) {
+        throw new Error('Invitation does not belong to this agent')
+    }
+
+    // Verificar que el estado sea "Solicitud del cliente"
+    if (invitation.is_accepted !== null || invitation.expected_date !== null) {
+        throw new Error('Can only propose when state is "Solicitud del cliente"')
+    }
+
+    // Actualizar la invitación
+    await DB.invitation.update({
+        where: { id_invitation: invitationId },
+        data: {
+            expected_date: new Date(input.expected_date),
+            description: input.description,
+            updated_at: new Date(),
+        },
+    })
+
+    return {
+        message: 'Propuesta enviada exitosamente',
+        id_invitation: invitationId,
+    }
+}
 //termina heladoo
