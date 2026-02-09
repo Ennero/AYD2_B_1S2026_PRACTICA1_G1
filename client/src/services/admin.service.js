@@ -110,7 +110,31 @@ class DeleteAgentCommand extends AgentCommand {
 
   async execute() {
     try {
-      // Simulación de eliminación de agente
+      const token = localStorage.getItem('authToken')
+      
+      if (!token) {
+        throw new Error('No se encontró token de autenticación')
+      }
+
+      const response = await fetch(`${this.apiUrl}/admin/agents/${this.agentId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.message || `Error ${response.status}: ${response.statusText}`)
+      }
+
+      const result = await response.json()
+
+      if (!result.ok) {
+        throw new Error(result.message || 'Error al eliminar el agente')
+      }
+
       return { success: true, deletedId: this.agentId }
     } catch (error) {
       console.error('Error al eliminar agente:', error)
