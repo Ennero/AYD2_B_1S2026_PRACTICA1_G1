@@ -134,6 +134,18 @@ clientRouter.post(
 	clientController.acknowledgeappointment,
 )
 
+// POST /api/client/appointment/request
+clientRouter.post(
+	'/appointment/request',
+	[
+		authMiddleware,
+		requireRole(UserType.Client),
+		body('id_property').isInt({ gt: 0 }).withMessage('id_property must be a positive integer'),
+		body('description').optional().isString().withMessage('description must be a string'),
+	],
+	clientController.requestappointment,
+)
+
 // =============================== DAVID ===============================
 
 clientRouter.post('/dashboard',

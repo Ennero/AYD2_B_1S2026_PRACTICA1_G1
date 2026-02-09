@@ -120,109 +120,9 @@ Se seleccionaron frameworks y tecnologías que en conjunto cumplen con los reque
 
 Se implementaron patrones de diseño reconocidos tanto en el frontend como en el backend para resolver problemas concretos de diseño, mejorar la mantenibilidad y facilitar la extensión del sistema.
 
-### 3.1 Patrones en el Frontend
+### 3.1 Patrones en el Backend
 
-#### 3.1.1 Strategy
-
-![Diagrama Strategy - Filtros de Propiedades](imgs/strategy1.png)
-
-![Diagrama Strategy - Ordenamiento de Propiedades](imgs/strategy2.png)
-
-![Diagrama Strategy - Estados de Citas](imgs/strategy3.png)
-
-**Problema que resuelve**: El sistema necesita aplicar 8 filtros y 5 ordenamientos sobre propiedades. Sin Strategy, esto produciría funciones monolíticas imposibles de extender sin modificar código existente (viola Open/Closed).
-
-**Implementación**:
-
-**Filtros** (`strategies/PropertyFilters.js`): 8 estrategias con método `execute(properties, filterValue)` — `TextSearchStrategy`, `TypeFilterStrategy`, `MinPriceFilterStrategy`, `MaxPriceFilterStrategy`, `ZoneFilterStrategy`, `BedroomsFilterStrategy`, `BathroomsFilterStrategy`, `MinAreaFilterStrategy`. El contexto `PropertyFilterContext` permite cambiar estrategia en runtime:
-
-```javascript
-const filterContext = new PropertyFilterContext(TextSearchStrategy)
-filterContext.setStrategy(TypeFilterStrategy)
-result = filterContext.applyFilter(result, filters.propertyType)
-```
-
-**Ordenamiento** (`strategies/PropertySorters.js`): Clase base `SortStrategy` con 5 concretas: `MostRecentStrategy`, `PriceLowToHighStrategy`, `PriceHighToLowStrategy`, `AreaLowToHighStrategy`, `AreaHighToLowStrategy`. `getSortStrategy(sortType)` actúa como factory method.
-
-**Estados de Citas** (`strategies/AppointmentStatus.strategy.js`): 4 estrategias (confirmada, pendiente agente, pendiente cliente, rechazada) que retornan configuración de UI. `AppointmentStatusFactory` selecciona la estrategia según el estado.
-
-**Beneficio**: Agregar un nuevo filtro solo requiere crear una nueva estrategia, cero cambios en código existente.
-
----
-
-#### 3.1.2 State
-
-> *Imagen del diagrama del patrón State pendiente de agregar.*
-
-**Problema que resuelve**: Las citas tienen 4 estados (nueva solicitud, en espera, confirmada, cancelada) que determinan colores, acciones disponibles, tipo de panel y datos visibles. Sin State, habría condicionales `if/else` duplicados en cada componente.
-
-**Implementación** (`context/AgentAppointmentState.js`):
-
-Clase base `AgentAppointmentState` con métodos: `getName()`, `getBadgeConfig()`, `getTabKey()`, `getPanelType()`, `canPropose()`, `hasProposedDate()`, `hasRejectionReason()`.
-
-**4 estados concretos**: `NuevaSolicitudState` (agente puede proponer horario), `EnEsperaState` (esperando respuesta del cliente), `ConfirmadaState` (cita confirmada), `CanceladaState` (rechazada, muestra motivo).
-
-**Contexto con transiciones**:
-```javascript
-class AgentAppointmentContext {
-  constructor(appointment) {
-    this.state = AgentAppointmentContext.resolveState(appointment.status)
-  }
-  transitionTo(newStatus) {
-    this.state = AgentAppointmentContext.resolveState(newStatus)
-  }
-}
-
-// Uso
-const context = new AgentAppointmentContext(appointment)
-const config = context.state.getBadgeConfig()
-if (context.state.canPropose()) { /* Mostrar formulario */ }
-```
-
-**Beneficio**: Agregar nuevo estado solo requiere crear una nueva clase sin tocar estados existentes.
-
----
-
-#### 3.1.3 Command
-
-> *Imagen del diagrama del patrón Command pendiente de agregar.*
-
-**Problema que resuelve**: Las operaciones CRUD necesitan encapsularse como objetos independientes para mantener historial de auditoría, desacoplar UI del servicio y permitir undo/redo futuro.
-
-**Implementación** (`services/admin.service.js`):
-
-Clase base `AgentCommand` con método abstracto `execute()`. **4 comandos concretos**: `GetAgentsCommand`, `CreateAgentCommand`, `UpdateAgentCommand`, `DeleteAgentCommand`.
-
-El `AgentCommandInvoker` ejecuta comandos y mantiene historial:
-
-```javascript
-class AgentCommandInvoker {
-  constructor() { this.history = [] }
-  async executeCommand(command) {
-    const result = await command.execute()
-    this.history.push(command)
-    return result
-  }
-}
-
-// El servicio crea y ejecuta comandos a través del Invoker
-const AgentService = {
-  invoker: new AgentCommandInvoker(),
-  async createAgent(agentData) {
-    return await this.invoker.executeCommand(new CreateAgentCommand(API_URL, agentData))
-  }
-}
-```
-
-Este patrón se replica en otros servicios: `auth.service.js`, `property.service.js` y `agent/property.service.js`.
-
-**Beneficio**: Historial de operaciones para auditoría, base para undo/redo, y testing simplificado.
-
----
-
-### 3.2 Patrones en el Backend
-
-#### 3.2.1 Singleton
+#### 3.1.1 Singleton
 
 ![Diagrama Singleton - DB_Connection](imgs/singleton1.png)
 
@@ -266,7 +166,7 @@ export class EnvVars {
 
 ---
 
-#### 3.2.2 Adapter
+#### 3.1.2 Adapter
 
 ![Diagrama Adapter - Storage](imgs/adapter.png)
 
@@ -303,6 +203,109 @@ export function getPublicObjectStorage(): PublicObjectStorage {
 ```
 
 **Beneficio**: Para cambiar a AWS S3, solo se crea un nuevo adapter y se actualiza la factory. Los servicios nunca importan Supabase directamente.
+
+---
+
+### 3.2 Patrones en el Frontend
+
+#### 3.2.1 Strategy
+
+![Diagrama Strategy - Filtros de Propiedades](imgs/strategy1.png)
+
+![Diagrama Strategy - Ordenamiento de Propiedades](imgs/strategy2.png)
+
+![Diagrama Strategy - Estados de Citas](imgs/strategy3.png)
+
+**Problema que resuelve**: El sistema necesita aplicar 8 filtros y 5 ordenamientos sobre propiedades. Sin Strategy, esto produciría funciones monolíticas imposibles de extender sin modificar código existente (viola Open/Closed).
+
+**Implementación**:
+
+**Filtros** (`strategies/PropertyFilters.js`): 8 estrategias con método `execute(properties, filterValue)` — `TextSearchStrategy`, `TypeFilterStrategy`, `MinPriceFilterStrategy`, `MaxPriceFilterStrategy`, `ZoneFilterStrategy`, `BedroomsFilterStrategy`, `BathroomsFilterStrategy`, `MinAreaFilterStrategy`. El contexto `PropertyFilterContext` permite cambiar estrategia en runtime:
+
+```javascript
+const filterContext = new PropertyFilterContext(TextSearchStrategy)
+filterContext.setStrategy(TypeFilterStrategy)
+result = filterContext.applyFilter(result, filters.propertyType)
+```
+
+**Ordenamiento** (`strategies/PropertySorters.js`): Clase base `SortStrategy` con 5 concretas: `MostRecentStrategy`, `PriceLowToHighStrategy`, `PriceHighToLowStrategy`, `AreaLowToHighStrategy`, `AreaHighToLowStrategy`. `getSortStrategy(sortType)` actúa como factory method.
+
+**Estados de Citas** (`strategies/AppointmentStatus.strategy.js`): 4 estrategias (confirmada, pendiente agente, pendiente cliente, rechazada) que retornan configuración de UI. `AppointmentStatusFactory` selecciona la estrategia según el estado.
+
+**Beneficio**: Agregar un nuevo filtro solo requiere crear una nueva estrategia, cero cambios en código existente.
+
+---
+
+#### 3.2.2 State
+
+![Diagrama State](imgs/state.png)
+
+**Problema que resuelve**: Las citas tienen 4 estados (nueva solicitud, en espera, confirmada, cancelada) que determinan colores, acciones disponibles, tipo de panel y datos visibles. Sin State, habría condicionales `if/else` duplicados en cada componente.
+
+**Implementación** (`context/AgentAppointmentState.js`):
+
+Clase base `AgentAppointmentState` con métodos: `getName()`, `getBadgeConfig()`, `getTabKey()`, `getPanelType()`, `canPropose()`, `hasProposedDate()`, `hasRejectionReason()`.
+
+**4 estados concretos**: `NuevaSolicitudState` (agente puede proponer horario), `EnEsperaState` (esperando respuesta del cliente), `ConfirmadaState` (cita confirmada), `CanceladaState` (rechazada, muestra motivo).
+
+**Contexto con transiciones**:
+```javascript
+class AgentAppointmentContext {
+  constructor(appointment) {
+    this.state = AgentAppointmentContext.resolveState(appointment.status)
+  }
+  transitionTo(newStatus) {
+    this.state = AgentAppointmentContext.resolveState(newStatus)
+  }
+}
+
+// Uso
+const context = new AgentAppointmentContext(appointment)
+const config = context.state.getBadgeConfig()
+if (context.state.canPropose()) { /* Mostrar formulario */ }
+```
+
+**Beneficio**: Agregar nuevo estado solo requiere crear una nueva clase sin tocar estados existentes.
+
+---
+
+#### 3.2.3 Command
+
+![Diagrama Command](imgs/Command1.png)
+![Diagrama Command](imgs/Command2.png)
+![Diagrama Command](imgs/Command3.png)
+![Diagrama Command](imgs/Command4.png)
+
+**Problema que resuelve**: Las operaciones CRUD necesitan encapsularse como objetos independientes para mantener historial de auditoría, desacoplar UI del servicio y permitir undo/redo futuro.
+
+**Implementación** (`services/admin.service.js`):
+
+Clase base `AgentCommand` con método abstracto `execute()`. **4 comandos concretos**: `GetAgentsCommand`, `CreateAgentCommand`, `UpdateAgentCommand`, `DeleteAgentCommand`.
+
+El `AgentCommandInvoker` ejecuta comandos y mantiene historial:
+
+```javascript
+class AgentCommandInvoker {
+  constructor() { this.history = [] }
+  async executeCommand(command) {
+    const result = await command.execute()
+    this.history.push(command)
+    return result
+  }
+}
+
+// El servicio crea y ejecuta comandos a través del Invoker
+const AgentService = {
+  invoker: new AgentCommandInvoker(),
+  async createAgent(agentData) {
+    return await this.invoker.executeCommand(new CreateAgentCommand(API_URL, agentData))
+  }
+}
+```
+
+Este patrón se replica en los demás servicios del frontend: `auth.service.js` (Login, Register, Logout, ValidateToken), `property.service.js` (GetProperties, GetPropertyById, SearchProperties, ToggleFavorite, GetFavorites, RemoveFavorite, PropertyLookup, RequestAppointment), `appointment.service.js` (GetAppointments, AcceptAppointment, RejectAppointment), `profile.service.js` (GetProfile, UpdatePersonalInfo, UpdatePassword, UploadProfilePhoto), `agent/property.service.js` (GetProperties, CreateProperty, UpdateProperty, DeleteProperty) y `agent/appointment.service.js` (GetAgentAppointments, ProposeAppointment).
+
+**Beneficio**: Historial de operaciones para auditoría, base para undo/redo, y testing simplificado.
 
 ---
 
@@ -421,7 +424,6 @@ server/
 │   └── index.ts               # Entry point del servidor
 ├── docker-compose.yml         # Orquestación Docker
 ├── Dockerfile                 # Imagen del backend
-├── docker-entrypoint.sh       # Script de arranque
 ├── package.json
 └── tsconfig.json
 ```
@@ -446,6 +448,8 @@ server/
 | **record** | Registro de historial de visitas/interacciones de clientes con propiedades. | `id_record`, `created_at`, `id_client` (FK → USER), `id_property` (FK → property) |
 
 ### 4.6 APIs y Endpoints
+
+> **Nota sobre formato de respuesta:** Los endpoints de Auth, Admin y Agent (CRUD de propiedades, invitaciones) utilizan el helper `response_ok()`, por lo que sus respuestas reales están envueltas en `{ "ok": true, "data": { ... } }`. Los endpoints del módulo Client y algunos del Agent (dashboard, filter) retornan el JSON directamente sin este envoltorio. Los ejemplos de respuesta a continuación muestran el contenido del campo `data` (o el JSON directo según el caso).
 
 #### Autenticación (`/api/auth`) — Público
 
@@ -492,6 +496,25 @@ server/
   "userId": 1
 }
 ```
+
+---
+
+##### `GET /api/auth/me`
+
+**Request:** Token Bearer
+
+**Response:**
+```json
+{
+  "user": {
+    "sub": "1",
+    "email": "example@gmail.com",
+    "type": "CLIENT"
+  }
+}
+```
+
+> Retorna el payload del token JWT del usuario autenticado. Útil para validar la sesión activa y obtener el rol del usuario.
 
 ---
 
@@ -957,9 +980,9 @@ server/
 
 #### Cliente — Mis Citas (`/api/client`)
 
-##### `GET /api/client/appointment/:filter`
+##### `GET /api/client/appointment/{all|finalized|pending|acknowledge}`
 
-`:filter` puede ser: `all`, `finalized`, `pending`, `acknowledge`. Todos retornan la misma estructura, solo cambia el filtro aplicado.
+Cada filtro es una ruta estática independiente: `/appointment/all`, `/appointment/finalized`, `/appointment/pending`, `/appointment/acknowledge`. Todas retornan la misma estructura, solo cambia el filtro aplicado.
 
 **Request:** Token Bearer
 
@@ -1090,7 +1113,7 @@ services:
   backend:        # Node.js 24 Alpine, depende de postgres-db
 ```
 
-**Pasos**: `docker-compose up --build` → el `docker-entrypoint.sh` ejecuta migraciones (`prisma migrate dev`), seed (`prisma db seed`) y arranca el servidor (`npm run dev`).
+**Pasos**: `docker-compose up --build` → el servicio backend ejecuta un `command: sh -c "..."` que espera a que PostgreSQL esté listo, ejecuta migraciones (`prisma migrate deploy`), seed (`npm run db:seed`) y arranca el servidor (`npm run dev`).
 
 ---
 
@@ -1125,10 +1148,10 @@ services:
 - CDU001.2: Actualizar Propiedad
 - CDU001.3: Eliminar Propiedad
 - CDU001.4: Consultar Estadísticas
-- CDU001.5: Gestionar Tipo de Inmuebles
-- CDU001.6: Crear Tipo de Inmueble
-- CDU001.7: Eliminar Tipo de Inmueble
-- CDU001.8: Actualizar Tipo de Inmueble
+- CDU001.5: Gestionar Tipo de Inmuebles (categorías predefinidas: Casa, Apartamento, Terreno, Local Comercial)
+- CDU001.6: Seleccionar Tipo de Inmueble al crear propiedad
+- CDU001.7: Validar Tipo de Inmueble
+- CDU001.8: Filtrar por Tipo de Inmueble
 - CDU001.9: Visualizar Propiedades
 
 **CDU002 - Gestión de Citas**:
@@ -1173,7 +1196,7 @@ A continuación se presenta la especificación detallada de cada caso de uso exp
 | **Precondiciones** | El Agente debe haber iniciado sesión (CDU005). |
 | **Post Condiciones** | El catálogo de propiedades queda actualizado en la base de datos. |
 | **Flujo Principal** | 1. El Agente selecciona "Gestionar Propiedades" (CDU001.0).<br>2. El Sistema muestra el listado de inmuebles asignados.<br>3. El Agente visualiza la información general.<br>4. El Agente finaliza la gestión. |
-| **Flujos Alternos** | **FA1: Crear Propiedad (CDU001.1)**<br>1. El Agente selecciona "Nueva Propiedad".<br>2. Ingresa datos (título, dirección, precio, descripción, tipo, habitaciones, baños, m², zona) y fotos.<br>3. Sistema valida campos obligatorios y formatos.<br>4. Sistema almacena la propiedad e imágenes.<br><br>**FA2: Actualizar Propiedad (CDU001.2)**<br>1. El Agente selecciona una propiedad existente.<br>2. Modifica los datos necesarios.<br>3. Sistema valida y actualiza.<br><br>**FA3: Eliminar Propiedad (CDU001.3)**<br>1. El Agente selecciona eliminar propiedad.<br>2. Sistema solicita confirmación.<br>3. Sistema elimina la propiedad y sus imágenes/favoritos/citas asociadas (cascade).<br><br>**FA4: Consultar Estadísticas (CDU001.4)**<br>1. El Agente selecciona ver dashboard.<br>2. Sistema muestra Top 3 tipos de inmuebles más buscados y Top 5 zonas con mayor oferta.<br><br>**FA5: Gestión de Tipos (CDU001.5)**<br>1. El Agente accede al catálogo de tipos.<br>2. Puede crear (CDU001.6), actualizar (CDU001.8) o eliminar (CDU001.7) tipos de inmueble (Casa, Apartamento, Terreno, Local Comercial).<br><br>**FA6: Visualizar Propiedades (CDU001.9)**<br>1. El Agente visualiza el listado completo de sus propiedades con filtros por tipo, precio y características.<br>2. Sistema muestra información resumida de cada propiedad. |
+| **Flujos Alternos** | **FA1: Crear Propiedad (CDU001.1)**<br>1. El Agente selecciona "Nueva Propiedad".<br>2. Ingresa datos (título, dirección, precio, descripción, tipo, habitaciones, baños, m², zona) y fotos.<br>3. Sistema valida campos obligatorios y formatos.<br>4. Sistema almacena la propiedad e imágenes.<br><br>**FA2: Actualizar Propiedad (CDU001.2)**<br>1. El Agente selecciona una propiedad existente.<br>2. Modifica los datos necesarios.<br>3. Sistema valida y actualiza.<br><br>**FA3: Eliminar Propiedad (CDU001.3)**<br>1. El Agente selecciona eliminar propiedad.<br>2. Sistema solicita confirmación.<br>3. Sistema elimina la propiedad y sus imágenes/favoritos/citas asociadas (cascade).<br><br>**FA4: Consultar Estadísticas (CDU001.4)**<br>1. El Agente selecciona ver dashboard.<br>2. Sistema muestra Top 3 tipos de inmuebles más buscados y Top 5 zonas con mayor oferta.<br><br>**FA5: Gestión de Tipos (CDU001.5)**<br>1. Los tipos de inmueble están definidos como categorías predeterminadas en el sistema: Casa, Apartamento, Terreno, Local Comercial.<br>2. El Agente selecciona el tipo correspondiente al crear o editar una propiedad.<br>3. El sistema valida que el tipo sea uno de los valores permitidos.<br><br>**FA6: Visualizar Propiedades (CDU001.9)**<br>1. El Agente visualiza el listado completo de sus propiedades con filtros por tipo, precio y características.<br>2. Sistema muestra información resumida de cada propiedad. |
 | **Reglas de Negocio** | RN1: Solo el agente propietario puede editar o eliminar una propiedad.<br>RN2: Toda propiedad debe tener al menos título, dirección, precio, tipo y descripción.<br>RN3: Los tipos de inmueble válidos son: Casa, Apartamento, Terreno y Local Comercial.<br>RN4: El precio debe ser un valor numérico positivo con máximo 2 decimales.<br>RN5: Al eliminar una propiedad se eliminan en cascada sus imágenes, favoritos, citas y registros asociados.<br>RN6: Las estadísticas del dashboard se calculan en base a los registros de búsqueda (tabla `record`). |
 | **Reglas de Calidad** | RC1: La creación/actualización de propiedad debe completarse en menos de 3 segundos (excluyendo carga de imágenes).<br>RC2: El dashboard de estadísticas debe cargar en menos de 2 segundos.<br>RC3: Las imágenes de propiedades deben almacenarse en un servicio externo (Supabase Storage) con URL pública accesible.<br>RC4: Los campos deben validarse tanto en frontend como en backend para garantizar integridad. |
 
@@ -1269,7 +1292,7 @@ A continuación se presenta la especificación detallada de cada caso de uso exp
 | RF006 | Actualizar propiedad | El sistema debe permitir al agente actualizar los datos de sus propiedades existentes. | Alta | CDU001.2 | Agente Inmobiliario |
 | RF007 | Eliminar propiedad | El sistema debe permitir al agente eliminar propiedades, con confirmación previa y eliminación en cascada de datos asociados. | Alta | CDU001.3 | Agente Inmobiliario |
 | RF008 | Consultar estadísticas | El sistema debe mostrar al agente un dashboard con: Top 3 de tipos de inmuebles más buscados y Top 5 de zonas con mayor oferta de propiedades. | Media | CDU001.4 | Agente Inmobiliario |
-| RF009 | Gestionar tipos de inmueble | El sistema debe permitir al agente crear, actualizar y eliminar tipos de inmueble (Casa, Apartamento, Terreno, Local Comercial). | Media | CDU001.5, CDU001.6, CDU001.7, CDU001.8 | Agente Inmobiliario |
+| RF009 | Tipos de inmueble predefinidos | El sistema define categorías fijas de inmueble (Casa, Apartamento, Terreno, Local Comercial) que el agente selecciona al crear o editar una propiedad. El sistema valida que el tipo sea válido. | Media | CDU001.5, CDU001.6, CDU001.7, CDU001.8 | Agente Inmobiliario |
 | RF010 | Visualizar propiedades (Agente) | El sistema debe permitir al agente visualizar el listado de sus propiedades con posibilidad de filtrar por tipo, precio y características. | Alta | CDU001.9 | Agente Inmobiliario |
 | RF011 | Solicitar cita | El sistema debe permitir al cliente solicitar una cita para evaluar una propiedad. | Alta | CDU002.0 | Cliente |
 | RF012 | Proponer horario de cita | El sistema debe permitir al agente proponer un horario alternativo para una solicitud de cita. | Alta | CDU002.1 | Agente Inmobiliario |
@@ -1319,7 +1342,7 @@ A continuación se presenta la especificación detallada de cada caso de uso exp
 | CDU001.2 - Actualizar Propiedad | Agente | RF006 | Formulario de Propiedad |
 | CDU001.3 - Eliminar Propiedad | Agente | RF007 | Dashboard del Agente |
 | CDU001.4 - Consultar Estadísticas | Agente | RF008 | Dashboard con Gráficas |
-| CDU001.5-8 - Gestionar Tipos | Agente | RF009 | Catálogo de Tipos |
+| CDU001.5-8 - Gestionar Tipos | Agente | RF009 | Selector de Tipo en Formulario de Propiedad |
 | CDU001.9 - Visualizar Propiedades | Agente | RF010 | Listado de Propiedades |
 | CDU002.0 - Solicitar Cita | Cliente | RF011 | Detalle de Propiedad |
 | CDU002.1 - Proponer Horario | Agente | RF012 | Gestión de Citas |
