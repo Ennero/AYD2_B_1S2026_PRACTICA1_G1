@@ -34,7 +34,7 @@ const FavoritesContainer = () => {
 
   const handleRemoveFavorite = async (propertyId) => {
     try {
-      const result = await propertyService.toggleFavorite(propertyId)
+      const result = await propertyService.removeFavorite(propertyId)
       
       if (result.success) {
         setFavorites(prevFavorites => 

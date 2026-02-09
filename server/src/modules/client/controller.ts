@@ -78,15 +78,15 @@ export class ClientController {
     deletepropertiesfavorites: RequestHandler = async (req, res) => {
         try {
             const userId = Number(req.user?.sub)
-            const id_favorite = Number(req.query.id)
-            if (!Number.isFinite(id_favorite) || id_favorite <= 0) {
+            const id_property = Number(req.query.id)
+            if (!Number.isFinite(id_property) || id_property <= 0) {
                 return response_with_error(res, {
                     statusCode: 400,
-                    message: 'Invalid favorite id',
+                    message: 'Invalid property id',
                 })
             }
 
-            const result = await this.clientService.deletepropertiesfavorites(userId, id_favorite);
+            const result = await this.clientService.deletepropertiesfavorites(userId, id_property);
             // return response_ok(res, result, 200);
             return res.json(result)
         } catch (error) {
@@ -243,12 +243,14 @@ export class ClientController {
 
     lookUpProperty: RequestHandler = async (req, res) => {
         try {
+            console.log('[LOOKUP] User ID:', req.user?.sub, 'Property ID:', req.body.id_property)
             const result = await this.clientService.lookUpPropertyFromDB(Number(req.user?.sub), req.body.id_property)
-            res.status(200).json({ message: "Información guardada..." })
+            res.status(200).json({ message: "Información guardada" })
         } catch (error) {
+            console.error('[LOOKUP] Error:', error)
             return response_with_error(res, {
                 statusCode: 400,
-                message: 'Could not filter properties',
+                message: 'Could not register property lookup',
                 details: error instanceof Error ? error.message : error,
             })
         }

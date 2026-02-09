@@ -44,6 +44,20 @@ const PropertyDetailContainer = () => {
 
   const handleAddToFavorites = async () => {
     try {
+      // Si ya está en favoritos, removemos usando el endpoint DELETE
+      if (property?.isFavorite) {
+        const result = await propertyService.removeFavorite(id)
+        if (result.success) {
+          setProperty(prev => ({
+            ...prev,
+            isFavorite: false
+          }))
+          toast.success('Eliminado de favoritos')
+        }
+        return
+      }
+
+      // Si no está en favoritos, agregamos usando el endpoint POST
       const result = await propertyService.toggleFavorite(id)
       
       if (result.success) {
