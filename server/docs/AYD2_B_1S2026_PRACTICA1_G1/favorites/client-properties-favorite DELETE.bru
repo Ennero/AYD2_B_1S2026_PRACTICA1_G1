@@ -1,0 +1,24 @@
+meta {
+  name: client/properties/favorite DELETE
+  type: http
+  seq: 2
+}
+
+delete {
+  url: {{URL}}/api/client/properties/favorite?id=2
+  body: none
+  auth: bearer
+}
+
+params:query {
+  id: 2
+}
+
+auth:bearer {
+  token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIyOCIsImVtYWlsIjoiZHZkYnJhbWlyZXo0NUBleGFtcGxlLmNvbSIsInR5cGUiOiJDTElFTlQiLCJpYXQiOjE3NzA1MDIyMzgsImV4cCI6MTc3MTEwNzAzOH0.5Jn-x266NUpJdGa0zw4Xwbd1Z_l7KeVNs2HiayfMxTU
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

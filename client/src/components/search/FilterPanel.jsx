@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { SlidersHorizontal } from 'lucide-react'
 
 /**
@@ -6,6 +6,7 @@ import { SlidersHorizontal } from 'lucide-react'
  */
 const FilterPanel = ({ onFilterChange, onSearch }) => {
   const [searchQuery, setSearchQuery] = useState('')
+  const [availableZones, setAvailableZones] = useState([])
   const [filters, setFilters] = useState({
     propertyType: '',
     minPrice: '',
@@ -16,6 +17,27 @@ const FilterPanel = ({ onFilterChange, onSearch }) => {
     minArea: '',
     maxArea: ''
   })
+
+  // Cargar zonas disponibles del backend
+  useEffect(() => {
+    const loadZones = async () => {
+      try {
+        const token = localStorage.getItem('authToken')
+        const response = await fetch('http://localhost:3000/api/client/zones', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        })
+        if (response.ok) {
+          const data = await response.json()
+          setAvailableZones(data.zones || [])
+        }
+      } catch (error) {
+        console.error('Error cargando zonas:', error)
+      }
+    }
+    loadZones()
+  }, [])
 
   const handleChange = (field, value) => {
     const newFilters = { ...filters, [field]: value }
@@ -93,8 +115,8 @@ const FilterPanel = ({ onFilterChange, onSearch }) => {
             <option value="">Todos los tipos</option>
             <option value="casa">Casa</option>
             <option value="apartamento">Apartamento</option>
-            <option value="loft">Loft</option>
-            <option value="chalet">Chalet</option>
+            <option value="terreno">Terreno</option>
+            <option value="local">Local Comercial</option>
           </select>
         </div>
 
@@ -139,12 +161,11 @@ const FilterPanel = ({ onFilterChange, onSearch }) => {
             }}
           >
             <option value="">Todas las zonas</option>
-            <option value="centro">Centro</option>
-            <option value="malasaña">Malasaña</option>
-            <option value="retiro">Retiro</option>
-            <option value="salamanca">Salamanca</option>
-            <option value="las rozas">Las Rozas</option>
-            <option value="moraleja">La Moraleja</option>
+            {availableZones.map((zone) => (
+              <option key={zone} value={zone}>
+                {zone}
+              </option>
+            ))}
           </select>
         </div>
 

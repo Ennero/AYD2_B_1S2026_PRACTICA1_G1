@@ -1,0 +1,28 @@
+meta {
+  name: api/client/appointment/acknowledge POST
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{URL}}/api/client/appointment/acknowledge
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIyOCIsImVtYWlsIjoiZHZkYnJhbWlyZXo0NUBleGFtcGxlLmNvbSIsInR5cGUiOiJDTElFTlQiLCJpYXQiOjE3NzA1MDIyMzgsImV4cCI6MTc3MTEwNzAzOH0.5Jn-x266NUpJdGa0zw4Xwbd1Z_l7KeVNs2HiayfMxTU
+}
+
+body:json {
+  {
+    "id_appointment": 28,
+    "status": "accepted",
+    "justification": "Porque si quiero"
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
