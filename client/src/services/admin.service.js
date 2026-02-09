@@ -36,7 +36,7 @@ class GetAgentsCommand extends AgentCommand {
 
       // Mapear la respuesta del backend al formato del frontend
       if (result.ok && result.data && result.data.list) {
-        return result.data.list.map(agent => ({
+        const agents = result.data.list.map(agent => ({
           id: agent.id_user,
           email: agent.email,
           firstName: agent.name,
@@ -44,6 +44,9 @@ class GetAgentsCommand extends AgentCommand {
           phone: agent.phone,
           photo: agent.url_img || '/images/logo-HomeFinder.png',
         }))
+        
+        // Ordenar por ID ascendente
+        return agents.sort((a, b) => a.id - b.id)
       }
 
       return []
@@ -70,20 +73,20 @@ class CreateAgentCommand extends AgentCommand {
         throw new Error('No se encontró token de autenticación')
       }
 
-      // Convertir imagen a base64 si existe
-      let imgBase64 = ''
-      if (this.agentData.photo) {
-        imgBase64 = await this.fileToBase64(this.agentData.photo)
-      }
-
       // Mapear datos del frontend al formato del backend
       const payload = {
         email: this.agentData.email,
         name: this.agentData.firstName,
         last_name: this.agentData.lastName,
         phone: this.agentData.phone,
-        img_base64: imgBase64,
+        img_base64: null, // Por defecto null
         type: 'agent'
+      }
+
+      // Si hay una foto, convertir a base64
+      if (this.agentData.photo) {
+        const imgBase64 = await this.fileToBase64(this.agentData.photo)
+        payload.img_base64 = imgBase64
       }
 
       const response = await fetch(`${this.apiUrl}/admin/agents`, {
@@ -97,13 +100,15 @@ class CreateAgentCommand extends AgentCommand {
 
       if (!response.ok) {
         const errorData = await response.json()
-        throw new Error(errorData.message || `Error ${response.status}: ${response.statusText}`)
+        const errorMessage = errorData.details || errorData.message || `Error ${response.status}: ${response.statusText}`
+        throw new Error(errorMessage)
       }
 
       const result = await response.json()
 
       if (!result.ok) {
-        throw new Error(result.message || 'Error al crear el agente')
+        const errorMessage = result.details || result.message || 'Error al crear el agente'
+        throw new Error(errorMessage)
       }
 
       // Mapear la respuesta del backend al formato del frontend
@@ -149,7 +154,51 @@ class UpdateAgentCommand extends AgentCommand {
 
   async execute() {
     try {
-      // Simulación de actualización de agente
+      const token = localStorage.getItem('authToken')
+      
+      if (!token) {
+        throw new Error('No se encontró token de autenticación')
+      }
+
+      // Mapear datos del frontend al formato del backend
+      const payload = {
+        id_user: this.agentId,
+        email: this.agentData.email,
+        name: this.agentData.firstName,
+        last_name: this.agentData.lastName,
+        phone: this.agentData.phone,
+        type: 'agent'
+      }
+
+      // Solo incluir img_base64 si hay una nueva foto
+      if (this.agentData.photo) {
+        const imgBase64 = await this.fileToBase64(this.agentData.photo)
+        payload.img_base64 = imgBase64
+      }
+
+      const response = await fetch(`${this.apiUrl}/admin/agents/${this.agentId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        const errorMessage = errorData.details || errorData.message || `Error ${response.status}: ${response.statusText}`
+        throw new Error(errorMessage)
+      }
+
+      const result = await response.json()
+
+      if (!result.ok) {
+        const errorMessage = result.details || result.message || 'Error al editar el agente'
+        throw new Error(errorMessage)
+      }
+
+      // Retornar el agente actualizado
       return {
         id: this.agentId,
         ...this.agentData,
@@ -158,6 +207,20 @@ class UpdateAgentCommand extends AgentCommand {
       console.error('Error al actualizar agente:', error)
       throw error
     }
+  }
+
+  // Método auxiliar para convertir File a base64
+  fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        // Extraer solo la parte base64 (sin el prefijo data:image/...)
+        const base64 = reader.result.split(',')[1]
+        resolve(base64)
+      }
+      reader.onerror = reject
+      reader.readAsDataURL(file)
+    })
   }
 }
 
@@ -187,13 +250,15 @@ class DeleteAgentCommand extends AgentCommand {
 
       if (!response.ok) {
         const errorData = await response.json()
-        throw new Error(errorData.message || `Error ${response.status}: ${response.statusText}`)
+        const errorMessage = errorData.details || errorData.message || `Error ${response.status}: ${response.statusText}`
+        throw new Error(errorMessage)
       }
 
       const result = await response.json()
 
       if (!result.ok) {
-        throw new Error(result.message || 'Error al eliminar el agente')
+        const errorMessage = result.details || result.message || 'Error al eliminar el agente'
+        throw new Error(errorMessage)
       }
 
       return { success: true, deletedId: this.agentId }

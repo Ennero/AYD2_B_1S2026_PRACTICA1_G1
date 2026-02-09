@@ -25,7 +25,8 @@ const AgentManagementContainer = () => {
       const data = await AgentService.getAgents()
       setAgents(data)
     } catch (error) {
-      toast.error('Error al cargar los agentes')
+      const errorMessage = error.message || 'Error al cargar los agentes'
+      toast.error(errorMessage)
     } finally {
       setLoading(false)
     }
@@ -73,10 +74,11 @@ const AgentManagementContainer = () => {
     try {
       if (selectedAgent) {
         // Editar agente
-        const updatedAgent = await AgentService.updateAgent(selectedAgent.id, formData)
-        setAgents(prev =>
-          prev.map(a => (a.id === selectedAgent.id ? { ...a, ...formData, ...updatedAgent } : a))
-        )
+        await AgentService.updateAgent(selectedAgent.id, formData)
+        
+        // Recargar todos los agentes para obtener los datos actualizados del servidor
+        await loadAgents()
+        
         toast.success(
           `Agente editado exitosamente — ID: ${selectedAgent.id}, ${formData.firstName} ${formData.lastName}`,
           { duration: 4000 }
@@ -84,7 +86,11 @@ const AgentManagementContainer = () => {
       } else {
         // Crear agente
         const newAgent = await AgentService.createAgent(formData)
-        setAgents(prev => [...prev, newAgent])
+        setAgents(prev => {
+          const updated = [...prev, newAgent]
+          // Ordenar por ID después de crear
+          return updated.sort((a, b) => a.id - b.id)
+        })
         
         // Si hay contraseña temporal, mostrar el modal
         if (newAgent.temporaryPassword) {
@@ -100,7 +106,8 @@ const AgentManagementContainer = () => {
       }
       handleCloseModals()
     } catch (error) {
-      toast.error(selectedAgent ? 'Error al editar el agente' : 'Error al crear el agente')
+      const errorMessage = error.message || (selectedAgent ? 'Error al editar el agente' : 'Error al crear el agente')
+      toast.error(errorMessage, { duration: 4000 })
     } finally {
       setActionLoading(false)
     }
@@ -119,7 +126,8 @@ const AgentManagementContainer = () => {
       )
       handleCloseModals()
     } catch (error) {
-      toast.error('Error al eliminar el agente')
+      const errorMessage = error.message || 'Error al eliminar el agente'
+      toast.error(errorMessage, { duration: 4000 })
     } finally {
       setActionLoading(false)
     }
