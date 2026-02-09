@@ -2,14 +2,14 @@ import DB from '../../db/db.ts'
 import { hashPassword } from '../../lib/security.ts'
 import { normalizeEmail } from '../../utils/strings.ts'
 import { UserType } from '../../store/enums.ts'
-import { title } from 'node:process'
-import { me } from '../auth/controller.ts'
+import { Prisma } from '../../generated/prisma/client.ts'
+import { InvitationState } from '../../store/enums.ts'
 
 export type UpdateClientInput = {
 	id_user?: number
 	name?: string
 	last_name?: string,
-    gender?: string,
+	gender?: string,
 	phone?: string
 	email?: string
 	url_img?: string | null
@@ -18,38 +18,38 @@ export type UpdateClientInput = {
 
 export class ClientService {
 	// =============================== DAVID ===============================
-	async getprofile(id_user : number) {
-        console.log('Getting profile for user id:', id_user)  
-        // Casteo de sting a numero, por si acaso
-        id_user = Number(id_user)
-        const user = await DB.uSER.findUnique({
-            where: { id_user: id_user },
-            select: { id_user: true, name: true, last_name: true, gender: true, phone: true, email: true, url_img: true, password: true },
-        })
+	async getprofile(id_user: number) {
+		console.log('Getting profile for user id:', id_user)
+		// Casteo de sting a numero, por si acaso
+		id_user = Number(id_user)
+		const user = await DB.uSER.findUnique({
+			where: { id_user: id_user },
+			select: { id_user: true, name: true, last_name: true, gender: true, phone: true, email: true, url_img: true, password: true },
+		})
 
-        if (!user){
-            throw new Error('User not found')
-        }
+		if (!user) {
+			throw new Error('User not found')
+		}
 		return {
-            id_user: user.id_user,
-            name: user.name,
-            last_name: user.last_name,
-            gender: (Number(user.gender) === 1)? 'Male' : 'Female',
-            phone: user.phone, 
-            email: user.email,
-            url_img: user.url_img,
-            password: user.password
-        }
+			id_user: user.id_user,
+			name: user.name,
+			last_name: user.last_name,
+			gender: (Number(user.gender) === 1) ? 'Male' : 'Female',
+			phone: user.phone,
+			email: user.email,
+			url_img: user.url_img,
+			password: user.password
+		}
 	}
 
-    async updateProfile(clientid: number, input: UpdateClientInput) {
+	async updateProfile(clientid: number, input: UpdateClientInput) {
 		if (input.id_user !== undefined && Number(input.id_user) !== clientid) {
 			throw new Error('id_user in body does not match :id param')
 		}
 
 		const existingClient = await DB.uSER.findUnique({
 			where: { id_user: clientid },
-			select: { id_user: true, name: true, last_name:true, gender: true, phone:true, email: true, url_img: true, password: true, type: true },
+			select: { id_user: true, name: true, last_name: true, gender: true, phone: true, email: true, url_img: true, password: true, type: true },
 		})
 
 		if (!existingClient) throw new Error('Client not found')
@@ -73,32 +73,32 @@ export class ClientService {
 			data: {
 				...(input.name !== undefined ? { name: input.name } : {}),
 				...(input.last_name !== undefined ? { last_name: input.last_name } : {}),
-                ...(input.gender !== undefined ? { gender: (input.gender.toLowerCase() === 'male' ? 1 : 2) } : {}),
+				...(input.gender !== undefined ? { gender: (input.gender.toLowerCase() === 'male' ? 1 : 2) } : {}),
 				...(input.phone !== undefined ? { phone: String(input.phone) } : {}),
-                ...(input.email !== undefined ? { email: normalizedEmail } : {}),
+				...(input.email !== undefined ? { email: normalizedEmail } : {}),
 				...(input.url_img !== undefined ? { url_img: input.url_img } : {}),
-                ...(input.password !== undefined ? { password: await hashPassword(input.password) } : {}),
+				...(input.password !== undefined ? { password: await hashPassword(input.password) } : {}),
 				type: UserType.Client,
 			},
 			select: { id_user: true },
 		})
 
 		return {
-			message: 'Cliente editado con exito',
+			message: 'Datos de perfil actualizados correctamente',
 			id_user: updated.id_user,
 		}
 	}
 
 	async propertiesfavorite(id_user: number) {
-		console.log('Getting profile for user id:', id_user);  
+		console.log('Getting profile for user id:', id_user);
 		id_user = Number(id_user);
 
 		const properties = await DB.favorite.findMany({
 			where: { id_client: id_user },
-			include: { property: true}
+			include: { property: true }
 		})
 
-		if (!properties){
+		if (!properties) {
 			throw new Error('No favorite properties found for this user')
 		}
 
@@ -115,12 +115,23 @@ export class ClientService {
 
 	}
 
-	async deletepropertiesfavorites(id_user: number, id_favorite: number) {
+	async deletepropertiesfavorites(id_user: number, id_property: number) {
 		id_user = Number(id_user);
-		id_favorite = Number(id_favorite);
+		id_property = Number(id_property);
+
+		if (!Number.isFinite(id_property) || id_property <= 0) {
+			throw new Error('Invalid favorite id')
+		}
+
+		if (!Number.isFinite(id_user) || id_user <= 0) {
+			throw new Error('Invalid user id')
+		}
 
 		const deleteFavorite = await DB.favorite.deleteMany({
-			where: { id_favorite: id_favorite, id_client: id_user }
+			where: {
+				id_client: id_user,
+				id_property: id_property
+			}
 		})
 
 		if (deleteFavorite.count === 0) {
@@ -128,9 +139,311 @@ export class ClientService {
 		}
 
 		return {
-			message: 'Favorite property deleted successfully',
-			id_favorite: id_favorite
+			message: 'Propiedad eliminada de favoritos',
+			id_property: id_property
+		}
+	}
+
+	async getpropertybyid(id_user: number, id_property: number) {
+		id_user = Number(id_user);
+		id_property = Number(id_property);
+
+		const property = await DB.property.findUnique({
+			where: { id_property: id_property },
+			include: {
+				image: true,
+				// Traemos al agente directamente
+				USER: true,
+				// Traemos el favorito solo si coincide con este usuario
+				favorite: {
+					where: { id_client: id_user }
+				}
+			}
+		});
+
+		if (!property) throw new Error('Property not found');
+
+		return {
+			id_property: property.id_property,
+			title: property.title,
+			address: property.address,
+			price: property.price,
+			description: property.description,
+			zone: property.zone,
+			num_rooms: property.num_rooms,
+			num_bathrooms: property.num_bathrooms,
+			square_meters: property.square_meters,
+			type: property.type,
+			image: property.image.map(img => img.url_img),
+			already_in_favorite: property.favorite.length > 0,
+			estate_agent: property.USER.name,
+		}
+	}
+
+	async addpropertytofavorite(id_user: number, id_property: number) {
+		id_user = Number(id_user);
+		id_property = Number(id_property);
+
+		const existingFavorite = await DB.favorite.findFirst({
+			where: { id_client: id_user, id_property: id_property }
+		})
+
+		if (existingFavorite) {
+			throw new Error('Property already in favorites')
+		}
+
+		// Anadimos creando la tabla de favoritos
+		const newFavorite = await DB.favorite.create({
+			data: {
+				created_at: new Date().toISOString(),
+				id_client: id_user,
+				id_property: id_property
+			}
+		})
+
+		return {
+			message: 'Propiedad añadida a favoritos',
+			id_favorite: newFavorite.id_favorite
+		}
+	}
+
+	async getallappointments(id_user: number) {
+		id_user = Number(id_user);
+
+		const appointments = await DB.invitation.findMany({
+			where: { id_client: id_user },
+			include: {
+				property: {
+					include: {
+						image: {
+							take: 1, // Solo traemos una imagen para mostrar en la lista
+							select: { url_img: true }
+						},
+						USER: true, // Traemos el agente para mostrar su nombre en la lista de citas
+					}
+				},
+			}
+		})
+
+		if (!appointments || appointments.length === 0) {
+			throw new Error('No appointments found for this user')
+		}
+		return appointments.map(app => ({
+			id_invitation: app.id_invitation,
+			id_property: app.id_property,
+			id_client: app.id_client,
+			title: app.property.title,
+			address: app.property.address,
+			id_agent: app.property.id_agent,
+			agent_name: app.property.USER.name,
+			img: app.property.image[0]?.url_img || 'placeholder.jpg',
+			status: app.status,
+			description: app.description,
+			expected_date: app.expected_date,
+			is_accepted: app.is_accepted?.toString() === '1' ? true : app.is_accepted?.toString() === '0' ? false : null,
+			justification: app.justification,
+		}))
+	}
+
+	async getfinalizedappointments(id_user: number) {
+		id_user = Number(id_user);
+
+		id_user = Number(id_user);
+
+		const appointments = await DB.invitation.findMany({
+			where: {
+				id_client: id_user,
+				OR: [
+					{ status: InvitationState.Rejected },
+					{ status: InvitationState.Accepted }
+				]
+			},
+			include: {
+				property: {
+					include: {
+						image: {
+							take: 1,
+							select: { url_img: true }
+						},
+						USER: true,
+					}
+				},
+			}
+		})
+
+		if (!appointments || appointments.length === 0) {
+			throw new Error('No appointments found for this user')
+		}
+		return appointments.map(app => ({
+			id_invitation: app.id_invitation,
+			id_property: app.id_property,
+			id_client: app.id_client,
+			title: app.property.title,
+			address: app.property.address,
+			id_agent: app.property.id_agent,
+			agent_name: app.property.USER.name,
+			img: app.property.image[0]?.url_img || 'placeholder.jpg',
+			status: app.status,
+			description: app.description,
+			expected_date: app.expected_date,
+			is_accepted: app.is_accepted?.toString() === '1' ? true : app.is_accepted?.toString() === '0' ? false : null,
+			justification: app.justification,
+		}))
+	}
+
+	async getpendingappointments(id_user: number) {
+		id_user = Number(id_user);
+
+		const appointments = await DB.invitation.findMany({
+			where: { id_client: id_user, status: InvitationState.Pending },
+			include: {
+				property: {
+					include: {
+						image: {
+							take: 1,
+							select: { url_img: true }
+						},
+						USER: true,
+					}
+				},
+			}
+		})
+
+		if (!appointments || appointments.length === 0) {
+			throw new Error('No appointments found for this user')
+		}
+		return appointments.map(app => ({
+			id_invitation: app.id_invitation,
+			id_property: app.id_property,
+			id_client: app.id_client,
+			title: app.property.title,
+			address: app.property.address,
+			id_agent: app.property.id_agent,
+			agent_name: app.property.USER.name,
+			img: app.property.image[0]?.url_img || 'placeholder.jpg',
+			status: app.status,
+			description: app.description,
+			expected_date: app.expected_date,
+			is_accepted: app.is_accepted?.toString() === '1' ? true : app.is_accepted?.toString() === '0' ? false : null,
+			justification: app.justification,
+		}))
+	}
+
+	async getacknowledgeappointments(id_user: number) {
+		id_user = Number(id_user);
+
+		const appointments = await DB.invitation.findMany({
+			where: { id_client: id_user, status: InvitationState.Acknowledge },
+			include: {
+				property: {
+					include: {
+						image: {
+							take: 1,
+							select: { url_img: true }
+						},
+						USER: true,
+					}
+				},
+			}
+		})
+
+		if (!appointments || appointments.length === 0) {
+			throw new Error('No appointments found for this user')
+		}
+		return appointments.map(app => ({
+			id_invitation: app.id_invitation,
+			id_property: app.id_property,
+			id_client: app.id_client,
+			title: app.property.title,
+			address: app.property.address,
+			id_agent: app.property.id_agent,
+			agent_name: app.property.USER.name,
+			img: app.property.image[0]?.url_img || 'placeholder.jpg',
+			status: app.status,
+			description: app.description,
+			expected_date: app.expected_date,
+			is_accepted: app.is_accepted?.toString() === '1' ? true : app.is_accepted?.toString() === '0' ? false : null,
+			justification: app.justification,
+		}))
+	}
+
+	async acknowledgeappointment(id_user: number, id_property: number, status: string, justification?: string) {
+
+		const invitation = await DB.invitation.findFirst({
+			where: { id_client: id_user, id_property: id_property, status: InvitationState.Acknowledge }
+		})
+
+		if (!invitation) {
+			throw new Error('Appointment not found')
+		}
+
+		await DB.invitation.updateMany({
+			where: { id_client: id_user, id_property: id_property, status: InvitationState.Acknowledge },
+			data: {
+				status: status.toUpperCase(),
+				justification: justification || null,
+				is_accepted: status.toLowerCase() === 'accepted' ? 1 : 0,
+			}
+		})
+
+		return {
+			message: (status.toLowerCase() === 'accepted' ? 'Cita aceptada' : 'La cita ha sido rechazada'),
 		}
 	}
 	// =============================== DAVID ===============================
+	async filterFromDB(title: string | undefined, type: string | undefined, price: number | undefined, num_rooms: number | undefined, square_meters: number | undefined, num_bathrooms: number | undefined, asc_price: boolean | undefined, asc_title: boolean | undefined) {
+
+		let query: Prisma.Sql[] = [];
+		query.push(Prisma.sql`select p.id_property,
+       p.title,
+       (select image.url_img from image inner join property on image.id_property = property.id_property where property.id_property = p.id_property limit 1),
+       p.type,
+       p.zone,
+       p.address,
+       p.price,
+       p.state
+from property p where `)
+
+		if (title) {
+			query.push(Prisma.sql`p.title ilike ${'%' + title + '%'} and`)
+		}
+		if (type) {
+			query.push(Prisma.sql`p.type = ${type} and`)
+		}
+		if (price) {
+			query.push(Prisma.sql`p.price = ${price} and`)
+		}
+		if (num_rooms) {
+			query.push(Prisma.sql`p.num_rooms = ${num_rooms} and`)
+		}
+		if (square_meters) {
+			query.push(Prisma.sql`p.square_meters = ${square_meters} and`)
+		}
+		if (num_bathrooms) {
+			query.push(Prisma.sql`p.num_bathrooms = ${num_bathrooms} and`)
+		}
+		query.push(Prisma.sql`p.state = 'AVAILABLE'`)
+		query.push(Prisma.sql`order by `)
+		if (asc_price !== undefined) {
+			query.push(Prisma.sql`p.price ${asc_price ? Prisma.raw('') : Prisma.raw('DESC')},`)
+		}
+		if (asc_title !== undefined) {
+			query.push(Prisma.sql`p.title ${asc_title ? Prisma.raw('') : Prisma.raw('DESC')},`)
+		}
+		query.push(Prisma.sql`p.id_property`)
+		const result = await DB.$queryRaw<unknown[]>(Prisma.join(query, ' '))
+		return result
+
+	}
+
+	async lookUpPropertyFromDB(idUser: number, id_property: number) {
+		await DB.record.create({
+			data: {
+				created_at: new Date().toISOString(),
+				id_client: idUser,
+				id_property: id_property
+			}
+		})
+	}
+
 }
