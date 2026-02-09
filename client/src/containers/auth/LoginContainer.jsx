@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LoginForm } from '../../components/auth';
+import { authService } from '../../services';
 import toast from 'react-hot-toast';
 
 const LoginContainer = () => {
@@ -38,22 +39,35 @@ const LoginContainer = () => {
     setLoading(true);
     
     toast.promise(
-      new Promise((resolve, reject) => {
-        setTimeout(() => {
-          // Simulación de login
-          if (email === 'test@test.com' && password === 'Test1234') {
-            resolve();
-          } else {
-            reject();
-          }
-        }, 2000);
-      }),
+      authService.login(email, password),
       {
         loading: 'Verificando credenciales...',
         success: '¡Bienvenido! Redirigiendo...',
         error: 'Credenciales incorrectas',
       }
-    ).finally(() => {
+    ).then((result) => {
+      if (result.success && result.user.token) {
+        // Decodificar el token para obtener el tipo de usuario
+        try {
+          const payload = JSON.parse(atob(result.user.token.split('.')[1]))
+          const userType = payload.type
+          
+          setTimeout(() => {
+            // Redirigir según el rol del usuario
+            if (userType === 'AGENT') {
+              navigate('/agent/dashboard')
+            } else if (userType === 'ADMIN') {
+              navigate('/admin/agents')
+            } else {
+              navigate('/search')
+            }
+          }, 1500)
+        } catch (error) {
+          console.error('Error decodificando token:', error)
+          navigate('/')
+        }
+      }
+    }).finally(() => {
       setLoading(false);
     });
   };

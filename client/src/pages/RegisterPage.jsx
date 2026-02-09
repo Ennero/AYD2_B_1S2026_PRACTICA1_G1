@@ -9,7 +9,7 @@ const RegisterPage = () => {
       <div className="flex-1 lg:flex-none lg:w-2/5 flex items-center justify-center px-8 py-12 bg-white overflow-y-auto relative animate-slideInLeft">
         <div className="w-full max-w-md relative z-10 transform-gpu">
           {/* Logo */}
-          <div className="flex items-center gap-3 mb-8 transform hover:scale-105 transition-all duration-500" style={{ transformStyle: 'preserve-3d' }}>
+          <Link to="/" className="flex items-center gap-3 mb-8 transform hover:scale-105 transition-all duration-500 cursor-pointer w-fit" style={{ transformStyle: 'preserve-3d' }}>
             <img 
               src="/images/logo-HomeFinder.png" 
               alt="HomeFinder Pro" 
@@ -18,7 +18,7 @@ const RegisterPage = () => {
             <span className="text-2xl font-bold text-gray-800 animate-slideInRight">
               HomeFinder <span className="text-blue-600">Pro</span>
             </span>
-          </div>
+          </Link>
 
           {/* Título */}
           <div className="mb-8 animate-fadeInUp">
