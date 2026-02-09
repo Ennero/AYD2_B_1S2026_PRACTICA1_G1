@@ -95,7 +95,11 @@ export class ClientService {
 
 		const properties = await DB.favorite.findMany({
 			where: { id_client: id_user },
-			include: { property: true }
+			include: { 
+				property: {
+					include: { image: true }
+				}
+			}
 		})
 
 		if (!properties) {
@@ -110,7 +114,10 @@ export class ClientService {
 			num_bathrooms: fav.property.num_bathrooms,
 			square_meters: fav.property.square_meters,
 			address: fav.property.address,
-			id_property: fav.id_property
+			id_property: fav.id_property,
+			url_img: fav.property.image?.[0]?.url_img || null,
+			zone: fav.property.zone,
+			type: fav.property.type
 		}))
 
 	}
@@ -120,17 +127,18 @@ export class ClientService {
 		id_property = Number(id_property);
 
 		if (!Number.isFinite(id_property) || id_property <= 0) {
-			throw new Error('Invalid favorite id')
+			throw new Error('Invalid property id')
 		}
 
 		if (!Number.isFinite(id_user) || id_user <= 0) {
 			throw new Error('Invalid user id')
 		}
 
+		// Eliminar usando id_property + id_client
 		const deleteFavorite = await DB.favorite.deleteMany({
 			where: {
-				id_client: id_user,
-				id_property: id_property
+				id_property: id_property,
+				id_client: id_user
 			}
 		})
 
@@ -195,7 +203,7 @@ export class ClientService {
 		// Anadimos creando la tabla de favoritos
 		const newFavorite = await DB.favorite.create({
 			data: {
-				created_at: new Date().toISOString(),
+				created_at: new Date(),
 				id_client: id_user,
 				id_property: id_property
 			}
@@ -450,9 +458,22 @@ from property p where `)
 	}
 
 	async lookUpPropertyFromDB(idUser: number, id_property: number) {
+		idUser = Number(idUser);
+		id_property = Number(id_property);
+
+		console.log('[SERVICE] lookUpProperty - User:', idUser, 'Property:', id_property);
+
+		if (!Number.isFinite(idUser) || idUser <= 0) {
+			throw new Error('Invalid user id')
+		}
+
+		if (!Number.isFinite(id_property) || id_property <= 0) {
+			throw new Error('Invalid property id')
+		}
+
 		await DB.record.create({
 			data: {
-				created_at: new Date().toISOString(),
+				created_at: new Date(),
 				id_client: idUser,
 				id_property: id_property
 			}

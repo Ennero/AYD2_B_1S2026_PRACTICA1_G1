@@ -326,6 +326,8 @@ class PropertyLookupCommand extends PropertyCommand {
         throw new Error('No hay sesión activa')
       }
 
+      console.log('[PROPERTY] Registrando lookup para propiedad:', this.propertyId)
+
       const response = await fetch(`${this.apiUrl}/client/property/lookup`, {
         method: 'POST',
         headers: {
@@ -333,13 +335,15 @@ class PropertyLookupCommand extends PropertyCommand {
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          id_property: this.propertyId
+          id_property: Number(this.propertyId)
         })
       })
 
       const data = await response.json()
+      console.log('[PROPERTY] Lookup response:', data)
 
       if (!response.ok) {
+        console.error('[PROPERTY] Lookup error:', data)
         throw new Error(data.message || 'Error al registrar visita')
       }
 
@@ -367,16 +371,96 @@ class GetFavoritesCommand extends PropertyCommand {
 
   async execute() {
     try {
-      await new Promise(resolve => setTimeout(resolve, 800))
-      
-      
+      const token = localStorage.getItem('authToken')
+      if (!token) {
+        throw new Error('No hay sesión activa')
+      }
+
+      const response = await fetch(`${this.apiUrl}/client/properties/favorite`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Error al cargar favoritos')
+      }
+
+      // Transformar datos del backend al formato del frontend
+      const backendToFrontendTypeMap = {
+        'APARTMENT': 'apartamento',
+        'HOUSE': 'casa',
+        'LAND': 'terreno',
+        'RETAIL SPACE': 'local'
+      }
+
+      const favorites = (data.favorites || []).map(fav => ({
+        id: fav.id_property,
+        favoriteId: fav.id_favorite,
+        title: fav.title,
+        price: fav.price,
+        location: fav.address,
+        zone: fav.zone || '',
+        image: fav.url_img || '/images/home-background.png',
+        bedrooms: Number(fav.num_rooms) || 0,
+        bathrooms: Number(fav.num_bathrooms) || 0,
+        area: Number(fav.square_meters) || 0,
+        isFavorite: true,
+        propertyType: backendToFrontendTypeMap[fav.type] || 'apartamento'
+      }))
+
       return {
         success: true,
-        properties: [],
-        total: 0
+        properties: favorites,
+        total: data.total || favorites.length
       }
     } catch (error) {
-      throw new Error('Error al cargar favoritos')
+      console.error('[PROPERTY] Error al cargar favoritos:', error)
+      throw new Error(error.message || 'Error al cargar favoritos')
+    }
+  }
+}
+
+// Comando: Eliminar favorito
+class RemoveFavoriteCommand extends PropertyCommand {
+  constructor(apiUrl, propertyId) {
+    super()
+    this.apiUrl = apiUrl
+    this.propertyId = propertyId
+  }
+
+  async execute() {
+    try {
+      const token = localStorage.getItem('authToken')
+      if (!token) {
+        throw new Error('No hay sesión activa')
+      }
+
+      const response = await fetch(`${this.apiUrl}/client/properties/favorite?id=${this.propertyId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Error al eliminar favorito')
+      }
+
+      return {
+        success: true,
+        message: data.message || 'Propiedad eliminada de favoritos'
+      }
+    } catch (error) {
+      console.error('[PROPERTY] Error al eliminar favorito:', error)
+      throw error
     }
   }
 }
@@ -465,6 +549,11 @@ const propertyService = {
     return await this.invoker.executeCommand(command)
   },
 
+  async removeFavorite(propertyId) {
+    const command = new RemoveFavoriteCommand(API_URL, propertyId)
+    return await this.invoker.executeCommand(command)
+  },
+
   async requestAppointment(propertyId, appointmentData) {
     const command = new RequestAppointmentCommand(API_URL, propertyId, appointmentData)
     return await this.invoker.executeCommand(command)
@@ -485,6 +574,7 @@ export {
   SearchPropertiesCommand,
   ToggleFavoriteCommand,
   GetFavoritesCommand,
+  RemoveFavoriteCommand,
   PropertyLookupCommand,
   RequestAppointmentCommand,
   PropertyCommandInvoker
