@@ -14,49 +14,39 @@ class GetAgentsCommand extends AgentCommand {
 
   async execute() {
     try {
-      //Quemados mientras
-      return [
-        {
-          id: 1,
-          email: 'carlos.mendez@homefinder.com',
-          firstName: 'Carlos',
-          lastName: 'Méndez',
-          phone: '5551-1234',
-          photo: '/images/logo-HomeFinder.png',
-        },
-        {
-          id: 2,
-          email: 'maria.lopez@homefinder.com',
-          firstName: 'María',
-          lastName: 'López',
-          phone: '5552-5678',
-          photo: '/images/logo-HomeFinder.png',
-        },
-        {
-          id: 3,
-          email: 'andres.garcia@homefinder.com',
-          firstName: 'Andrés',
-          lastName: 'García',
-          phone: '5553-9012',
-          photo: '/images/logo-HomeFinder.png',
-        },
-        {
-          id: 4,
-          email: 'lucia.fernandez@homefinder.com',
-          firstName: 'Lucía',
-          lastName: 'Fernández',
-          phone: '5554-3456',
-          photo: '/images/logo-HomeFinder.png',
-        },
-        {
-          id: 5,
-          email: 'roberto.diaz@homefinder.com',
-          firstName: 'Roberto',
-          lastName: 'Díaz',
-          phone: '5555-7890',
-          photo: '/images/logo-HomeFinder.png',
-        },
-      ]
+      const token = localStorage.getItem('authToken')
+      
+      if (!token) {
+        throw new Error('No se encontró token de autenticación')
+      }
+
+      const response = await fetch(`${this.apiUrl}/admin/agents`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      })
+
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`)
+      }
+
+      const result = await response.json()
+
+      // Mapear la respuesta del backend al formato del frontend
+      if (result.ok && result.data && result.data.list) {
+        return result.data.list.map(agent => ({
+          id: agent.id_user,
+          email: agent.email,
+          firstName: agent.name,
+          lastName: agent.last_name,
+          phone: agent.phone,
+          photo: agent.url_img || '/images/logo-HomeFinder.png',
+        }))
+      }
+
+      return []
     } catch (error) {
       console.error('Error al obtener agentes:', error)
       throw error
