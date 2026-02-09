@@ -23,42 +23,67 @@ const RegisterContainer = () => {
     setIsLoading(true)
 
     try {
-      const result = await authService.register(formData)
+      toast.loading('Creando tu cuenta...');
+      const result = await authService.register(formData);
+      
+      toast.dismiss();
       
       if (result.success) {
-        toast.success('¡Cuenta creada exitosamente!')
+        toast.success('¡Cuenta creada exitosamente! Ahora inicia sesión', {
+          duration: 4000,
+          icon: '🎉',
+          style: {
+            background: '#10b981',
+          },
+        });
         
-        // Si recibimos token, redirigir según el rol
-        if (result.token) {
-          try {
-            const payload = JSON.parse(atob(result.token.split('.')[1]))
-            const userType = payload.type
-            
-            setTimeout(() => {
-              if (userType === 'AGENT') {
-                navigate('/agent/dashboard')
-              } else if (userType === 'ADMIN') {
-                navigate('/admin/agents')
-              } else {
-                navigate('/search')
-              }
-            }, 1500)
-          } catch (error) {
-            console.error('Error decodificando token:', error)
-            navigate('/login')
-          }
-        } else {
-          // Si no hay token, ir al login
-          setTimeout(() => {
-            navigate('/login')
-          }, 1500)
-        }
+        // Redirigir al login después del registro exitoso
+        setTimeout(() => {
+          navigate('/login');
+        }, 1500);
       }
     } catch (error) {
-      console.error('Error en registro:', error)
-      toast.error(error.message || 'Error al crear la cuenta')
+      toast.dismiss();
+      console.error('Error en registro:', error);
+      
+      // Mensajes de error específicos
+      const errorMsg = error.message?.toLowerCase();
+      
+      if (errorMsg?.includes('email already registered') || errorMsg?.includes('email already exists')) {
+        toast.error('Este correo ya está registrado', {
+          duration: 5000,
+          icon: '📧',
+          style: {
+            background: '#ef4444',
+          },
+        });
+      } else if (errorMsg?.includes('validation error') || errorMsg?.includes('validation')) {
+        toast.error('Por favor verifica que todos los campos sean correctos', {
+          duration: 5000,
+          icon: '⚠️',
+        });
+      } else if (errorMsg?.includes('email') && errorMsg?.includes('valid')) {
+        toast.error('El formato del correo electrónico no es válido', {
+          duration: 5000,
+          icon: '📧',
+        });
+      } else if (errorMsg?.includes('password')) {
+        toast.error('La contraseña debe tener al menos 6 caracteres', {
+          duration: 5000,
+          icon: '🔒',
+        });
+      } else if (errorMsg?.includes('phone')) {
+        toast.error('El número de teléfono debe tener 8 o 9 dígitos', {
+          duration: 5000,
+          icon: '📱',
+        });
+      } else {
+        toast.error(error.message || 'Error al crear la cuenta', {
+          duration: 5000,
+        });
+      }
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
   }
 
