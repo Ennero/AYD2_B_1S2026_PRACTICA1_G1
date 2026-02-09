@@ -46,10 +46,26 @@ const LoginContainer = () => {
         error: 'Credenciales incorrectas',
       }
     ).then((result) => {
-      if (result.success) {
-        setTimeout(() => {
-          navigate('/');
-        }, 1500);
+      if (result.success && result.user.token) {
+        // Decodificar el token para obtener el tipo de usuario
+        try {
+          const payload = JSON.parse(atob(result.user.token.split('.')[1]))
+          const userType = payload.type
+          
+          setTimeout(() => {
+            // Redirigir según el rol del usuario
+            if (userType === 'AGENT') {
+              navigate('/agent/dashboard')
+            } else if (userType === 'ADMIN') {
+              navigate('/admin/agents')
+            } else {
+              navigate('/search')
+            }
+          }, 1500)
+        } catch (error) {
+          console.error('Error decodificando token:', error)
+          navigate('/')
+        }
       }
     }).finally(() => {
       setLoading(false);

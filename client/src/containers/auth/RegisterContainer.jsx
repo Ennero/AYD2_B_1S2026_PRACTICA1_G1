@@ -28,9 +28,31 @@ const RegisterContainer = () => {
       if (result.success) {
         toast.success('¡Cuenta creada exitosamente!')
         
-        setTimeout(() => {
-          navigate('/login')
-        }, 1500)
+        // Si recibimos token, redirigir según el rol
+        if (result.token) {
+          try {
+            const payload = JSON.parse(atob(result.token.split('.')[1]))
+            const userType = payload.type
+            
+            setTimeout(() => {
+              if (userType === 'AGENT') {
+                navigate('/agent/dashboard')
+              } else if (userType === 'ADMIN') {
+                navigate('/admin/agents')
+              } else {
+                navigate('/search')
+              }
+            }, 1500)
+          } catch (error) {
+            console.error('Error decodificando token:', error)
+            navigate('/login')
+          }
+        } else {
+          // Si no hay token, ir al login
+          setTimeout(() => {
+            navigate('/login')
+          }, 1500)
+        }
       }
     } catch (error) {
       console.error('Error en registro:', error)
