@@ -226,6 +226,23 @@ export class ClientController {
             })
         }
     }
+
+    requestappointment: RequestHandler = async (req, res) => {
+        try {
+            const user_id = Number(req.user?.sub);
+            const id_property = Number(req.body.id_property)
+            const description = req.body.description
+
+            const result = await this.clientService.requestappointment(user_id, id_property, description);
+            return res.json(result)
+        } catch (error) {
+            return response_with_error(res, {
+                statusCode: 400,
+                message: 'Could not request appointment',
+                details: error instanceof Error ? error.message : error,
+            })
+        }
+    }
     // =============================== DAVID ===============================
 
     filter: RequestHandler = async (req, res) => {

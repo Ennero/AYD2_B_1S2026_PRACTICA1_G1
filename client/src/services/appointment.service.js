@@ -278,6 +278,56 @@ class RejectAppointmentCommand extends AppointmentCommand {
 }
 
 /**
+ * Comando para solicitar una cita (crear invitación)
+ */
+class RequestAppointmentCommand extends AppointmentCommand {
+  constructor(propertyId, description, apiUrl) {
+    super()
+    this.propertyId = propertyId
+    this.description = description
+    this.apiUrl = apiUrl
+  }
+
+  async execute() {
+    try {
+      const token = localStorage.getItem('authToken')
+      if (!token) {
+        throw new Error('No hay sesión activa')
+      }
+
+      console.log('[REQUEST APPOINTMENT] Enviando solicitud:', {
+        id_property: this.propertyId,
+        description: this.description
+      })
+
+      const response = await fetch(`${this.apiUrl}/client/appointment/request`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          id_property: this.propertyId,
+          description: this.description || null
+        })
+      })
+
+      const data = await response.json()
+      console.log('[REQUEST APPOINTMENT] Respuesta del backend:', data)
+
+      if (!response.ok) {
+        throw new Error(data.details || data.message || 'Error al solicitar la cita')
+      }
+
+      return { success: true, message: data.message || 'Solicitud enviada correctamente', id_invitation: data.id_invitation }
+    } catch (error) {
+      console.error('[APPOINTMENT] Error al solicitar cita:', error)
+      throw error
+    }
+  }
+}
+
+/**
  * Invoker - Ejecutor de comandos
  */
 class AppointmentService {
@@ -330,6 +380,14 @@ class AppointmentService {
    */
   async rejectAppointment(appointmentId, reason) {
     const command = new RejectAppointmentCommand(appointmentId, reason, this.apiUrl)
+    return await command.execute()
+  }
+
+  /**
+   * Solicitar una cita para una propiedad
+   */
+  async requestAppointment(propertyId, description = null) {
+    const command = new RequestAppointmentCommand(propertyId, description, this.apiUrl)
     return await command.execute()
   }
 }

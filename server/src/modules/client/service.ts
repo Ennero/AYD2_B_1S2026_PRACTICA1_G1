@@ -432,6 +432,61 @@ export class ClientService {
 			message: (status.toLowerCase() === 'accepted' ? 'Cita aceptada' : 'La cita ha sido rechazada'),
 		}
 	}
+
+	async requestappointment(id_user: number, id_property: number, description?: string) {
+		id_user = Number(id_user);
+		id_property = Number(id_property);
+
+		if (!Number.isFinite(id_user) || id_user <= 0) {
+			throw new Error('Invalid user id')
+		}
+
+		if (!Number.isFinite(id_property) || id_property <= 0) {
+			throw new Error('Invalid property id')
+		}
+
+		// Verificar que la propiedad existe
+		const property = await DB.property.findUnique({
+			where: { id_property: id_property }
+		})
+
+		if (!property) {
+			throw new Error('Property not found')
+		}
+
+		// Verificar que no exista ya una invitación pendiente para esta propiedad
+		const existingInvitation = await DB.invitation.findFirst({
+			where: {
+				id_client: id_user,
+				id_property: id_property,
+				status: InvitationState.Pending
+			}
+		})
+
+		if (existingInvitation) {
+			throw new Error('Ya tienes una solicitud pendiente para esta propiedad')
+		}
+
+		// Crear nueva invitación con estado PENDING
+		const newInvitation = await DB.invitation.create({
+			data: {
+				id_client: id_user,
+				id_property: id_property,
+				status: InvitationState.Pending,
+				description: description || null,
+				created_at: new Date(),
+				updated_at: new Date(),
+				is_accepted: null,
+				justification: null,
+				expected_date: null
+			}
+		})
+
+		return {
+			message: 'Solicitud de cita enviada correctamente',
+			id_invitation: newInvitation.id_invitation
+		}
+	}
 	// =============================== DAVID ===============================
 	async filterFromDB(idUser: number, title: string | undefined, type: string | undefined, price: number | undefined, num_rooms: number | undefined, square_meters: number | undefined, num_bathrooms: number | undefined, asc_price: boolean | undefined, asc_title: boolean | undefined, asc_date: boolean | undefined, asc_area: boolean | undefined) {
 
