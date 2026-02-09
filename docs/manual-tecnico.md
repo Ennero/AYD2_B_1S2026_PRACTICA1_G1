@@ -684,52 +684,52 @@ A continuación se presenta la especificación detallada de cada caso de uso exp
 
 ### 6.1 Requerimientos Funcionales
 
-| ID | Requerimiento | Descripción | Prioridad | CDU Relacionado |
-|----|--------------|-------------|-----------|-----------------|
-| RF001 | Registro de clientes | El sistema debe permitir el registro de nuevos clientes con: nombre completo, correo electrónico (único), contraseña y fotografía (opcional). | Alta | CDU005.0 |
-| RF002 | Inicio de sesión | El sistema debe permitir que todos los usuarios (Cliente, Agente, Administrador) inicien sesión con correo electrónico y contraseña. | Alta | CDU005.1 |
-| RF003 | Autenticación JWT | El sistema debe emitir un token JWT al iniciar sesión o registrarse, que se utiliza para autenticar las solicitudes posteriores. | Alta | CDU005 |
-| RF004 | Cierre de sesión | El sistema debe permitir al usuario cerrar sesión, invalidando su sesión actual en el cliente. | Media | CDU005.2 |
-| RF005 | Crear propiedad | El sistema debe permitir al agente inmobiliario crear propiedades con: título, dirección, precio, descripción, fotos, número de habitaciones, baños, metros cuadrados, tipo y zona. | Alta | CDU001.1 |
-| RF006 | Actualizar propiedad | El sistema debe permitir al agente actualizar los datos de sus propiedades existentes. | Alta | CDU001.2 |
-| RF007 | Eliminar propiedad | El sistema debe permitir al agente eliminar propiedades, con confirmación previa y eliminación en cascada de datos asociados. | Alta | CDU001.3 |
-| RF008 | Consultar estadísticas | El sistema debe mostrar al agente un dashboard con: Top 3 de tipos de inmuebles más buscados y Top 5 de zonas con mayor oferta de propiedades. | Media | CDU001.4 |
-| RF009 | Gestionar tipos de inmueble | El sistema debe permitir al agente crear, actualizar y eliminar tipos de inmueble (Casa, Apartamento, Terreno, Local Comercial). | Media | CDU001.5, CDU001.6, CDU001.7, CDU001.8 |
-| RF010 | Visualizar propiedades (Agente) | El sistema debe permitir al agente visualizar el listado de sus propiedades con posibilidad de filtrar por tipo, precio y características. | Alta | CDU001.9 |
-| RF011 | Solicitar cita | El sistema debe permitir al cliente solicitar una cita para evaluar una propiedad. | Alta | CDU002.0 |
-| RF012 | Proponer horario de cita | El sistema debe permitir al agente proponer un horario alternativo para una solicitud de cita. | Alta | CDU002.1 |
-| RF013 | Aceptar/Rechazar horario | El sistema debe permitir tanto al cliente como al agente aceptar o rechazar un horario de cita, con justificación obligatoria en caso de rechazo. | Alta | CDU002.2 |
-| RF014 | Visualizar agentes | El sistema debe permitir al administrador ver el listado de todos los agentes registrados. | Alta | CDU003.0 |
-| RF015 | Crear agente | El sistema debe permitir al administrador crear nuevas cuentas de agente inmobiliario con sus datos personales. | Alta | CDU003.2 |
-| RF016 | Actualizar agente | El sistema debe permitir al administrador actualizar los datos de un agente existente. | Media | CDU003.3 |
-| RF017 | Eliminar agente | El sistema debe permitir al administrador eliminar un agente del sistema, con eliminación en cascada de sus propiedades. | Media | CDU003.4 |
-| RF018 | Buscar propiedades | El sistema debe permitir al cliente buscar propiedades por texto libre (título, descripción, dirección). | Alta | CDU004.0, CDU004.1 |
-| RF019 | Filtrar propiedades | El sistema debe permitir filtrar propiedades por: tipo de inmueble, rango de precio, zona, número de habitaciones, número de baños y rango de área. | Alta | CDU004.1 |
-| RF020 | Ordenar resultados | El sistema debe permitir ordenar los resultados de búsqueda por: más recientes, precio ascendente/descendente, mayor área y popularidad. | Media | CDU004.1 |
-| RF021 | Gestionar favoritos | El sistema debe permitir al cliente agregar y quitar propiedades de su lista de favoritos. | Media | CDU004.0 |
-| RF022 | Editar perfil | El sistema debe permitir al cliente actualizar sus datos personales (nombre, correo, teléfono, fotografía). | Media | CDU004.2 |
-| RF023 | Carga de imágenes | El sistema debe permitir subir fotografías de propiedades y perfiles en formato base64 o URL, almacenándolas en Supabase Storage. | Alta | CDU001.1, CDU005.0 |
-| RF024 | Registro de visitas | El sistema debe registrar cada visita/interacción de un cliente con una propiedad para alimentar las estadísticas del agente. | Baja | CDU004.0 |
+| ID | Requerimiento | Descripción | Prioridad | CDU Relacionado | Usuario |
+|----|--------------|-------------|-----------|-----------------|---------|
+| RF001 | Registro de clientes | El sistema debe permitir el registro de nuevos clientes con: nombre completo, correo electrónico (único), contraseña y fotografía (opcional). | Alta | CDU005.0 | Cliente |
+| RF002 | Inicio de sesión | El sistema debe permitir que todos los usuarios (Cliente, Agente, Administrador) inicien sesión con correo electrónico y contraseña. | Alta | CDU005.1 | Cliente, Agente Inmobiliario, Administrador |
+| RF003 | Autenticación JWT | El sistema debe emitir un token JWT al iniciar sesión o registrarse, que se utiliza para autenticar las solicitudes posteriores. | Alta | CDU005 | Cliente, Agente Inmobiliario, Administrador |
+| RF004 | Cierre de sesión | El sistema debe permitir al usuario cerrar sesión, invalidando su sesión actual en el cliente. | Media | CDU005.2 | Cliente, Agente Inmobiliario, Administrador |
+| RF005 | Crear propiedad | El sistema debe permitir al agente inmobiliario crear propiedades con: título, dirección, precio, descripción, fotos, número de habitaciones, baños, metros cuadrados, tipo y zona. | Alta | CDU001.1 | Agente Inmobiliario |
+| RF006 | Actualizar propiedad | El sistema debe permitir al agente actualizar los datos de sus propiedades existentes. | Alta | CDU001.2 | Agente Inmobiliario |
+| RF007 | Eliminar propiedad | El sistema debe permitir al agente eliminar propiedades, con confirmación previa y eliminación en cascada de datos asociados. | Alta | CDU001.3 | Agente Inmobiliario |
+| RF008 | Consultar estadísticas | El sistema debe mostrar al agente un dashboard con: Top 3 de tipos de inmuebles más buscados y Top 5 de zonas con mayor oferta de propiedades. | Media | CDU001.4 | Agente Inmobiliario |
+| RF009 | Gestionar tipos de inmueble | El sistema debe permitir al agente crear, actualizar y eliminar tipos de inmueble (Casa, Apartamento, Terreno, Local Comercial). | Media | CDU001.5, CDU001.6, CDU001.7, CDU001.8 | Agente Inmobiliario |
+| RF010 | Visualizar propiedades (Agente) | El sistema debe permitir al agente visualizar el listado de sus propiedades con posibilidad de filtrar por tipo, precio y características. | Alta | CDU001.9 | Agente Inmobiliario |
+| RF011 | Solicitar cita | El sistema debe permitir al cliente solicitar una cita para evaluar una propiedad. | Alta | CDU002.0 | Cliente |
+| RF012 | Proponer horario de cita | El sistema debe permitir al agente proponer un horario alternativo para una solicitud de cita. | Alta | CDU002.1 | Agente Inmobiliario |
+| RF013 | Aceptar/Rechazar horario | El sistema debe permitir tanto al cliente como al agente aceptar o rechazar un horario de cita, con justificación obligatoria en caso de rechazo. | Alta | CDU002.2 | Cliente, Agente Inmobiliario |
+| RF014 | Visualizar agentes | El sistema debe permitir al administrador ver el listado de todos los agentes registrados. | Alta | CDU003.0 | Administrador |
+| RF015 | Crear agente | El sistema debe permitir al administrador crear nuevas cuentas de agente inmobiliario con sus datos personales. | Alta | CDU003.2 | Administrador |
+| RF016 | Actualizar agente | El sistema debe permitir al administrador actualizar los datos de un agente existente. | Media | CDU003.3 | Administrador |
+| RF017 | Eliminar agente | El sistema debe permitir al administrador eliminar un agente del sistema, con eliminación en cascada de sus propiedades. | Media | CDU003.4 | Administrador |
+| RF018 | Buscar propiedades | El sistema debe permitir al cliente buscar propiedades por texto libre (título, descripción, dirección). | Alta | CDU004.0, CDU004.1 | Cliente |
+| RF019 | Filtrar propiedades | El sistema debe permitir filtrar propiedades por: tipo de inmueble, rango de precio, zona, número de habitaciones, número de baños y rango de área. | Alta | CDU004.1 | Cliente |
+| RF020 | Ordenar resultados | El sistema debe permitir ordenar los resultados de búsqueda por: más recientes, precio ascendente/descendente, mayor área y popularidad. | Media | CDU004.1 | Cliente |
+| RF021 | Gestionar favoritos | El sistema debe permitir al cliente agregar y quitar propiedades de su lista de favoritos. | Media | CDU004.0 | Cliente |
+| RF022 | Editar perfil | El sistema debe permitir al cliente actualizar sus datos personales (nombre, correo, teléfono, fotografía). | Media | CDU004.2 | Cliente |
+| RF023 | Carga de imágenes | El sistema debe permitir subir fotografías de propiedades y perfiles en formato base64 o URL, almacenándolas en Supabase Storage. | Alta | CDU001.1, CDU005.0 | Cliente, Agente Inmobiliario |
+| RF024 | Registro de visitas | El sistema debe registrar cada visita/interacción de un cliente con una propiedad para alimentar las estadísticas del agente. | Baja | CDU004.0 | Cliente |
 
 ### 6.2 Requerimientos No Funcionales
 
-| ID | Requerimiento | Categoría | Descripción | Métrica / Criterio de Aceptación |
-|----|--------------|-----------|-------------|----------------------------------|
-| RNF001 | Tiempo de respuesta | Rendimiento | Las operaciones de lectura (listados, búsquedas) deben completarse en un tiempo aceptable. | ≤ 2 segundos para resultados de búsqueda y listados |
-| RNF002 | Tiempo de procesamiento | Rendimiento | Las operaciones de escritura (registro, creación de propiedades) deben procesarse rápidamente. | ≤ 3 segundos para operaciones de creación/actualización |
-| RNF003 | Seguridad de contraseñas | Seguridad | Las contraseñas deben almacenarse de forma segura utilizando algoritmos de hashing con salt. | bcrypt con 10 salt rounds; nunca en texto plano |
-| RNF004 | Autenticación stateless | Seguridad | El sistema debe utilizar autenticación basada en tokens para no depender de estado en el servidor. | JWT con firma, expiración de 7 días |
-| RNF005 | Validación de entrada | Seguridad | Toda entrada del usuario debe validarse tanto en frontend como en backend para prevenir inyecciones y datos malformados. | express-validator en backend; validaciones en React en frontend |
-| RNF006 | Protección CORS | Seguridad | El sistema debe restringir los orígenes permitidos para solicitudes cross-origin. | Solo orígenes autorizados (localhost en desarrollo, dominios específicos en producción) |
-| RNF007 | Containerización | Escalabilidad | El backend y la base de datos deben ejecutarse en contenedores Docker para garantizar portabilidad y reproducibilidad. | Docker Compose con 2 servicios (backend + PostgreSQL) |
-| RNF008 | Responsividad | Usabilidad | La interfaz de usuario debe adaptarse correctamente a diferentes tamaños de pantalla. | Tailwind CSS con breakpoints responsivos; funcional en móvil y escritorio |
-| RNF009 | Retroalimentación visual | Usabilidad | El sistema debe proporcionar retroalimentación visual clara ante las acciones del usuario (éxito, error, carga). | Toast notifications, estados de loading en botones, mensajes de error específicos |
-| RNF010 | Integridad referencial | Confiabilidad | La base de datos debe mantener integridad referencial con eliminación en cascada donde corresponda. | Foreign keys con ON DELETE CASCADE configuradas en Prisma |
-| RNF011 | Migraciones de base de datos | Mantenibilidad | Los cambios en el esquema de la base de datos deben gestionarse mediante migraciones versionadas. | Prisma Migrate con historial de migraciones |
-| RNF012 | Modularidad del código | Mantenibilidad | El código debe organizarse en módulos independientes con responsabilidades bien definidas. | Módulos por dominio (auth, admin, agent, client) con separación route/controller/service |
-| RNF013 | Patrones de diseño | Mantenibilidad | El sistema debe implementar patrones de diseño reconocidos para facilitar la extensibilidad y mantenimiento. | Strategy, Adapter, Singleton, State, Command |
-| RNF014 | Almacenamiento externo | Escalabilidad | Las imágenes y archivos deben almacenarse en un servicio externo de objetos, no en el servidor de aplicación. | Supabase Storage con URLs públicas |
-| RNF015 | Tipado estático | Mantenibilidad | El backend debe utilizar tipado estático para reducir errores en tiempo de desarrollo. | TypeScript con tipos generados por Prisma para queries type-safe |
+| ID | Requerimiento | Categoría | Descripción | Métrica / Criterio de Aceptación | Usuario |
+|----|--------------|-----------|-------------|----------------------------------|---------|
+| RNF001 | Tiempo de respuesta | Rendimiento | Las operaciones de lectura (listados, búsquedas) deben completarse en un tiempo aceptable. | ≤ 2 segundos para resultados de búsqueda y listados | Cliente, Agente Inmobiliario, Administrador |
+| RNF002 | Tiempo de procesamiento | Rendimiento | Las operaciones de escritura (registro, creación de propiedades) deben procesarse rápidamente. | ≤ 3 segundos para operaciones de creación/actualización | Cliente, Agente Inmobiliario, Administrador |
+| RNF003 | Seguridad de contraseñas | Seguridad | Las contraseñas deben almacenarse de forma segura utilizando algoritmos de hashing con salt. | bcrypt con 10 salt rounds; nunca en texto plano | Cliente, Agente Inmobiliario, Administrador |
+| RNF004 | Autenticación stateless | Seguridad | El sistema debe utilizar autenticación basada en tokens para no depender de estado en el servidor. | JWT con firma, expiración de 7 días | Cliente, Agente Inmobiliario, Administrador |
+| RNF005 | Validación de entrada | Seguridad | Toda entrada del usuario debe validarse tanto en frontend como en backend para prevenir inyecciones y datos malformados. | express-validator en backend; validaciones en React en frontend | Cliente, Agente Inmobiliario, Administrador |
+| RNF006 | Protección CORS | Seguridad | El sistema debe restringir los orígenes permitidos para solicitudes cross-origin. | Solo orígenes autorizados (localhost en desarrollo, dominios específicos en producción) | Cliente, Agente Inmobiliario, Administrador |
+| RNF007 | Containerización | Escalabilidad | El backend y la base de datos deben ejecutarse en contenedores Docker para garantizar portabilidad y reproducibilidad. | Docker Compose con 2 servicios (backend + PostgreSQL) | Sistema |
+| RNF008 | Responsividad | Usabilidad | La interfaz de usuario debe adaptarse correctamente a diferentes tamaños de pantalla. | Tailwind CSS con breakpoints responsivos; funcional en móvil y escritorio | Cliente, Agente Inmobiliario, Administrador |
+| RNF009 | Retroalimentación visual | Usabilidad | El sistema debe proporcionar retroalimentación visual clara ante las acciones del usuario (éxito, error, carga). | Toast notifications, estados de loading en botones, mensajes de error específicos | Cliente, Agente Inmobiliario, Administrador |
+| RNF010 | Integridad referencial | Confiabilidad | La base de datos debe mantener integridad referencial con eliminación en cascada donde corresponda. | Foreign keys con ON DELETE CASCADE configuradas en Prisma | Sistema |
+| RNF011 | Migraciones de base de datos | Mantenibilidad | Los cambios en el esquema de la base de datos deben gestionarse mediante migraciones versionadas. | Prisma Migrate con historial de migraciones | Sistema |
+| RNF012 | Modularidad del código | Mantenibilidad | El código debe organizarse en módulos independientes con responsabilidades bien definidas. | Módulos por dominio (auth, admin, agent, client) con separación route/controller/service | Sistema |
+| RNF013 | Patrones de diseño | Mantenibilidad | El sistema debe implementar patrones de diseño reconocidos para facilitar la extensibilidad y mantenimiento. | Strategy, Adapter, Singleton, State, Command | Sistema |
+| RNF014 | Almacenamiento externo | Escalabilidad | Las imágenes y archivos deben almacenarse en un servicio externo de objetos, no en el servidor de aplicación. | Supabase Storage con URLs públicas | Sistema |
+| RNF015 | Tipado estático | Mantenibilidad | El backend debe utilizar tipado estático para reducir errores en tiempo de desarrollo. | TypeScript con tipos generados por Prisma para queries type-safe | Sistema |
 
 ---
 
@@ -737,28 +737,28 @@ A continuación se presenta la especificación detallada de cada caso de uso exp
 
 ### 7.1 Matriz de Trazabilidad de Casos de Uso
 
-| Caso de Uso | Actor(es) | Requerimientos Funcionales | Módulo Backend | Componentes Frontend |
-|-------------|-----------|---------------------------|----------------|---------------------|
-| CDU001.0 - Gestionar Propiedades | Agente | RF010 | `modules/agent/` | Dashboard del Agente |
-| CDU001.1 - Crear Propiedad | Agente | RF005, RF023 | `modules/agent/` | Formulario de Propiedad |
-| CDU001.2 - Actualizar Propiedad | Agente | RF006 | `modules/agent/` | Formulario de Propiedad |
-| CDU001.3 - Eliminar Propiedad | Agente | RF007 | `modules/agent/` | Dashboard del Agente |
-| CDU001.4 - Consultar Estadísticas | Agente | RF008 | `modules/agent/` | Dashboard con Gráficas |
-| CDU001.5-8 - Gestionar Tipos | Agente | RF009 | `modules/agent/` | Catálogo de Tipos |
-| CDU001.9 - Visualizar Propiedades | Agente | RF010 | `modules/agent/` | Listado de Propiedades |
-| CDU002.0 - Solicitar Cita | Cliente | RF011 | `modules/client/` | Detalle de Propiedad |
-| CDU002.1 - Proponer Horario | Agente | RF012 | `modules/agent/` | Gestión de Citas |
-| CDU002.2 - Aceptar/Rechazar | Cliente, Agente | RF013 | `modules/client/`, `modules/agent/` | Vista de Citas |
-| CDU003.0 - Visualizar Agentes | Administrador | RF014 | `modules/admin/` | Panel de Administración |
-| CDU003.2 - Crear Agente | Administrador | RF015 | `modules/admin/` | Formulario de Agente |
-| CDU003.3 - Actualizar Agente | Administrador | RF016 | `modules/admin/` | Formulario de Agente |
-| CDU003.4 - Eliminar Agente | Administrador | RF017 | `modules/admin/` | Panel de Administración |
-| CDU004.0 - Visualizar Propiedades | Cliente | RF018, RF021, RF024 | `modules/client/` | `SearchContainer`, `PropertyCard` |
-| CDU004.1 - Filtrar Propiedades | Cliente | RF019, RF020 | `modules/client/` | `FilterPanel`, `SearchContainer` |
-| CDU004.2 - Editar Perfil | Cliente | RF022 | `modules/client/` | Formulario de Perfil |
-| CDU005.0 - Registrar Cliente | Cliente | RF001, RF003, RF023 | `modules/auth/` | `RegisterContainer`, `RegisterForm` |
-| CDU005.1 - Iniciar Sesión | Cliente, Agente, Admin | RF002, RF003 | `modules/auth/` | `LoginContainer`, `LoginForm` |
-| CDU005.2 - Cerrar Sesión | Cliente, Agente, Admin | RF004 | — (cliente) | `NavbarClient` |
+| Caso de Uso | Actor(es) | Requerimientos Funcionales | Componentes Frontend |
+|-------------|-----------|---------------------------|---------------------|
+| CDU001.0 - Gestionar Propiedades | Agente | RF010 | Dashboard del Agente |
+| CDU001.1 - Crear Propiedad | Agente | RF005, RF023 | Formulario de Propiedad |
+| CDU001.2 - Actualizar Propiedad | Agente | RF006 | Formulario de Propiedad |
+| CDU001.3 - Eliminar Propiedad | Agente | RF007 | Dashboard del Agente |
+| CDU001.4 - Consultar Estadísticas | Agente | RF008 | Dashboard con Gráficas |
+| CDU001.5-8 - Gestionar Tipos | Agente | RF009 | Catálogo de Tipos |
+| CDU001.9 - Visualizar Propiedades | Agente | RF010 | Listado de Propiedades |
+| CDU002.0 - Solicitar Cita | Cliente | RF011 | Detalle de Propiedad |
+| CDU002.1 - Proponer Horario | Agente | RF012 | Gestión de Citas |
+| CDU002.2 - Aceptar/Rechazar | Cliente, Agente | RF013 | Vista de Citas |
+| CDU003.0 - Visualizar Agentes | Administrador | RF014 | Panel de Administración |
+| CDU003.2 - Crear Agente | Administrador | RF015 | Formulario de Agente |
+| CDU003.3 - Actualizar Agente | Administrador | RF016 | Formulario de Agente |
+| CDU003.4 - Eliminar Agente | Administrador | RF017 | Panel de Administración |
+| CDU004.0 - Visualizar Propiedades | Cliente | RF018, RF021, RF024 | `SearchContainer`, `PropertyCard` |
+| CDU004.1 - Filtrar Propiedades | Cliente | RF019, RF020 | `FilterPanel`, `SearchContainer` |
+| CDU004.2 - Editar Perfil | Cliente | RF022 | Formulario de Perfil |
+| CDU005.0 - Registrar Cliente | Cliente | RF001, RF003, RF023 | `RegisterContainer`, `RegisterForm` |
+| CDU005.1 - Iniciar Sesión | Cliente, Agente, Admin | RF002, RF003 | `LoginContainer`, `LoginForm` |
+| CDU005.2 - Cerrar Sesión | Cliente, Agente, Admin | RF004| `NavbarClient` |
 
 
 ### 7.2 Matriz de Trazabilidad de Requerimientos No Funcionales
