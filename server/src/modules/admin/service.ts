@@ -122,4 +122,67 @@ export class AdminService {
 			id_user: updated.id_user,
 		}
 	}
+
+
+	//Helado
+	async getAgents() {
+		const agents = await DB.uSER.findMany({
+			where: {
+				type: UserType.Agent,
+			},
+			select: {
+				id_user: true,
+				email: true,
+				name: true,
+				last_name: true,
+				phone: true,
+				url_img: true,
+				type: true,
+			},
+		})
+
+		return { list: agents }
+	}
+
+	async getAgentById(agentId: number) {
+		const agent = await DB.uSER.findUnique({
+			where: {
+				id_user: agentId,
+			},
+			select: {
+				id_user: true,
+				email: true,
+				name: true,
+				last_name: true,
+				phone: true,
+				url_img: true,
+				type: true,
+			},
+		})
+
+		if (!agent) throw new Error('Agent not found')
+		if (agent.type !== UserType.Agent) throw new Error('User is not an agent')
+
+		return agent
+	}
+
+	async deleteAgent(agentId: number) {
+		const existingAgent = await DB.uSER.findUnique({
+			where: { id_user: agentId },
+			select: { id_user: true, type: true },
+		})
+
+		if (!existingAgent) throw new Error('Agent not found')
+		if (existingAgent.type !== UserType.Agent) throw new Error('User is not an agent')
+
+		await DB.uSER.delete({
+			where: { id_user: agentId },
+		})
+
+		return {
+			message: 'Se ha eliminado el agente',
+		}
+	}
+
+// fin helado
 }

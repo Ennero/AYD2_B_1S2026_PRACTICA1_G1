@@ -48,4 +48,35 @@ adminRouter.put(
 	adminController.updateAgent,
 )
 
+//hekado
+// GET /api/admin/agents
+adminRouter.get(
+	'/agents',
+	[
+		authMiddleware,
+		requireRole(UserType.Admin),
+	],
+	adminController.getAgents,
+)
+
+// GET /api/admin/agents/:id
+adminRouter.get(
+	'/agents/:id',
+	[
+		authMiddleware,
+		requireRole(UserType.Admin),
+	],
+	adminController.getAgentById,
+)
+
+// DELETE /api/admin/agents/:id
+adminRouter.delete(
+	'/agents/:id',
+	[
+		authMiddleware,
+		requireRole(UserType.Admin),
+	],
+	adminController.deleteAgent,
+)
+//fin helado
 export default adminRouter
