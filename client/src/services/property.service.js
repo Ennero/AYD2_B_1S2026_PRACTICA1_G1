@@ -156,33 +156,131 @@ const MOCK_PROPERTIES = [
 const propertyService = {
   getProperties: async (filters = {}) => {
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      console.log('[PROPERTY] Obteniendo propiedades con filtros:', filters)
       
-      let properties = [...MOCK_PROPERTIES]
+      const token = localStorage.getItem('authToken')
+      if (!token) {
+        throw new Error('No hay sesión activa')
+      }
+
+      // Preparar el body con los filtros opcionales del backend
+      const requestBody = {}
       
-      if (filters.propertyType) {
-        properties = properties.filter(p => p.propertyType === filters.propertyType)
+      if (filters.searchQuery) {
+        requestBody.title = filters.searchQuery
       }
       
-      if (filters.minPrice) {
-        properties = properties.filter(p => p.price >= filters.minPrice)
+      if (filters.propertyType) {
+        // Mapear tipos del frontend al backend
+        const typeMap = {
+          'apartamento': 'APARTMENT',
+          'casa': 'HOUSE',
+          'loft': 'APARTMENT', // Loft se considera como apartamento
+          'chalet': 'HOUSE',
+          'terreno': 'LAND',
+          'local': 'RETAIL SPACE'
+        }
+        requestBody.type = typeMap[filters.propertyType] || filters.propertyType.toUpperCase()
       }
       
       if (filters.maxPrice) {
-        properties = properties.filter(p => p.price <= filters.maxPrice)
+        requestBody.price = filters.maxPrice
       }
       
-      if (filters.zone) {
-        properties = properties.filter(p => p.zone === filters.zone)
+      if (filters.bedrooms) {
+        requestBody.rooms = filters.bedrooms
       }
       
+      if (filters.bathrooms) {
+        requestBody.bathrooms = filters.bathrooms
+      }
+      
+      if (filters.minArea) {
+        requestBody.meter = filters.minArea
+      }
+      
+      // Ordenamiento
+      if (filters.sortBy) {
+        if (filters.sortBy === 'price-low') {
+          requestBody.is_ascendent_price = true
+        } else if (filters.sortBy === 'price-high') {
+          requestBody.is_ascendent_price = false
+        } else if (filters.sortBy === 'title-asc') {
+          requestBody.is_ascendent_title = true
+        } else if (filters.sortBy === 'title-desc') {
+          requestBody.is_ascendent_title = false
+        }
+        // 'recent', 'area', 'popular' se manejan en el backend por defecto o no están soportados
+      }
+
+      console.log('[PROPERTY] Request body:', requestBody)
+
+      const response = await fetch(`${API_URL}/client/dashboard`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(requestBody)
+      })
+
+      console.log('[PROPERTY] Response status:', response.status)
+      const data = await response.json()
+      console.log('[PROPERTY] Response data:', data)
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Error al cargar propiedades')
+      }
+
+      // El backend puede devolver array directo o objeto {properties: [...]}
+      const propertiesArray = Array.isArray(data) ? data : (data.properties || [])
+      console.log('[PROPERTY] Array de propiedades:', propertiesArray.length)
+
+      // Transformar datos del backend al formato del frontend
+      const backendToFrontendTypeMap = {
+        'APARTMENT': 'apartamento',
+        'HOUSE': 'casa',
+        'LAND': 'terreno',
+        'RETAIL SPACE': 'local'
+      }
+      
+      const properties = propertiesArray.map(prop => {
+        // Debug: log de la propiedad original
+        if (prop.zone === 'Zona 16') {
+          console.log('[PROPERTY] Zona 16 encontrada:', {
+            title: prop.title,
+            num_rooms: prop.num_rooms,
+            num_bathrooms: prop.num_bathrooms,
+            square_meters: prop.square_meters
+          })
+        }
+
+        return {
+          id: prop.id_property,
+          title: prop.title,
+          price: prop.price,
+          location: prop.address,
+          zone: prop.zone,
+          image: prop.url_img || '/images/home-background.png',
+          bedrooms: prop.num_rooms ? Number(prop.num_rooms) : 0,
+          bathrooms: prop.num_bathrooms ? Number(prop.num_bathrooms) : 0,
+          area: prop.square_meters ? Number(prop.square_meters) : 0,
+          isFavorite: prop.already_in_favorite || false,
+          propertyType: backendToFrontendTypeMap[prop.type] || 'apartamento'
+        }
+      })
+
+      console.log('[PROPERTY] Propiedades transformadas:', properties.length)
+      console.log('[PROPERTY] Muestra de datos transformados:', properties.slice(0, 2))
+
       return {
         success: true,
         properties: properties,
         total: properties.length
       }
     } catch (error) {
-      throw new Error('Error al cargar propiedades')
+      console.error('[PROPERTY] Error:', error)
+      throw new Error(error.message || 'Error al cargar propiedades')
     }
   },
 
