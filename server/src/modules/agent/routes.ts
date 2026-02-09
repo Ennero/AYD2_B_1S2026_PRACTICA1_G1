@@ -82,6 +82,31 @@ agentRouter.delete(
 
 //fin helado
 
+// GET /api/agent/invitations/:type
+agentRouter.get(
+    '/invitations/:type',
+    [
+        authMiddleware,
+        requireRole(UserType.Agent),
+    ],
+    controller.getInvitations
+)
+
+// POST /api/agent/invitations/:id/propose
+agentRouter.post(
+    '/invitations/:id/propose',
+    [
+        authMiddleware,
+        requireRole(UserType.Agent),
+        body('expected_date').isString().notEmpty().withMessage('expected_date is required'),
+        body('description').isString().notEmpty().withMessage('description is required'),
+        validateFields,
+    ],
+    controller.proposeInvitation
+)
+//fin helado
+
+
 
 
 

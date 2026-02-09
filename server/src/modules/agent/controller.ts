@@ -98,5 +98,52 @@ export const deleteProperty: RequestHandler = async (req, res) => {
         })
     }
 
-    //fin helado
+    
 }
+
+export const getInvitations: RequestHandler = async (req, res) => {
+    try {
+        const agentId = Number(req.user?.sub)
+        const type = req.params.type
+
+        if (!type || typeof type !== 'string') {
+            return response_with_error(res, {
+                statusCode: 400,
+                message: 'Invalid type parameter',
+            })
+        }
+
+        const result = await service.getInvitations(agentId, type)
+        return response_ok(res, result)
+    } catch (error) {
+        return response_with_error(res, {
+            statusCode: 400,
+            message: 'Could not get invitations',
+            details: error instanceof Error ? error.message : error,
+        })
+    }
+}
+
+export const proposeInvitation: RequestHandler = async (req, res) => {
+    try {
+        const agentId = Number(req.user?.sub)
+        const invitationId = Number(req.params.id)
+
+        if (!Number.isFinite(invitationId) || invitationId <= 0) {
+            return response_with_error(res, {
+                statusCode: 400,
+                message: 'Invalid invitation id',
+            })
+        }
+
+        const result = await service.proposeInvitation(agentId, invitationId, req.body)
+        return response_ok(res, result)
+    } catch (error) {
+        return response_with_error(res, {
+            statusCode: 400,
+            message: 'Could not propose invitation',
+            details: error instanceof Error ? error.message : error,
+        })
+    }
+}
+//fin helado
