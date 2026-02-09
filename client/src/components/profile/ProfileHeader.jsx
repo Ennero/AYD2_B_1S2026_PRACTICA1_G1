@@ -3,7 +3,7 @@ import { User } from 'lucide-react'
 /**
  * Header del perfil con saludo personalizado
  */
-const ProfileHeader = ({ nombre }) => {
+const ProfileHeader = ({ nombre, foto }) => {
   return (
     <div className="text-center relative">
       {/* Decoración de fondo */}
@@ -14,8 +14,16 @@ const ProfileHeader = ({ nombre }) => {
 
       {/* Avatar */}
       <div className="relative inline-block mb-4">
-        <div className="inline-flex items-center justify-center w-32 h-32 bg-gradient-to-br from-orange-400 via-orange-500 to-orange-600 rounded-full shadow-2xl transform transition-all duration-500 hover:scale-110 hover:rotate-[360deg] group" style={{ transformStyle: 'preserve-3d', perspective: '1000px' }}>
-          <User className="w-16 h-16 text-white transform transition-all duration-500 group-hover:scale-110 group-hover:rotate-12" />
+        <div className="inline-flex items-center justify-center w-32 h-32 bg-gradient-to-br from-orange-400 via-orange-500 to-orange-600 rounded-full shadow-2xl transform transition-all duration-500 hover:scale-110 hover:rotate-[360deg] group overflow-hidden" style={{ transformStyle: 'preserve-3d', perspective: '1000px' }}>
+          {foto ? (
+            <img 
+              src={foto} 
+              alt={nombre}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <User className="w-16 h-16 text-white transform transition-all duration-500 group-hover:scale-110 group-hover:rotate-12" />
+          )}
           
           {/* Ring animado */}
           <div className="absolute inset-0 rounded-full border-4 border-orange-400/50 animate-ping"></div>

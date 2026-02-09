@@ -33,7 +33,7 @@ clientRouter.put(
 		body('gender').notEmpty().withMessage('gender must not be empty'),
 		body('phone').notEmpty().withMessage('phone must not be empty'),
 		body('email').isEmail().withMessage('email must be valid'),
-		body('url_img').optional({ nullable: true }).isURL().withMessage('url_img must be a valid URL'),
+		body('url_img').optional({ nullable: true }),
 		body('password').optional().isString().isLength({ min: 8 }).withMessage('password must be at least 8 characters long'),
 		validateFields,
 	],
@@ -148,6 +148,8 @@ clientRouter.post('/dashboard',
 		body('bathrooms').isNumeric().optional(),
 		body('is_ascendent_price').isBoolean().optional(),
 		body('is_ascendent_title').isBoolean().optional(),
+		body('is_ascendent_date').isBoolean().optional(),
+		body('is_ascendent_area').isBoolean().optional(),
 		validateFields
 	],
 	clientController.filter
@@ -161,6 +163,14 @@ clientRouter.post('/property/lookup',
 		validateFields
 	],
 	clientController.lookUpProperty
+)
+
+clientRouter.get('/zones',
+	[
+		authMiddleware,
+		requireRole(UserType.Client),
+	],
+	clientController.getZones
 )
 
 

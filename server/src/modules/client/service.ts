@@ -4,6 +4,11 @@ import { normalizeEmail } from '../../utils/strings.ts'
 import { UserType } from '../../store/enums.ts'
 import { Prisma } from '../../generated/prisma/client.ts'
 import { InvitationState } from '../../store/enums.ts'
+import { decodeBase64ToBytes, guessExtensionFromMime } from '../../utils/base64.ts'
+import { getPublicObjectStorage } from '../../adapters/storage/index.ts'
+import { buildPublicBucketPath } from '../../utils/supabase-storage.ts'
+import { getOptionalEnv } from '../../utils/env.ts'
+import crypto from 'node:crypto'
 
 export type UpdateClientInput = {
 	id_user?: number
@@ -68,6 +73,35 @@ export class ClientService {
 			}
 		}
 
+		// Procesar imagen si es base64 (data:image/...)
+		let finalUrlImg = input.url_img
+		if (input.url_img && input.url_img.startsWith('data:image/')) {
+			console.log('[CLIENT SERVICE] Detectado base64, subiendo a Supabase...')
+			
+			// Extraer mime type del data URL
+			const mimeMatch = input.url_img.match(/^data:(image\/[^;]+);base64,/)
+			const mime = mimeMatch ? mimeMatch[1] : 'image/jpeg'
+			const ext = guessExtensionFromMime(mime)
+			
+			// Decodificar base64 a bytes
+			const bytes = decodeBase64ToBytes(input.url_img)
+			
+			// Subir a Supabase Storage
+			const storage = getPublicObjectStorage()
+			const bucket = getOptionalEnv('SUPABASE_BUCKET_USERS', 'user-images') ?? 'user-images'
+			const objectPath = buildPublicBucketPath(['users', `${crypto.randomUUID()}.${ext}`])
+			
+			const uploaded = await storage.uploadObject({
+				bucket,
+				path: objectPath,
+				contentType: mime,
+				data: bytes,
+			})
+			
+			finalUrlImg = uploaded.publicUrl
+			console.log('[CLIENT SERVICE] Imagen subida correctamente:', finalUrlImg)
+		}
+
 		const updated = await DB.uSER.update({
 			where: { id_user: clientid },
 			data: {
@@ -76,7 +110,7 @@ export class ClientService {
 				...(input.gender !== undefined ? { gender: (input.gender.toLowerCase() === 'male' ? 1 : 2) } : {}),
 				...(input.phone !== undefined ? { phone: String(input.phone) } : {}),
 				...(input.email !== undefined ? { email: normalizedEmail } : {}),
-				...(input.url_img !== undefined ? { url_img: input.url_img } : {}),
+				...(finalUrlImg !== undefined ? { url_img: finalUrlImg } : {}),
 				...(input.password !== undefined ? { password: await hashPassword(input.password) } : {}),
 				type: UserType.Client,
 			},
@@ -95,7 +129,11 @@ export class ClientService {
 
 		const properties = await DB.favorite.findMany({
 			where: { id_client: id_user },
-			include: { property: true }
+			include: { 
+				property: {
+					include: { image: true }
+				}
+			}
 		})
 
 		if (!properties) {
@@ -110,7 +148,10 @@ export class ClientService {
 			num_bathrooms: fav.property.num_bathrooms,
 			square_meters: fav.property.square_meters,
 			address: fav.property.address,
-			id_property: fav.id_property
+			id_property: fav.id_property,
+			url_img: fav.property.image?.[0]?.url_img || null,
+			zone: fav.property.zone,
+			type: fav.property.type
 		}))
 
 	}
@@ -120,17 +161,18 @@ export class ClientService {
 		id_property = Number(id_property);
 
 		if (!Number.isFinite(id_property) || id_property <= 0) {
-			throw new Error('Invalid favorite id')
+			throw new Error('Invalid property id')
 		}
 
 		if (!Number.isFinite(id_user) || id_user <= 0) {
 			throw new Error('Invalid user id')
 		}
 
+		// Eliminar usando id_property + id_client
 		const deleteFavorite = await DB.favorite.deleteMany({
 			where: {
-				id_client: id_user,
-				id_property: id_property
+				id_property: id_property,
+				id_client: id_user
 			}
 		})
 
@@ -195,7 +237,7 @@ export class ClientService {
 		// Anadimos creando la tabla de favoritos
 		const newFavorite = await DB.favorite.create({
 			data: {
-				created_at: new Date().toISOString(),
+				created_at: new Date(),
 				id_client: id_user,
 				id_property: id_property
 			}
@@ -391,7 +433,7 @@ export class ClientService {
 		}
 	}
 	// =============================== DAVID ===============================
-	async filterFromDB(title: string | undefined, type: string | undefined, price: number | undefined, num_rooms: number | undefined, square_meters: number | undefined, num_bathrooms: number | undefined, asc_price: boolean | undefined, asc_title: boolean | undefined) {
+	async filterFromDB(idUser: number, title: string | undefined, type: string | undefined, price: number | undefined, num_rooms: number | undefined, square_meters: number | undefined, num_bathrooms: number | undefined, asc_price: boolean | undefined, asc_title: boolean | undefined, asc_date: boolean | undefined, asc_area: boolean | undefined) {
 
 		let query: Prisma.Sql[] = [];
 		query.push(Prisma.sql`select p.id_property,
@@ -401,7 +443,14 @@ export class ClientService {
        p.zone,
        p.address,
        p.price,
-       p.state
+       p.state,
+       p.num_rooms,
+       p.num_bathrooms,
+       p.square_meters,
+	   case
+        when (select count(*) from favorite f where f.id_client = ${idUser} and f.id_property = p.id_property) > 0 then true
+        else false
+        end as already_in_favorite
 from property p where `)
 
 		if (title) {
@@ -430,6 +479,12 @@ from property p where `)
 		if (asc_title !== undefined) {
 			query.push(Prisma.sql`p.title ${asc_title ? Prisma.raw('') : Prisma.raw('DESC')},`)
 		}
+		if (asc_date !== undefined) {
+			query.push(Prisma.sql`p.created_at ${asc_date ? Prisma.raw('') : Prisma.raw('DESC')},`)
+		}
+		if (asc_area !== undefined) {
+			query.push(Prisma.sql`p.square_meters ${asc_area ? Prisma.raw('') : Prisma.raw('DESC')},`)
+		}
 		query.push(Prisma.sql`p.id_property`)
 		const result = await DB.$queryRaw<unknown[]>(Prisma.join(query, ' '))
 		return result
@@ -437,13 +492,40 @@ from property p where `)
 	}
 
 	async lookUpPropertyFromDB(idUser: number, id_property: number) {
+		idUser = Number(idUser);
+		id_property = Number(id_property);
+
+		console.log('[SERVICE] lookUpProperty - User:', idUser, 'Property:', id_property);
+
+		if (!Number.isFinite(idUser) || idUser <= 0) {
+			throw new Error('Invalid user id')
+		}
+
+		if (!Number.isFinite(id_property) || id_property <= 0) {
+			throw new Error('Invalid property id')
+		}
+
 		await DB.record.create({
 			data: {
-				created_at: new Date().toISOString(),
+				created_at: new Date(),
 				id_client: idUser,
 				id_property: id_property
 			}
 		})
+	}
+
+	async getAvailableZones() {
+		const zones = await DB.property.findMany({
+			where: {
+				state: 'AVAILABLE'
+			},
+			select: {
+				zone: true
+			},
+			distinct: ['zone']
+		})
+
+		return zones.map(z => z.zone).filter(z => z !== null).sort()
 	}
 
 }
