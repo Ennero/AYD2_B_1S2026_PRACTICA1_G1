@@ -89,7 +89,6 @@ class AgentAppointmentContext {
   static resolveState(status) {
     const stateMap = {
       nueva_solicitud: new NuevaSolicitudState(),
-      en_espera: new EnEsperaState(),
       confirmada: new ConfirmadaState(),
       cancelada: new CanceladaState(),
     }
@@ -114,7 +113,6 @@ class AgentAppointmentContext {
 export {
   AgentAppointmentState,
   NuevaSolicitudState,
-  EnEsperaState,
   ConfirmadaState,
   CanceladaState,
   AgentAppointmentContext,

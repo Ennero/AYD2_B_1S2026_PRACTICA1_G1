@@ -44,7 +44,7 @@ const AgentAppointmentsContainer = () => {
 
   // Contador por tab
   const tabCounts = useMemo(() => {
-    const counts = { todos: appointments.length, nuevas: 0, espera: 0, confirmadas: 0, canceladas: 0 }
+    const counts = { todos: appointments.length, nuevas: 0, confirmadas: 0, canceladas: 0 }
     appointments.forEach((apt) => {
       const ctx = new AgentAppointmentContext(apt)
       const tab = ctx.getTabKey()
@@ -56,19 +56,24 @@ const AgentAppointmentsContainer = () => {
   // Form de propuesta
   const handlePropose = async (appointmentId, proposalData) => {
     try {
+      console.log('📤 Enviando propuesta para invitación:', appointmentId)
+      console.log('📋 Datos de la propuesta:', proposalData)
+      
       const result = await AgentAppointmentService.proposeDateTime(appointmentId, proposalData)
+      
       if (result.success) {
         setAppointments(prev =>
           prev.map(a =>
             a.id === appointmentId
-              ? { ...a, ...result.appointment, status: 'en_espera' }
+              ? { ...a, ...result.appointment, status: 'confirmada' }
               : a
           )
         )
-        toast.success('¡Propuesta enviada exitosamente!')
+        toast.success(result.message || '¡Propuesta enviada exitosamente!')
       }
     } catch (error) {
-      toast.error('Error al enviar la propuesta')
+      console.error('❌ Error al proponer fecha:', error)
+      toast.error(error.message || 'Error al enviar la propuesta')
     }
   }
 

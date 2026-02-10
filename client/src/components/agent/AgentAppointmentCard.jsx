@@ -45,14 +45,14 @@ const AgentAppointmentCard = ({ appointment, index, onPropose }) => {
         <div className="flex flex-col lg:flex-row items-center lg:items-stretch">
 
           {/* ──── Imagen ──── */}
-          <div className="lg:w-64 flex-shrink-0 p-5 flex items-center">
-            <div className="relative w-full h-40 lg:h-full min-h-[200px] bg-gradient-to-br from-gray-100 via-gray-50 to-gray-200 rounded-2xl border-2 border-gray-200 flex items-center justify-center overflow-hidden transition-all duration-700 group-hover:shadow-xl">
+          <div className="lg:w-80 flex-shrink-0 p-5 flex items-center">
+            <div className="relative w-full h-48 lg:h-full min-h-[240px] bg-gradient-to-br from-gray-100 via-gray-50 to-gray-200 rounded-2xl border-2 border-gray-200 flex items-center justify-center overflow-hidden transition-all duration-700 group-hover:shadow-xl">
               {/* Efecto de brillo */}
               <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
               <img
                 src={appointment.propertyImage}
                 alt={appointment.propertyTitle}
-                className="relative z-10 w-20 h-20 object-contain opacity-30 group-hover:opacity-70 group-hover:scale-125 group-hover:rotate-6 transition-all duration-700"
+                className="relative z-10 w-full h-full object-cover group-hover:scale-110 transition-all duration-700"
               />
             </div>
           </div>
@@ -103,7 +103,7 @@ const AgentAppointmentCard = ({ appointment, index, onPropose }) => {
                 </h4>
                 <div className="grid grid-cols-2 gap-2 mb-2">
                   <div>
-                    <label className="text-[11px] font-bold text-gray-500 mb-1 block">Fecha</label>
+                    <label className="text-[11px] font-bold text-gray-500 mb-1 block">Fecha <span className="text-red-500">*</span></label>
                     <input
                       type="date"
                       value={formData.date}
@@ -112,7 +112,7 @@ const AgentAppointmentCard = ({ appointment, index, onPropose }) => {
                     />
                   </div>
                   <div>
-                    <label className="text-[11px] font-bold text-gray-500 mb-1 block">Hora</label>
+                    <label className="text-[11px] font-bold text-gray-500 mb-1 block">Hora <span className="text-red-500">*</span></label>
                     <input
                       type="time"
                       value={formData.time}
@@ -122,18 +122,18 @@ const AgentAppointmentCard = ({ appointment, index, onPropose }) => {
                   </div>
                 </div>
                 <div className="mb-3">
-                  <label className="text-[11px] font-bold text-gray-500 mb-1 block">Descripción</label>
+                  <label className="text-[11px] font-bold text-gray-500 mb-1 block">Descripción <span className="text-red-500">*</span></label>
                   <textarea
                     value={formData.description}
                     onChange={e => setFormData({ ...formData, description: e.target.value })}
                     rows={2}
-                    placeholder="Detalles de la visita..."
+                    placeholder="Detalles de la visita... (obligatorio)"
                     className="w-full px-2.5 py-2 rounded-lg border-2 border-gray-300 bg-white text-sm focus:border-sky-400 focus:ring-2 focus:ring-sky-100 transition-all duration-300 outline-none resize-none"
                   />
                 </div>
                 <button
                   onClick={handlePropose}
-                  disabled={!formData.date || !formData.time || sending}
+                  disabled={!formData.date || !formData.time || !formData.description || sending}
                   className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-sky-600 via-blue-600 to-sky-700 hover:from-sky-500 hover:via-blue-500 hover:to-sky-600 disabled:from-gray-300 disabled:to-gray-400 text-white rounded-xl font-bold text-sm transition-all duration-500 transform hover:scale-105 active:scale-95 shadow-xl hover:shadow-2xl hover:shadow-sky-500/50 disabled:shadow-none disabled:cursor-not-allowed relative overflow-hidden group/btn"
                 >
                   {/* Efecto de brillo */}

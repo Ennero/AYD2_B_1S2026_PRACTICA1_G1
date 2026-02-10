@@ -1,3 +1,19 @@
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+
+// Mapeo de estados del backend al frontend
+const STATE_MAP = {
+  'Solicitud del cliente': 'nueva_solicitud',
+  'Cita agendada': 'confirmada',
+  'Cancelado por el cliente': 'cancelada'
+}
+
+// Mapeo de types del endpoint a estados
+const TYPE_TO_STATE = {
+  'Pending': 'nueva_solicitud',
+  'Accepted': 'confirmada',
+  'Rejected': 'cancelada'
+}
+
 // Datos quemados de ejemplo
 const MOCK_AGENT_APPOINTMENTS = [
   // Nuevas Solicitudes
@@ -180,30 +196,149 @@ class AppointmentCommand {
 
 // Comando Get
 class GetAgentAppointmentsCommand extends AppointmentCommand {
+  constructor(apiUrl, type = 'all') {
+    super()
+    this.apiUrl = apiUrl
+    this.type = type // all, Pending, Accepted, Rejected
+  }
+
+  // Transformar respuesta del backend al formato del frontend
+  transformInvitation(item) {
+    // Determinar el estado basado en is_accepted y expected_date
+    let status = 'nueva_solicitud'
+    if (item.is_accepted === false) {
+      status = 'cancelada'
+    } else if (item.is_accepted === true || item.expected_date) {
+      status = 'confirmada'
+    }
+
+    return {
+      id: item.id_invitation,
+      propertyTitle: item.title,
+      propertyAddress: item.address,
+      propertyZone: `Zona ${item.zone}`,
+      propertyPrice: item.price,
+      propertyImage: item.url_img || '/images/logo-HomeFinder.png',
+      clientName: item.client_name,
+      status: status,
+      proposedDate: item.expected_date ? item.expected_date.split(' ')[0] : null,
+      proposedTime: item.expected_date ? item.expected_date.split(' ')[1] || null : null,
+      proposedDescription: item.description || null,
+      rejectionReason: item.justification || null,
+      createdAt: item.created_at,
+    }
+  }
+
   async execute() {
-    await new Promise(resolve => setTimeout(resolve, 800))
-    return MOCK_AGENT_APPOINTMENTS.map(a => ({ ...a }))
+    try {
+      const token = localStorage.getItem('authToken')
+      
+      if (!token) {
+        throw new Error('No se encontró token de autenticación')
+      }
+
+      const response = await fetch(`${this.apiUrl}/agent/invitations/${this.type}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      })
+
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`)
+      }
+
+      const result = await response.json()
+      // La respuesta viene con estructura { ok: true, data: { list: [...] } }
+      const list = result.data?.list || result.list || result
+      
+      // Transformar cada invitación al formato del frontend
+      return list.map(item => this.transformInvitation(item))
+    } catch (error) {
+      console.error('Error al obtener invitaciones:', error)
+      throw error
+    }
   }
 }
 
 // Comando Proponer Nueva Fecha
 class ProposeAppointmentCommand extends AppointmentCommand {
-  constructor(appointmentId, proposalData) {
+  constructor(apiUrl, appointmentId, proposalData) {
     super()
+    this.apiUrl = apiUrl
     this.appointmentId = appointmentId
     this.proposalData = proposalData
   }
 
   async execute() {
-    await new Promise(resolve => setTimeout(resolve, 600))
-    const appointment = MOCK_AGENT_APPOINTMENTS.find(a => a.id === this.appointmentId)
-    if (appointment) {
-      appointment.status = 'en_espera'
-      appointment.proposedDate = this.proposalData.date
-      appointment.proposedTime = this.proposalData.time
-      appointment.proposedDescription = this.proposalData.description
+    try {
+      const token = localStorage.getItem('authToken')
+      
+      if (!token) {
+        throw new Error('No se encontró token de autenticación')
+      }
+
+      // Validar campos obligatorios
+      if (!this.proposalData.date || !this.proposalData.time) {
+        throw new Error('La fecha y hora son obligatorias')
+      }
+
+      if (!this.proposalData.description) {
+        throw new Error('La descripción es obligatoria')
+      }
+
+      // Construir expected_date en formato "YYYY-MM-DD HH:MM"
+      const expectedDate = `${this.proposalData.date} ${this.proposalData.time}`
+
+      const body = {
+        expected_date: expectedDate,
+        description: this.proposalData.description
+      }
+
+      console.log(`📅 Proponiendo fecha para invitación ID: ${this.appointmentId}`)
+      console.log('📦 Datos a enviar:', body)
+
+      const response = await fetch(`${this.apiUrl}/agent/invitations/${this.appointmentId}/propose`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(body)
+      })
+
+      console.log('📥 Respuesta del servidor:', {
+        status: response.status,
+        statusText: response.statusText,
+        ok: response.ok
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        console.error('❌ Error del servidor:', errorData)
+        throw new Error(errorData.message || `Error ${response.status}: ${response.statusText}`)
+      }
+
+      const result = await response.json()
+      console.log('✅ Propuesta enviada exitosamente:', result)
+
+      // Retornar datos actualizados
+      return {
+        success: true,
+        message: result.message || 'Propuesta enviada exitosamente',
+        appointment: {
+          id: this.appointmentId,
+          status: 'confirmada',
+          proposedDate: this.proposalData.date,
+          proposedTime: this.proposalData.time,
+          proposedDescription: this.proposalData.description
+        }
+      }
+    } catch (error) {
+      console.error('❌ Error al proponer fecha:', error)
+      throw error
     }
-    return { success: true, appointment: { ...appointment } }
   }
 }
 
@@ -222,13 +357,13 @@ class AppointmentCommandInvoker {
 const AgentAppointmentService = {
   invoker: new AppointmentCommandInvoker(),
 
-  async getAppointments() {
-    const command = new GetAgentAppointmentsCommand()
+  async getAppointments(type = 'all') {
+    const command = new GetAgentAppointmentsCommand(API_URL, type)
     return await this.invoker.executeCommand(command)
   },
 
   async proposeDateTime(appointmentId, proposalData) {
-    const command = new ProposeAppointmentCommand(appointmentId, proposalData)
+    const command = new ProposeAppointmentCommand(API_URL, appointmentId, proposalData)
     return await this.invoker.executeCommand(command)
   },
 }

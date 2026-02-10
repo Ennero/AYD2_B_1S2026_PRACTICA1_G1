@@ -15,6 +15,7 @@ const AgentPropertiesContainer = () => {
   const [properties, setProperties] = useState([])
   const [filteredProperties, setFilteredProperties] = useState([])
   const [activeFilters, setActiveFilters] = useState([])
+  const [currentFilters, setCurrentFilters] = useState({})
   const [loading, setLoading] = useState(true)
   const [actionLoading, setActionLoading] = useState(false)
 
@@ -25,10 +26,10 @@ const AgentPropertiesContainer = () => {
   const [selectedProperty, setSelectedProperty] = useState(null)
 
   // Cargar propiedades al montar (Command: GetPropertiesCommand)
-  const loadProperties = useCallback(async () => {
+  const loadProperties = useCallback(async (filters = {}) => {
     try {
       setLoading(true)
-      const data = await AgentPropertyService.getProperties()
+      const data = await AgentPropertyService.getProperties(filters)
       // Delay artificial para mejorar la experiencia visual del skeleton
       await new Promise(resolve => setTimeout(resolve, 400))
       setProperties(data)
@@ -51,15 +52,46 @@ const AgentPropertiesContainer = () => {
   }
 
   // Abrir modal de edición
-  const handleOpenEdit = (property) => {
-    setSelectedProperty(property)
-    setIsFormModalOpen(true)
+  const handleOpenEdit = async (property) => {
+    try {
+      setActionLoading(true)
+      setIsFormModalOpen(true)
+      setSelectedProperty(null) // Limpiar primero para mostrar loading
+      
+      console.log('📝 Cargando detalle completo para editar propiedad ID:', property.id)
+      
+      // Cargar detalle completo desde el backend para autocompletar el formulario
+      const propertyDetail = await AgentPropertyService.getPropertyDetail(property.id)
+      
+      console.log('✅ Detalle cargado para edición:', propertyDetail)
+      setSelectedProperty(propertyDetail)
+    } catch (error) {
+      console.error('❌ Error al cargar detalle de propiedad para editar:', error)
+      toast.error('Error al cargar los datos de la propiedad')
+      setIsFormModalOpen(false)
+    } finally {
+      setActionLoading(false)
+    }
   }
 
   // Abrir modal de detalle
-  const handleOpenDetail = (property) => {
-    setSelectedProperty(property)
-    setIsDetailModalOpen(true)
+  const handleOpenDetail = async (property) => {
+    try {
+      setActionLoading(true)
+      setIsDetailModalOpen(true)
+      setSelectedProperty(null) // Limpiar primero para mostrar loading
+      
+      // Cargar detalle completo desde el backend
+      const propertyDetail = await AgentPropertyService.getPropertyDetail(property.id)
+      
+      setSelectedProperty(propertyDetail)
+    } catch (error) {
+      console.error('Error al cargar detalle de propiedad:', error)
+      toast.error('Error al cargar el detalle de la propiedad')
+      setIsDetailModalOpen(false)
+    } finally {
+      setActionLoading(false)
+    }
   }
 
   // Abrir modal de eliminación
@@ -76,10 +108,11 @@ const AgentPropertiesContainer = () => {
     setSelectedProperty(null)
   }
 
-  // Aplicar filtros (Strategy pattern)
-  const handleApplyFilters = (filtered, filters) => {
-    setFilteredProperties(filtered)
-    setActiveFilters(filters || [])
+  // Aplicar filtros - ahora recarga desde el backend
+  const handleApplyFilters = async (filters, activeFiltersArray) => {
+    setCurrentFilters(filters)
+    setActiveFilters(activeFiltersArray || [])
+    await loadProperties(filters)
   }
 
   // Remover un filtro individual
@@ -93,30 +126,38 @@ const AgentPropertiesContainer = () => {
     try {
       if (selectedProperty) {
         // Editar propiedad (Command: UpdatePropertyCommand)
+        console.log('Editando propiedad ID:', selectedProperty.id)
+        console.log('Datos del formulario para editar:', formData)
+        
         const updatedProperty = await AgentPropertyService.updateProperty(selectedProperty.id, formData)
-        setProperties(prev =>
-          prev.map(p => (p.id === selectedProperty.id ? { ...p, ...formData, ...updatedProperty } : p))
-        )
-        setFilteredProperties(prev =>
-          prev.map(p => (p.id === selectedProperty.id ? { ...p, ...formData, ...updatedProperty } : p))
-        )
+        
+        console.log('Propiedad actualizada, recargando lista...')
+        
+        // Recargar la lista de propiedades para obtener los datos actualizados del servidor
+        await loadProperties(currentFilters)
+        
         toast.success(
           `Propiedad editada exitosamente — ID: ${selectedProperty.id}, ${formData.title}`,
           { duration: 4000 }
         )
       } else {
         // Crear propiedad (Command: CreatePropertyCommand)
-        const newProperty = await AgentPropertyService.createProperty(formData, properties)
-        setProperties(prev => [...prev, newProperty])
-        setFilteredProperties(prev => [...prev, newProperty])
+        console.log('Creando nueva propiedad')
+        console.log('Datos del formulario para crear:', formData)
+        
+        await AgentPropertyService.createProperty(formData)
         toast.success(
           `Propiedad creada exitosamente — ${formData.title}`,
           { duration: 4000 }
         )
+        // Recargar la lista de propiedades para obtener la imagen del servidor
+        await loadProperties(currentFilters)
       }
       handleCloseModals()
     } catch (error) {
-      toast.error(selectedProperty ? 'Error al editar la propiedad' : 'Error al crear la propiedad')
+      console.error('Error en handleFormSubmit:', error)
+      const errorMessage = error.message || (selectedProperty ? 'Error al editar la propiedad' : 'Error al crear la propiedad')
+      toast.error(errorMessage, { duration: 5000 })
     } finally {
       setActionLoading(false)
     }
@@ -207,7 +248,6 @@ const AgentPropertiesContainer = () => {
           <div className="w-[260px] flex-shrink-0 animate-slideInLeft">
             <PropertyFilterPanel
               onApplyFilters={handleApplyFilters}
-              allProperties={properties}
             />
           </div>
 
