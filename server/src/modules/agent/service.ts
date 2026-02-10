@@ -523,6 +523,7 @@ export async function proposeInvitation(agentId: number, invitationId: number, i
     await DB.invitation.update({
         where: { id_invitation: invitationId },
         data: {
+            status: 'ACKNOWLEDGE',
             expected_date: new Date(input.expected_date),
             description: input.description,
             updated_at: new Date(),
