@@ -145,28 +145,95 @@ class GetPropertiesCommand extends PropertyCommand {
 
 // Comando Post
 class CreatePropertyCommand extends PropertyCommand {
-  constructor(apiUrl, propertyData, existingProperties = []) {
+  constructor(apiUrl, propertyData) {
     super()
     this.apiUrl = apiUrl
     this.propertyData = propertyData
-    this.existingProperties = existingProperties
+  }
+
+  // Transforma los datos del frontend al formato del backend
+  buildPropertyBody() {
+    // Extraer la zona sin el prefijo "Zona" si existe - solo números
+    let zoneValue = this.propertyData.zone
+    if (typeof zoneValue === 'string') {
+      // Remover cualquier texto y dejar solo números
+      zoneValue = zoneValue.replace(/[^\d]/g, '').trim()
+    }
+
+    // Convertir imágenes a base64 (ya vienen en base64 desde el modal)
+    const imagesBase64 = this.propertyData.images.map(img => {
+      // Si la imagen ya es base64, extraer solo la parte después de la coma
+      if (typeof img === 'string' && img.includes('base64,')) {
+        return img.split('base64,')[1]
+      }
+      return img
+    })
+
+    // Asegurar al menos una imagen
+    if (imagesBase64.length === 0) {
+      throw new Error('Se requiere al menos una imagen')
+    }
+
+    const body = {
+      title: this.propertyData.title,
+      type: this.propertyData.propertyType, // Casa, Apartamento, Terreno, Local Comercial
+      address: this.propertyData.address,
+      zone: zoneValue,
+      price: Number(this.propertyData.price),
+      num_rooms: Number(this.propertyData.bedrooms),
+      num_bathrooms: Number(this.propertyData.bathrooms),
+      square_meters: parseFloat(this.propertyData.area), // Puede ser decimal
+      state: this.propertyData.status, // Disponible, No Disponible, Vendido
+      description: this.propertyData.description,
+      images: imagesBase64
+    }
+
+    console.log('📤 Body que se enviará al backend:', body)
+    console.log('📸 Número de imágenes:', imagesBase64.length)
+    console.log('📸 Primera imagen (preview):', imagesBase64[0]?.substring(0, 50) + '...')
+    return body
   }
 
   async execute() {
     try {
-      // Logica para crear una nueva propiedad (simulación)
+      const token = localStorage.getItem('authToken')
+      
+      if (!token) {
+        throw new Error('No se encontró token de autenticación')
+      }
 
-      // Calcular el próximo ID secuencial
-      const maxId = this.existingProperties.length > 0
-        ? Math.max(...this.existingProperties.map(p => p.id))
-        : 0
-      const nextId = maxId + 1
+      const propertyBody = this.buildPropertyBody()
 
-      // Simulación de creación
+      console.log('🚀 Enviando petición POST a /agent/properties')
+      
+      const response = await fetch(`${this.apiUrl}/agent/properties`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(propertyBody)
+      })
+
+      console.log('📥 Respuesta del servidor:', {
+        status: response.status,
+        statusText: response.statusText,
+        ok: response.ok
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        console.error('❌ Error del servidor:', errorData)
+        throw new Error(errorData.message || `Error ${response.status}: ${response.statusText}`)
+      }
+
+      const result = await response.json()
+      console.log('✅ Propiedad creada exitosamente:', result)
+
+      // Retornar la propiedad creada con el ID del servidor
       return {
-        id: nextId,
+        id: result.id_property,
         ...this.propertyData,
-        images: this.propertyData.images || ['/images/logo-HomeFinder.png'],
         createdAt: new Date().toISOString().split('T')[0],
       }
     } catch (error) {
@@ -243,8 +310,8 @@ const AgentPropertyService = {
     return await this.invoker.executeCommand(command)
   },
 
-  async createProperty(propertyData, existingProperties = []) {
-    const command = new CreatePropertyCommand(API_URL, propertyData, existingProperties)
+  async createProperty(propertyData) {
+    const command = new CreatePropertyCommand(API_URL, propertyData)
     return await this.invoker.executeCommand(command)
   },
 

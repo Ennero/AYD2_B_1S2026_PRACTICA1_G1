@@ -108,17 +108,19 @@ const AgentPropertiesContainer = () => {
         )
       } else {
         // Crear propiedad (Command: CreatePropertyCommand)
-        const newProperty = await AgentPropertyService.createProperty(formData, properties)
-        setProperties(prev => [...prev, newProperty])
-        setFilteredProperties(prev => [...prev, newProperty])
+        await AgentPropertyService.createProperty(formData)
         toast.success(
           `Propiedad creada exitosamente — ${formData.title}`,
           { duration: 4000 }
         )
+        // Recargar la lista de propiedades para obtener la imagen del servidor
+        await loadProperties(currentFilters)
       }
       handleCloseModals()
     } catch (error) {
-      toast.error(selectedProperty ? 'Error al editar la propiedad' : 'Error al crear la propiedad')
+      console.error('❌ Error completo:', error)
+      const errorMessage = error.message || (selectedProperty ? 'Error al editar la propiedad' : 'Error al crear la propiedad')
+      toast.error(errorMessage, { duration: 5000 })
     } finally {
       setActionLoading(false)
     }
