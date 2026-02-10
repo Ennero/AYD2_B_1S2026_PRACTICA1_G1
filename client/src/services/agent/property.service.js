@@ -196,13 +196,6 @@ class CreatePropertyCommand extends PropertyCommand {
       images: imagesBase64
     }
 
-    console.log('Body que se enviará al backend:', {
-      ...body,
-      images: `[${body.images.length} imágenes]`
-    })
-    console.log('Número de imágenes:', imagesBase64.length)
-    console.log('Primera imagen tiene prefijo data:image?:', imagesBase64[0]?.startsWith('data:image'))
-    console.log('Primera imagen (preview):', imagesBase64[0]?.substring(0, 80) + '...')
     return body
   }
 
@@ -215,8 +208,6 @@ class CreatePropertyCommand extends PropertyCommand {
       }
 
       const propertyBody = this.buildPropertyBody()
-
-      console.log('Enviando petición POST a /agent/properties')
       
       const response = await fetch(`${this.apiUrl}/agent/properties`, {
         method: 'POST',
@@ -227,12 +218,6 @@ class CreatePropertyCommand extends PropertyCommand {
         body: JSON.stringify(propertyBody)
       })
 
-      console.log('Respuesta del servidor:', {
-        status: response.status,
-        statusText: response.statusText,
-        ok: response.ok
-      })
-
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}))
         console.error('Error del servidor:', errorData)
@@ -240,7 +225,6 @@ class CreatePropertyCommand extends PropertyCommand {
       }
 
       const result = await response.json()
-      console.log('Propiedad creada exitosamente:', result)
 
       // Retornar la propiedad creada con el ID del servidor
       return {
@@ -265,8 +249,6 @@ class GetPropertyDetailCommand extends PropertyCommand {
 
   // Transforma la respuesta del backend al formato del frontend
   transformPropertyDetail(apiProperty) {
-    console.log('Transformando datos de propiedad:', apiProperty)
-    
     // Extraer URLs de las imágenes
     const imageUrls = apiProperty.images?.map(img => img.url_img) || ['/images/logo-HomeFinder.png']
 
@@ -286,7 +268,6 @@ class GetPropertyDetailCommand extends PropertyCommand {
       images: imageUrls,
     }
     
-    console.log('Datos transformados:', transformed)
     return transformed
   }
 
@@ -298,8 +279,6 @@ class GetPropertyDetailCommand extends PropertyCommand {
         throw new Error('No se encontró token de autenticación')
       }
 
-      console.log(`Obteniendo detalle de propiedad ID: ${this.propertyId}`)
-
       const response = await fetch(`${this.apiUrl}/agent/properties/${this.propertyId}`, {
         method: 'GET',
         headers: {
@@ -308,31 +287,17 @@ class GetPropertyDetailCommand extends PropertyCommand {
         }
       })
 
-      console.log('Respuesta del servidor:', {
-        status: response.status,
-        statusText: response.statusText,
-        ok: response.ok
-      })
-
       if (!response.ok) {
         throw new Error(`Error ${response.status}: ${response.statusText}`)
       }
 
       const result = await response.json()
-      console.log('Detalle de propiedad obtenido (completo):', result)
       
       // La respuesta viene con estructura { ok: true, data: {...} }
       const propertyData = result.data || result
-      console.log('Property Data extraído:', propertyData)
-      console.log('Valores específicos:', {
-        num_rooms: propertyData.num_rooms,
-        num_bathrooms: propertyData.num_bathrooms,
-        square_meters: propertyData.square_meters
-      })
       
       // Transformar al formato del frontend
       const transformed = this.transformPropertyDetail(propertyData)
-      console.log('Resultado final transformado:', transformed)
       return transformed
     } catch (error) {
       console.error('Error al obtener detalle de propiedad:', error)
@@ -374,10 +339,27 @@ class DeletePropertyCommand extends PropertyCommand {
 
   async execute() {
     try {
-      // Logica para eliminar una propiedad (simulación)
-      return { success: true, deletedId: this.propertyId }
+      const token = localStorage.getItem('authToken')
+      
+      if (!token) {
+        throw new Error('No se encontró token de autenticación')
+      }
+
+      const response = await fetch(`${this.apiUrl}/agent/properties/${this.propertyId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.message || `Error ${response.status}: ${response.statusText}`)
+      }
+
+      const result = await response.json()
+      return result
     } catch (error) {
-      console.error('Error al eliminar propiedad:', error)
       throw error
     }
   }
