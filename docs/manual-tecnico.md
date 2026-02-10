@@ -103,13 +103,13 @@ Se seleccionaron frameworks y tecnologías que en conjunto cumplen con los reque
 | Tecnología | Versión | Rol en el sistema |
 |------------|---------|-------------------|
 | React | 19.2 | UI: Componentes reactivos, SPA |
-| Vite | — | Bundler con HMR instantáneo |
-| Tailwind CSS | — | Estilos utility-first responsivos |
+| Vite | 7.2 | Bundler con HMR instantáneo |
+| Tailwind CSS | 3.4 | Estilos utility-first responsivos |
 | Express.js | 5.2 | API REST, middleware HTTP |
 | TypeScript | 5.9 | Tipado estático en backend |
 | PostgreSQL | 15.3 | Base de datos relacional ACID |
 | Prisma ORM | 7.3 | ORM type-safe, migraciones |
-| Docker / Compose | — | Containerización y orquestación |
+| Docker / Compose | — | Containerización y orquestación (Node 24 Alpine + PostgreSQL 15.3) |
 | bcryptjs | 3.0 | Hashing de contraseñas |
 | jsonwebtoken | 9.0 | Autenticación JWT stateless |
 | Supabase Storage | 2.95 | Almacenamiento de imágenes con CDN |
@@ -1369,7 +1369,7 @@ A continuación se presenta la especificación detallada de cada caso de uso exp
 | RNF004 | Autenticación stateless | Seguridad | `lib/security.ts` → `signAuthToken()`, `middleware/auth.ts` | Todos los CDU protegidos |
 | RNF005 | Validación de entrada | Seguridad | `express-validator` en rutas, validaciones en React forms | Todos los CDU con formularios |
 | RNF006 | Protección CORS | Seguridad | `config/cors.config.ts` | Todos los CDU (comunicación frontend-backend) |
-| RNF007 | Containerización | Escalabilidad | `docker-compose.yml`, `Dockerfile`, `docker-entrypoint.sh` | Todos (infraestructura) |
+| RNF007 | Containerización | Escalabilidad | `docker-compose.yml`, `Dockerfile` | Todos (infraestructura) |
 | RNF008 | Responsividad | Usabilidad | Tailwind CSS responsive utilities, componentes responsivos | CDU004.0, CDU004.1, CDU005.0, CDU005.1 |
 | RNF009 | Retroalimentación visual | Usabilidad | `react-hot-toast`, estados `loading` en Button.jsx, mensajes de error | CDU005.0, CDU005.1, CDU004.1 |
 | RNF010 | Integridad referencial | Confiabilidad | `schema.prisma` → `onDelete: Cascade`, foreign keys | CDU001.3, CDU003.4 |
