@@ -15,6 +15,7 @@ const AgentPropertiesContainer = () => {
   const [properties, setProperties] = useState([])
   const [filteredProperties, setFilteredProperties] = useState([])
   const [activeFilters, setActiveFilters] = useState([])
+  const [currentFilters, setCurrentFilters] = useState({})
   const [loading, setLoading] = useState(true)
   const [actionLoading, setActionLoading] = useState(false)
 
@@ -25,10 +26,10 @@ const AgentPropertiesContainer = () => {
   const [selectedProperty, setSelectedProperty] = useState(null)
 
   // Cargar propiedades al montar (Command: GetPropertiesCommand)
-  const loadProperties = useCallback(async () => {
+  const loadProperties = useCallback(async (filters = {}) => {
     try {
       setLoading(true)
-      const data = await AgentPropertyService.getProperties()
+      const data = await AgentPropertyService.getProperties(filters)
       // Delay artificial para mejorar la experiencia visual del skeleton
       await new Promise(resolve => setTimeout(resolve, 400))
       setProperties(data)
@@ -76,10 +77,11 @@ const AgentPropertiesContainer = () => {
     setSelectedProperty(null)
   }
 
-  // Aplicar filtros (Strategy pattern)
-  const handleApplyFilters = (filtered, filters) => {
-    setFilteredProperties(filtered)
-    setActiveFilters(filters || [])
+  // Aplicar filtros - ahora recarga desde el backend
+  const handleApplyFilters = async (filters, activeFiltersArray) => {
+    setCurrentFilters(filters)
+    setActiveFilters(activeFiltersArray || [])
+    await loadProperties(filters)
   }
 
   // Remover un filtro individual
@@ -207,7 +209,6 @@ const AgentPropertiesContainer = () => {
           <div className="w-[260px] flex-shrink-0 animate-slideInLeft">
             <PropertyFilterPanel
               onApplyFilters={handleApplyFilters}
-              allProperties={properties}
             />
           </div>
 

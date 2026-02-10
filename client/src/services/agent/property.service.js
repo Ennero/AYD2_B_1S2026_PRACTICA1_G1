@@ -1,5 +1,28 @@
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
 
+// Mapeo de tipos de propiedades: Frontend -> Backend
+const PROPERTY_TYPE_MAP = {
+  'Casa': 'HOUSE',
+  'Apartamento': 'APARTMENT',
+  'Terreno': 'LAND',
+  'Local Comercial': 'RETAIL SPACE'
+}
+
+// Mapeo inverso: Backend -> Frontend
+const PROPERTY_TYPE_REVERSE_MAP = {
+  'HOUSE': 'Casa',
+  'APARTMENT': 'Apartamento',
+  'LAND': 'Terreno',
+  'RETAIL SPACE': 'Local Comercial'
+}
+
+// Mapeo de estados: Backend -> Frontend
+const STATE_MAP = {
+  'AVAILABLE': 'Disponible',
+  'UNAVAILABLE': 'No Disponible',
+  'SOLD': 'Vendido'
+}
+
 // Clase Base Comando
 class PropertyCommand {
   execute() {
@@ -7,126 +30,112 @@ class PropertyCommand {
   }
 }
 
-// Comando Get
+// Comando Get con filtros
 class GetPropertiesCommand extends PropertyCommand {
-  constructor(apiUrl) {
+  constructor(apiUrl, filters = {}) {
     super()
     this.apiUrl = apiUrl
+    this.filters = filters
+  }
+
+  // Construye el body de filtros para el backend
+  buildFilterBody() {
+    const body = {}
+
+    // Título
+    if (this.filters.title) {
+      body.title = this.filters.title
+    }
+
+    // Tipo de propiedad
+    if (this.filters.propertyType) {
+      body.type = PROPERTY_TYPE_MAP[this.filters.propertyType] || this.filters.propertyType
+    }
+
+    // Precio
+    if (this.filters.price) {
+      body.price = Number(this.filters.price)
+    }
+
+    // Habitaciones
+    if (this.filters.bedrooms) {
+      body.rooms = Number(this.filters.bedrooms)
+    }
+
+    // Baños
+    if (this.filters.bathrooms) {
+      body.bathrooms = Number(this.filters.bathrooms)
+    }
+
+    // Metros cuadrados
+    if (this.filters.area) {
+      body.meter = Number(this.filters.area)
+    }
+
+    // Ordenamiento por precio
+    if (this.filters.sortPriceLow) {
+      body.is_ascendent_price = true
+    } else if (this.filters.sortPriceHigh) {
+      body.is_ascendent_price = false
+    }
+
+    // Ordenamiento por título
+    if (this.filters.sortTitleAsc) {
+      body.is_ascendent_title = true
+    } else if (this.filters.sortTitleDesc) {
+      body.is_ascendent_title = false
+    }
+
+    return body
+  }
+
+  // Transforma la respuesta del backend al formato del frontend
+  transformProperty(apiProperty) {
+    return {
+      id: apiProperty.id_property,
+      title: apiProperty.title,
+      propertyType: PROPERTY_TYPE_REVERSE_MAP[apiProperty.type] || apiProperty.type,
+      zone: apiProperty.zone ? `Zona ${apiProperty.zone}` : apiProperty.zone,
+      address: apiProperty.address,
+      price: Number(apiProperty.price) || 0,
+      status: STATE_MAP[apiProperty.state] || apiProperty.state,
+      images: apiProperty.url_img ? [apiProperty.url_img] : ['/images/logo-HomeFinder.png'],
+      // Campos adicionales para compatibilidad con los modales
+      bedrooms: 0,
+      bathrooms: 0,
+      area: 0,
+      description: '',
+      createdAt: new Date().toISOString().split('T')[0],
+    }
   }
 
   async execute() {
     try {
-      //Logica para obtener propiedades del agente (simulación)
-      return [
-        {
-          id: 1,
-          title: 'Casa Residencial en Zona 10',
-          propertyType: 'Casa',
-          zone: 'Zona 10',
-          address: 'Avenida Las Américas 15-30',
-          price: 1250000,
-          status: 'Disponible',
-          bedrooms: 4,
-          bathrooms: 3,
-          area: 280,
-          description: 'Hermosa casa residencial con acabados de lujo, amplio jardín, cocina moderna y sala de estar con doble altura. Ubicada en una de las zonas más exclusivas de la ciudad.',
-          images: [
-            '/images/logo-HomeFinder.png',
-            '/images/logo-HomeFinder.png',
-            '/images/logo-HomeFinder.png',
-          ],
-          createdAt: '2026-01-15',
+      const token = localStorage.getItem('authToken')
+      
+      if (!token) {
+        throw new Error('No se encontró token de autenticación')
+      }
+
+      const filterBody = this.buildFilterBody()
+
+      const response = await fetch(`${this.apiUrl}/agent/filter`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
-        {
-          id: 2,
-          title: 'Apartamento Moderno Zona 14',
-          propertyType: 'Apartamento',
-          zone: 'Zona 14',
-          address: 'Boulevard Vista Hermosa 8-50',
-          price: 850000,
-          status: 'Disponible',
-          bedrooms: 3,
-          bathrooms: 2,
-          area: 150,
-          description: 'Apartamento moderno con vista panorámica, acabados contemporáneos, área social y parqueo para 2 vehículos. Incluye acceso a gimnasio y piscina.',
-          images: [
-            '/images/logo-HomeFinder.png',
-            '/images/logo-HomeFinder.png',
-          ],
-          createdAt: '2026-01-20',
-        },
-        {
-          id: 3,
-          title: 'Terreno en Carretera a El Salvador',
-          propertyType: 'Terreno',
-          zone: 'Zona 16',
-          address: 'Km 18.5 Carretera a El Salvador',
-          price: 500000,
-          status: 'Disponible',
-          bedrooms: 0,
-          bathrooms: 0,
-          area: 1200,
-          description: 'Terreno plano con excelente ubicación, ideal para proyecto residencial o comercial. Cuenta con acceso a servicios básicos y vías principales.',
-          images: [
-            '/images/logo-HomeFinder.png',
-          ],
-          createdAt: '2026-02-01',
-        },
-        {
-          id: 4,
-          title: 'Local Comercial Centro Histórico',
-          propertyType: 'Local Comercial',
-          zone: 'Zona 1',
-          address: '6ta Avenida 9-15',
-          price: 320000,
-          status: 'No Disponible',
-          bedrooms: 0,
-          bathrooms: 1,
-          area: 95,
-          description: 'Local comercial en pleno centro histórico, ideal para restaurante o tienda. Alto flujo peatonal, cuenta con instalaciones eléctricas y sanitarias completas.',
-          images: [
-            '/images/logo-HomeFinder.png',
-            '/images/logo-HomeFinder.png',
-          ],
-          createdAt: '2026-02-05',
-        },
-        {
-          id: 5,
-          title: 'Casa en Condominio Zona 16',
-          propertyType: 'Casa',
-          zone: 'Zona 16',
-          address: 'Condominio Los Eucaliptos Lote 12',
-          price: 1800000,
-          status: 'Vendido',
-          bedrooms: 5,
-          bathrooms: 4,
-          area: 350,
-          description: 'Casa en exclusivo condominio con seguridad 24/7, amplios jardines, piscina privada, 3 niveles y acabados premium. Área de servicio completa.',
-          images: [
-            '/images/logo-HomeFinder.png',
-            '/images/logo-HomeFinder.png',
-            '/images/logo-HomeFinder.png',
-          ],
-          createdAt: '2026-01-10',
-        },
-        {
-          id: 6,
-          title: 'Apartamento Estudiantil Zona 12',
-          propertyType: 'Apartamento',
-          zone: 'Zona 12',
-          address: 'Colonia Monte María 3-25',
-          price: 450000,
-          status: 'Disponible',
-          bedrooms: 2,
-          bathrooms: 1,
-          area: 75,
-          description: 'Apartamento ideal para estudiantes o profesionales jóvenes, cerca de universidades y centros comerciales. Incluye un parqueo.',
-          images: [
-            '/images/logo-HomeFinder.png',
-          ],
-          createdAt: '2026-02-10',
-        },
-      ]
+        body: JSON.stringify(filterBody)
+      })
+
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`)
+      }
+
+      const data = await response.json()
+      
+      // Transformar cada propiedad al formato del frontend
+      return data.map(prop => this.transformProperty(prop))
     } catch (error) {
       console.error('Error al obtener propiedades:', error)
       throw error
@@ -229,8 +238,8 @@ class PropertyCommandInvoker {
 const AgentPropertyService = {
   invoker: new PropertyCommandInvoker(),
 
-  async getProperties() {
-    const command = new GetPropertiesCommand(API_URL)
+  async getProperties(filters = {}) {
+    const command = new GetPropertiesCommand(API_URL, filters)
     return await this.invoker.executeCommand(command)
   },
 

@@ -1,32 +1,14 @@
 import { useState, useEffect } from 'react'
 import { SlidersHorizontal, X, Search, ChevronDown } from 'lucide-react'
-import {
-  TextSearchStrategy,
-  TypeFilterStrategy,
-  MinPriceFilterStrategy,
-  MaxPriceFilterStrategy,
-  ZoneFilterStrategy,
-  BedroomsFilterStrategy,
-  BathroomsFilterStrategy,
-  MinAreaFilterStrategy,
-  PropertyFilterContext,
-} from '../../strategies/PropertyFilters'
-import {
-  PriceLowToHighStrategy,
-  PriceHighToLowStrategy,
-  PropertySorter,
-} from '../../strategies/PropertySorters'
 
 /**
  * Panel de filtros lateral fijo para propiedades del agente
  */
-const PropertyFilterPanel = ({ onApplyFilters, allProperties = [], onFilterChange }) => {
+const PropertyFilterPanel = ({ onApplyFilters }) => {
   const [filters, setFilters] = useState({
     title: '',
     propertyType: '',
-    zone: '',
-    minPrice: '',
-    maxPrice: '',
+    price: '',
     bedrooms: '',
     bathrooms: '',
     area: '',
@@ -81,72 +63,11 @@ const PropertyFilterPanel = ({ onApplyFilters, allProperties = [], onFilterChang
   }
 
   const applyFilters = () => {
-    let filtered = [...allProperties]
-    const filterContext = new PropertyFilterContext(TextSearchStrategy)
-
-    // Aplicar filtros usando Strategy pattern
-    if (filters.title) {
-      filterContext.setStrategy(TextSearchStrategy)
-      filtered = filterContext.applyFilter(filtered, filters.title)
-    }
-
-    if (filters.propertyType) {
-      filterContext.setStrategy(TypeFilterStrategy)
-      filtered = filterContext.applyFilter(filtered, filters.propertyType)
-    }
-
-    if (filters.zone) {
-      filterContext.setStrategy(ZoneFilterStrategy)
-      filtered = filterContext.applyFilter(filtered, filters.zone)
-    }
-
-    if (filters.minPrice) {
-      filterContext.setStrategy(MinPriceFilterStrategy)
-      filtered = filterContext.applyFilter(filtered, filters.minPrice)
-    }
-
-    if (filters.maxPrice) {
-      filterContext.setStrategy(MaxPriceFilterStrategy)
-      filtered = filterContext.applyFilter(filtered, filters.maxPrice)
-    }
-
-    if (filters.bedrooms) {
-      filterContext.setStrategy(BedroomsFilterStrategy)
-      filtered = filterContext.applyFilter(filtered, filters.bedrooms)
-    }
-
-    if (filters.bathrooms) {
-      filterContext.setStrategy(BathroomsFilterStrategy)
-      filtered = filterContext.applyFilter(filtered, filters.bathrooms)
-    }
-
-    if (filters.area) {
-      filterContext.setStrategy(MinAreaFilterStrategy)
-      filtered = filterContext.applyFilter(filtered, filters.area)
-    }
-
-    // Ordenamiento
-    if (filters.sortTitleAsc) {
-      filtered = [...filtered].sort((a, b) => a.title.localeCompare(b.title))
-    } else if (filters.sortTitleDesc) {
-      filtered = [...filtered].sort((a, b) => b.title.localeCompare(a.title))
-    }
-
-    if (filters.sortPriceLow) {
-      const sorter = new PropertySorter(new PriceLowToHighStrategy())
-      filtered = sorter.sort(filtered)
-    } else if (filters.sortPriceHigh) {
-      const sorter = new PropertySorter(new PriceHighToLowStrategy())
-      filtered = sorter.sort(filtered)
-    }
-
-    // Calcular filtros activos basándose en el estado actual de filters
+    // Calcular filtros activos para mostrar en la UI
     const currentActiveFilters = []
     if (filters.title) currentActiveFilters.push({ key: 'title', label: 'Búsqueda', value: filters.title, onRemove: () => removeFilter('title') })
     if (filters.propertyType) currentActiveFilters.push({ key: 'propertyType', label: 'Tipo', value: filters.propertyType, onRemove: () => removeFilter('propertyType') })
-    if (filters.zone) currentActiveFilters.push({ key: 'zone', label: 'Zona', value: filters.zone, onRemove: () => removeFilter('zone') })
-    if (filters.minPrice) currentActiveFilters.push({ key: 'minPrice', label: 'Precio mín', value: `Q${filters.minPrice}`, onRemove: () => removeFilter('minPrice') })
-    if (filters.maxPrice) currentActiveFilters.push({ key: 'maxPrice', label: 'Precio máx', value: `Q${filters.maxPrice}`, onRemove: () => removeFilter('maxPrice') })
+    if (filters.price) currentActiveFilters.push({ key: 'price', label: 'Precio', value: `Q${filters.price}`, onRemove: () => removeFilter('price') })
     if (filters.bedrooms) currentActiveFilters.push({ key: 'bedrooms', label: 'Habitaciones', value: filters.bedrooms, onRemove: () => removeFilter('bedrooms') })
     if (filters.bathrooms) currentActiveFilters.push({ key: 'bathrooms', label: 'Baños', value: filters.bathrooms, onRemove: () => removeFilter('bathrooms') })
     if (filters.area) currentActiveFilters.push({ key: 'area', label: 'Área mín', value: `${filters.area}m²`, onRemove: () => removeFilter('area') })
@@ -155,16 +76,15 @@ const PropertyFilterPanel = ({ onApplyFilters, allProperties = [], onFilterChang
     if (filters.sortPriceLow) currentActiveFilters.push({ key: 'sortPriceLow', label: 'Orden', value: 'Precio Bajo', onRemove: () => removeFilter('sortPriceLow') })
     if (filters.sortPriceHigh) currentActiveFilters.push({ key: 'sortPriceHigh', label: 'Orden', value: 'Precio Alto', onRemove: () => removeFilter('sortPriceHigh') })
 
-    onApplyFilters(filtered, currentActiveFilters)
+    // Enviar los filtros al container (ahora se aplican en el backend)
+    onApplyFilters(filters, currentActiveFilters)
   }
 
   const handleClear = () => {
-    setFilters({
+    const emptyFilters = {
       title: '',
       propertyType: '',
-      zone: '',
-      minPrice: '',
-      maxPrice: '',
+      price: '',
       bedrooms: '',
       bathrooms: '',
       area: '',
@@ -172,8 +92,8 @@ const PropertyFilterPanel = ({ onApplyFilters, allProperties = [], onFilterChang
       sortTitleDesc: false,
       sortPriceLow: false,
       sortPriceHigh: false,
-    })
-    onApplyFilters(allProperties, [])
+    }
+    setFilters(emptyFilters)
   }
 
   const removeFilter = (key) => {
@@ -182,10 +102,10 @@ const PropertyFilterPanel = ({ onApplyFilters, allProperties = [], onFilterChang
 
   // Verificar si hay algún filtro activo
   const hasActiveFilters = () => {
-    return filters.title || filters.propertyType || filters.zone || 
-           filters.minPrice || filters.maxPrice || filters.bedrooms || 
-           filters.bathrooms || filters.area || filters.sortTitleAsc || 
-           filters.sortTitleDesc || filters.sortPriceLow || filters.sortPriceHigh
+    return filters.title || filters.propertyType || filters.price || 
+           filters.bedrooms || filters.bathrooms || filters.area || 
+           filters.sortTitleAsc || filters.sortTitleDesc || 
+           filters.sortPriceLow || filters.sortPriceHigh
   }
 
   return (
@@ -237,41 +157,16 @@ const PropertyFilterPanel = ({ onApplyFilters, allProperties = [], onFilterChang
           </div>
         </div>
 
-        {/* Rango de Precio */}
+        {/* Precio */}
         <div>
           <label className="block text-xs font-medium text-gray-700 mb-1.5">
-            Rango de Precio (GTQ)
-          </label>
-          <div className="grid grid-cols-2 gap-2">
-            <input
-              type="number"
-              name="minPrice"
-              placeholder="Mínimo"
-              value={filters.minPrice}
-              onChange={handleChange}
-              className="px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-transparent transition-all"
-            />
-            <input
-              type="number"
-              name="maxPrice"
-              placeholder="Máximo"
-              value={filters.maxPrice}
-              onChange={handleChange}
-              className="px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-transparent transition-all"
-            />
-          </div>
-        </div>
-
-        {/* Ubicación / Zona */}
-        <div>
-          <label className="block text-xs font-medium text-gray-700 mb-1.5">
-            Ubicación / Zona
+            Precio (GTQ)
           </label>
           <input
-            type="text"
-            name="zone"
-            placeholder="Todas las zonas"
-            value={filters.zone}
+            type="number"
+            name="price"
+            placeholder="Ej. 500000"
+            value={filters.price}
             onChange={handleChange}
             className="w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-transparent transition-all"
           />
