@@ -52,7 +52,7 @@ El sistema implementa tres roles de usuario (Cliente, Agente, Administrador) con
 | **Clientes** | Usuarios finales | Buscar, filtrar y contactar agentes para evaluar propiedades |
 | **Agentes Inmobiliarios** | Profesionales inmobiliarios | Publicar propiedades, gestionar citas y visualizar estadísticas |
 | **Administrador del Sistema** | Operador interno | Gestionar los agentes inmobiliarios activos en la plataforma |
-| **Equipo de Desarrollo** | Desarrolladores | Construir, mantener y escalar la plataforma |
+
 
 ### 1.5 Usuarios del Sistema
 
@@ -103,13 +103,13 @@ Se seleccionaron frameworks y tecnologías que en conjunto cumplen con los reque
 | Tecnología | Versión | Rol en el sistema |
 |------------|---------|-------------------|
 | React | 19.2 | UI: Componentes reactivos, SPA |
-| Vite | — | Bundler con HMR instantáneo |
-| Tailwind CSS | — | Estilos utility-first responsivos |
+| Vite | 7.2 | Bundler con HMR instantáneo |
+| Tailwind CSS | 3.4 | Estilos utility-first responsivos |
 | Express.js | 5.2 | API REST, middleware HTTP |
 | TypeScript | 5.9 | Tipado estático en backend |
 | PostgreSQL | 15.3 | Base de datos relacional ACID |
 | Prisma ORM | 7.3 | ORM type-safe, migraciones |
-| Docker / Compose | — | Containerización y orquestación |
+| Docker / Compose | — | Containerización y orquestación (Node 24 Alpine + PostgreSQL 15.3) |
 | bcryptjs | 3.0 | Hashing de contraseñas |
 | jsonwebtoken | 9.0 | Autenticación JWT stateless |
 | Supabase Storage | 2.95 | Almacenamiento de imágenes con CDN |
@@ -120,305 +120,192 @@ Se seleccionaron frameworks y tecnologías que en conjunto cumplen con los reque
 
 Se implementaron patrones de diseño reconocidos tanto en el frontend como en el backend para resolver problemas concretos de diseño, mejorar la mantenibilidad y facilitar la extensión del sistema.
 
-### 3.1 Patrones en el Frontend
+### 3.1 Patrones en el Backend
 
-#### 3.1.1 Container/Presentational
+#### 3.1.1 Singleton
 
-**Problema que resuelve**: 
-Cuando los componentes React mezclan lógica de negocio (estado, llamadas API, efectos) con código de renderizado, se vuelven difíciles de probar, reutilizar y mantener. Un componente que hace "todo" viola el principio de responsabilidad única.
+![Diagrama Singleton - DB_Connection](imgs/singleton1.png)
 
-**Implementación**:
+![Diagrama Singleton - EnvVars](imgs/singleton2.png)
 
-**Containers** (Smart Components):
-- Ubicación: `containers/` organizados por módulo funcional
-- Responsabilidades:
-  - Gestión de estado con hooks (`useState`, `useReducer`)
-  - Efectos secundarios (`useEffect` para cargar datos)
-  - Llamadas a servicios/API
-  - Lógica de negocio (validaciones, transformaciones)
-  - Manejo de eventos del usuario
-- Ejemplo `SearchContainer.jsx`: Carga propiedades, aplica filtros Strategy, maneja estado de búsqueda, ordena resultados
+**Problema que resuelve**: Sin Singleton, cada módulo crearía su propia instancia de `PrismaClient` (agotando conexiones), las variables de entorno se validarían múltiples veces, y en desarrollo con HMR cada recarga crearía conexiones nuevas sin cerrar las anteriores.
 
-**Presentational** (Dumb Components):
-- Ubicación: `components/` organizados por módulo
-- Responsabilidades:
-  - Solo renderizar UI basándose en props
-  - Emitir eventos mediante callbacks (ej: `onClick`, `onChange`)
-  - Sin lógica de negocio ni estado complejo
-  - Componentes stateless o con estado UI mínimo (hover, focus)
-- Ejemplo `PropertyCard.jsx`: Recibe `property` como prop, renderiza card, emite `onToggleFavorite` al hacer clic
+**Implementación**: Se aplica en 3 recursos:
 
-**Flujo de datos**:
-```
-SearchPage → SearchContainer (state + logic) → PropertyCard (UI pura)
-             ↓ carga datos
-        propertyService.getProperties()
+**1. Conexión a BD** (`db/db.ts`) — Singleton clásico con `#instance` privado:
+```typescript
+export class DB_Connection {
+    static #instance: DB_Connection
+    readonly DB: PrismaClient
+    private constructor() {
+        const pool = new pg.Pool({ connectionString: EnvVars.instance.DATABASE_URL })
+        this.DB = global.prisma ?? new PrismaClient({ adapter: new PrismaPg(pool) })
+        if (EnvVars.instance.NODE_ENV === 'development') global.prisma = this.DB
+    }
+    public static get instance(): DB_Connection {
+        if (!DB_Connection.#instance) DB_Connection.#instance = new DB_Connection()
+        return DB_Connection.#instance
+    }
+}
+export default DB_Connection.instance.DB
 ```
 
-**Beneficio**: Los presentational son 100% reutilizables en diferentes contextos. Se pueden testear con props mock sin montar servicios reales.
-
----
-
-#### 3.1.2 Strategy
-
-**Problema que resuelve**: 
-El sistema necesita aplicar 8 tipos de filtros diferentes (texto, tipo, precio min/max, zona, habitaciones, baños, área) y 5 ordenamientos (reciente, precio asc/desc, área, popularidad) sobre las propiedades. Implementar esto con condicionales `if/else` o `switch` en un solo método produciría:
-- Función monolítica de 200+ líneas
-- Difícil de testear cada filtro individualmente
-- Imposible agregar nuevos filtros sin modificar código existente (viola Open/Closed)
-
-**Implementación**:
-
-**Filtros de Propiedades** (`strategies/PropertyFilters.js`):
-- Cada estrategia implementa `execute(properties, filterValue)` que retorna array filtrado
-- Estrategias disponibles:
-  - `TextSearchStrategy`: Busca en título, ubicación y zona
-  - `TypeFilterStrategy`: Filtra por tipo de inmueble
-  - `MinPriceFilterStrategy` / `MaxPriceFilterStrategy`: Rango de precio
-  - `ZoneFilterStrategy`: Filtra por zona específica
-  - `BedroomsFilterStrategy` / `BathroomsFilterStrategy`: Cantidad de habitaciones/baños
-  - `MinAreaFilterStrategy`: Área mínima en m²
-- Contexto `PropertyFilterContext`: Permite cambiar estrategia en runtime con `setStrategy()`
-
-**Uso en SearchContainer.jsx**:
-```javascript
-const filterContext = new PropertyFilterContext(TextSearchStrategy)
-let result = properties
-
-// Cambio dinámico de estrategia
-filterContext.setStrategy(TextSearchStrategy)
-result = filterContext.applyFilter(result, searchQuery)
-
-filterContext.setStrategy(TypeFilterStrategy)
-result = filterContext.applyFilter(result, filters.propertyType)
-// ... continúa con más estrategias
-```
-
-**Ordenamiento** (`strategies/PropertySorters.js`):
-- Clase base `SortStrategy` con método abstracto `sort(properties)`
-- 5 estrategias concretas heredan de la base
-- `PropertySorter` es el contexto que ejecuta la estrategia actual
-- `getSortStrategy(sortType)` factory method que retorna la estrategia según string
-
-**Estados de Citas** (`strategies/AppointmentStatus.strategy.js`):
-- Define estrategias para los 4 estados de citas (confirmada, pendiente agente, pendiente cliente, rechazada)
-- Cada estrategia retorna configuración de UI (colores, íconos, botones visibles)
-
-**Beneficio**: Para agregar un nuevo filtro "Filtrar por año de construcción", solo se crea:
-```javascript
-export const YearFilterStrategy = {
-  execute: (properties, year) => properties.filter(p => p.year >= year)
+**2. Variables de Entorno** (`store/enviroment.ts`) — Mismo patrón, valida todas las env vars al arranque (fail-fast con `exit(1)` si falta alguna):
+```typescript
+export class EnvVars {
+    static #instance: EnvVars
+    readonly PORT, DATABASE_URL, JWT_SECRET, SUPABASE_URL // ...
+    private constructor() { /* valida cada variable o termina el proceso */ }
+    public static get instance(): EnvVars { /* lazy init */ }
 }
 ```
-Cero cambios en código existente.
+
+**3. Cliente Supabase** (`lib/supabase.ts`) — Singleton funcional con `global.supabase`.
+
+**Beneficio**: Una sola conexión a PostgreSQL compartida, variables validadas una vez al arranque, y conexiones que sobreviven a HMR en desarrollo.
 
 ---
 
-#### 3.1.3 State
+#### 3.1.2 Adapter
 
-**Problema que resuelve**: 
-Las citas tienen 4 estados diferentes (nueva solicitud, en espera, confirmada, cancelada) y cada estado determina:
-- Colores y badges a mostrar
-- Acciones disponibles (proponer horario, aceptar, rechazar)
-- Tipo de panel a renderizar
-- Si se muestra fecha propuesta o motivo de rechazo
+![Diagrama Adapter - Storage](imgs/adapter.png)
 
-Sin el patrón State, esto requeriría condicionales `if/else` en cada render, duplicando lógica en múltiples componentes.
+**Problema que resuelve**: El almacenamiento de archivos usa Supabase Storage actualmente, pero podría cambiar a AWS S3 u otro proveedor. Sin Adapter, todos los módulos que suben archivos dependerían directamente del SDK de Supabase.
+
+**Implementación** (`adapters/storage/`):
+
+**Interfaz Target** (`public-object-storage.ts`) — contrato que cualquier proveedor debe cumplir:
+```typescript
+export interface PublicObjectStorage {
+    uploadObject(input: UploadObjectInput): Promise<UploadObjectResult>
+}
+```
+
+**Adaptador Concreto** (`supabase-public-object-storage.adapter.ts`) — adapta el SDK de Supabase a la interfaz:
+```typescript
+export class SupabasePublicObjectStorageAdapter implements PublicObjectStorage {
+    async uploadObject(input: UploadObjectInput): Promise<UploadObjectResult> {
+        const supabase = getSupabaseClient()
+        await supabase.storage.from(input.bucket).upload(input.path, input.data, { ... })
+        const { data } = supabase.storage.from(input.bucket).getPublicUrl(input.path)
+        return { publicUrl: data.publicUrl }
+    }
+}
+```
+
+**Factory** (`adapters/storage/index.ts`) — punto único de cambio para intercambiar proveedores:
+```typescript
+export function getPublicObjectStorage(): PublicObjectStorage {
+    if (storage) return storage
+    storage = new SupabasePublicObjectStorageAdapter() // Cambiar aquí para otro proveedor
+    return storage
+}
+```
+
+**Beneficio**: Para cambiar a AWS S3, solo se crea un nuevo adapter y se actualiza la factory. Los servicios nunca importan Supabase directamente.
+
+---
+
+### 3.2 Patrones en el Frontend
+
+#### 3.2.1 Strategy
+
+![Diagrama Strategy - Filtros de Propiedades](imgs/strategy1.png)
+
+![Diagrama Strategy - Ordenamiento de Propiedades](imgs/strategy2.png)
+
+![Diagrama Strategy - Estados de Citas](imgs/strategy3.png)
+
+**Problema que resuelve**: El sistema necesita aplicar 8 filtros y 5 ordenamientos sobre propiedades. Sin Strategy, esto produciría funciones monolíticas imposibles de extender sin modificar código existente (viola Open/Closed).
+
+**Implementación**:
+
+**Filtros** (`strategies/PropertyFilters.js`): 8 estrategias con método `execute(properties, filterValue)` — `TextSearchStrategy`, `TypeFilterStrategy`, `MinPriceFilterStrategy`, `MaxPriceFilterStrategy`, `ZoneFilterStrategy`, `BedroomsFilterStrategy`, `BathroomsFilterStrategy`, `MinAreaFilterStrategy`. El contexto `PropertyFilterContext` permite cambiar estrategia en runtime:
+
+```javascript
+const filterContext = new PropertyFilterContext(TextSearchStrategy)
+filterContext.setStrategy(TypeFilterStrategy)
+result = filterContext.applyFilter(result, filters.propertyType)
+```
+
+**Ordenamiento** (`strategies/PropertySorters.js`): Clase base `SortStrategy` con 5 concretas: `MostRecentStrategy`, `PriceLowToHighStrategy`, `PriceHighToLowStrategy`, `AreaLowToHighStrategy`, `AreaHighToLowStrategy`. `getSortStrategy(sortType)` actúa como factory method.
+
+**Estados de Citas** (`strategies/AppointmentStatus.strategy.js`): 4 estrategias (confirmada, pendiente agente, pendiente cliente, rechazada) que retornan configuración de UI. `AppointmentStatusFactory` selecciona la estrategia según el estado.
+
+**Beneficio**: Agregar un nuevo filtro solo requiere crear una nueva estrategia, cero cambios en código existente.
+
+---
+
+#### 3.2.2 State
+
+![Diagrama State](imgs/state.png)
+
+**Problema que resuelve**: Las citas tienen 4 estados (nueva solicitud, en espera, confirmada, cancelada) que determinan colores, acciones disponibles, tipo de panel y datos visibles. Sin State, habría condicionales `if/else` duplicados en cada componente.
 
 **Implementación** (`context/AgentAppointmentState.js`):
 
-**Clase base abstracta**:
-```javascript
-class AgentAppointmentState {
-  getName() { throw new Error() }           // Nombre del estado
-  getBadgeConfig() { throw new Error() }   // Colores y estilos del badge
-  getTabKey() { throw new Error() }        // Tab donde aparece
-  getPanelType() { throw new Error() }     // Tipo de panel a renderizar
-  canPropose() { return false }            // ¿Puede proponer horario?
-  hasProposedDate() { return false }       // ¿Tiene fecha propuesta?
-  hasRejectionReason() { return false }    // ¿Tiene motivo de rechazo?
-}
-```
+Clase base `AgentAppointmentState` con métodos: `getName()`, `getBadgeConfig()`, `getTabKey()`, `getPanelType()`, `canPropose()`, `hasProposedDate()`, `hasRejectionReason()`.
 
-**Estados concretos**:
-- `NuevaSolicitudState`: Cliente solicitó cita, agente puede proponer horario
-- `EnEsperaState`: Agente propuso horario, esperando respuesta del cliente
-- `ConfirmadaState`: Cita confirmada por ambas partes
-- `CanceladaState`: Cita rechazada, muestra motivo
+**4 estados concretos**: `NuevaSolicitudState` (agente puede proponer horario), `EnEsperaState` (esperando respuesta del cliente), `ConfirmadaState` (cita confirmada), `CanceladaState` (rechazada, muestra motivo).
 
-**Contexto que maneja transiciones**:
+**Contexto con transiciones**:
 ```javascript
 class AgentAppointmentContext {
   constructor(appointment) {
     this.state = AgentAppointmentContext.resolveState(appointment.status)
   }
-  
   transitionTo(newStatus) {
     this.state = AgentAppointmentContext.resolveState(newStatus)
-    // Actualiza comportamiento sin cambiar el objeto appointment
   }
 }
-```
 
-**Uso en componentes**:
-```javascript
+// Uso
 const context = new AgentAppointmentContext(appointment)
-const config = context.state.getBadgeConfig()  // Obtiene colores según estado
-if (context.state.canPropose()) {
-  // Mostrar formulario de propuesta
-}
+const config = context.state.getBadgeConfig()
+if (context.state.canPropose()) { /* Mostrar formulario */ }
 ```
 
-**Beneficio**: Agregar nuevo estado "Reprogramada" solo requiere crear clase `ReprogramadaState` sin tocar estados existentes.
+**Beneficio**: Agregar nuevo estado solo requiere crear una nueva clase sin tocar estados existentes.
 
 ---
 
-#### 3.1.4 Command
+#### 3.2.3 Command
 
-**Problema que resuelve**: 
-La gestión de agentes (módulo admin) requiere operaciones CRUD que necesitan:
-- Encapsular cada operación como objeto independiente
-- Mantener historial de operaciones ejecutadas (auditoría)
-- Posibilidad futura de deshacer/rehacer acciones
-- Desacoplar el invocador (UI) del ejecutor (servicio)
+![Diagrama Command](imgs/Command1.png)
+![Diagrama Command](imgs/Command2.png)
+![Diagrama Command](imgs/Command3.png)
+![Diagrama Command](imgs/Command4.png)
+
+**Problema que resuelve**: Las operaciones CRUD necesitan encapsularse como objetos independientes para mantener historial de auditoría, desacoplar UI del servicio y permitir undo/redo futuro.
 
 **Implementación** (`services/admin.service.js`):
 
-**Clase base Command**:
-```javascript
-class AgentCommand {
-  execute() { throw new Error('Método abstracto') }
-}
-```
+Clase base `AgentCommand` con método abstracto `execute()`. **4 comandos concretos**: `GetAgentsCommand`, `CreateAgentCommand`, `UpdateAgentCommand`, `DeleteAgentCommand`.
 
-**Comandos concretos**:
-- `GetAgentsCommand`: Obtiene lista de agentes
-- `CreateAgentCommand`: Crea nuevo agente con datos proporcionados
-- `UpdateAgentCommand`: Actualiza agente existente por ID
-- `DeleteAgentCommand`: Elimina agente del sistema
+El `AgentCommandInvoker` ejecuta comandos y mantiene historial:
 
-Cada comando encapsula toda la información necesaria para ejecutar la operación:
-```javascript
-class CreateAgentCommand extends AgentCommand {
-  constructor(apiUrl, agentData) {
-    super()
-    this.apiUrl = apiUrl
-    this.agentData = agentData  // Datos necesarios para crear
-  }
-  
-  async execute() {
-    // Lógica de creación (validación, hash password, llamada API)
-    return { id: Date.now(), ...this.agentData }
-  }
-}
-```
-
-**Invoker con historial**:
 ```javascript
 class AgentCommandInvoker {
-  constructor() {
-    this.history = []  // Historial de comandos ejecutados
-  }
-  
+  constructor() { this.history = [] }
   async executeCommand(command) {
     const result = await command.execute()
-    this.history.push(command)  // Guarda en historial
+    this.history.push(command)
     return result
   }
-  
-  getHistory() { return this.history }  // Para auditoría
 }
-```
 
-**Servicio que usa el Invoker**:
-```javascript
+// El servicio crea y ejecuta comandos a través del Invoker
 const AgentService = {
   invoker: new AgentCommandInvoker(),
-  
   async createAgent(agentData) {
-    const command = new CreateAgentCommand(API_URL, agentData)
-    return await this.invoker.executeCommand(command)
+    return await this.invoker.executeCommand(new CreateAgentCommand(API_URL, agentData))
   }
 }
 ```
 
-**Uso en Container**:
-```javascript
-const handleCreateAgent = async (formData) => {
-  const newAgent = await AgentService.createAgent(formData)
-  // El comando se ejecutó y quedó registrado en el historial
-}
-```
+Este patrón se replica en los demás servicios del frontend: `auth.service.js` (Login, Register, Logout, ValidateToken), `property.service.js` (GetProperties, GetPropertyById, SearchProperties, ToggleFavorite, GetFavorites, RemoveFavorite, PropertyLookup, RequestAppointment), `appointment.service.js` (GetAppointments, AcceptAppointment, RejectAppointment), `profile.service.js` (GetProfile, UpdatePersonalInfo, UpdatePassword, UploadProfilePhoto), `agent/property.service.js` (GetProperties, CreateProperty, UpdateProperty, DeleteProperty) y `agent/appointment.service.js` (GetAgentAppointments, ProposeAppointment).
 
-**Beneficio**: 
-- Operaciones como objetos permiten serializarlas, guardarlas en localStorage para offline
-- Historial completo de operaciones para debugging/auditoría
-- Base para implementar undo/redo en futuras versiones
-- Testing simple: mock del command y verificar que se ejecuta
-
----
-
-#### 3.1.5 Module (Barrel Exports)
-
-**Problema que resuelve**: 
-Sin organización modular, los imports se vuelven verbosos y difíciles de mantener:
-```javascript
-// Sin barrel exports ❌
-import LoginForm from '../../components/auth/LoginForm'
-import RegisterForm from '../../components/auth/RegisterForm'
-import ForgotPasswordForm from '../../components/auth/ForgotPasswordForm'
-```
-
-**Implementación**: 
-Cada carpeta de componentes tiene un `index.js` que re-exporta todo:
-```javascript
-// components/auth/index.js
-export { default as LoginForm } from './LoginForm'
-export { default as RegisterForm } from './RegisterForm'
-export { default as ForgotPasswordForm } from './ForgotPasswordForm'
-```
-
-**Uso limpio**:
-```javascript
-// Con barrel exports 
-import { LoginForm, RegisterForm } from '../../components/auth'
-import { PropertyCard, FilterPanel } from '../../components/search'
-import { propertyService, authService } from '../../services'
-```
-
-**Estructura modular aplicada**:
-- `components/auth/index.js`, `components/search/index.js`, `components/ui/index.js`
-- `containers/auth/index.js`, `containers/search/index.js`
-- `services/index.js`, `services/agent/index.js`
-- `strategies/index.js`
-
-**Beneficio**: 
-- Imports más legibles y cortos
-- Fácil refactorizar: mover archivos sin cambiar imports externos
-- API de módulo clara: el `index.js` define qué es público
-
-### 3.2 Patrones en el Backend
-
-#### 3.2.1 Singleton
-
-**Problema que resuelve**: Crear múltiples instancias de `PrismaClient` o del cliente de Supabase desperdicia recursos y puede causar errores de conexión.
-
-**Solución implementada**:
-- `db/db.ts`: La instancia de `PrismaClient` se almacena en `global.prisma` para reutilizarla entre recargas en caliente durante desarrollo.
-- `lib/supabase.ts`: El cliente de Supabase se almacena en `global.supabase`.
-
-**Beneficio**: Se garantiza una única instancia por recurso costoso, reutilizando conexiones.
-
-#### 3.2.2 Adapter
-
-**Problema que resuelve**: El servicio de almacenamiento de archivos (Supabase Storage) es un proveedor externo. Si se quisiera cambiar a AWS S3 o almacenamiento local, sin un adapter habría que modificar cada módulo que sube archivos.
-
-**Solución implementada**:
-- `adapters/storage/public-object-storage.ts`: Define la interfaz `PublicObjectStorage` con el método `uploadObject()`.
-- `adapters/storage/supabase-public-object-storage.adapter.ts`: Implementa dicha interfaz usando el SDK de Supabase.
-- Los servicios (como `auth/service.ts`) solo dependen de la interfaz, nunca de Supabase directamente.
-
-**Beneficio**: Cambiar de proveedor de almacenamiento requiere solo crear un nuevo adapter. Cero cambios en la lógica de negocio.
+**Beneficio**: Historial de operaciones para auditoría, base para undo/redo, y testing simplificado.
 
 ---
 
@@ -476,7 +363,7 @@ El backend se organiza en **módulos por dominio** (`auth`, `admin`, `agent`, `c
 | **Middleware** | `src/middleware/` | Autenticación JWT y validación con express-validator |
 | **Adapters** | `src/adapters/` | Adaptadores para servicios externos (Supabase Storage) |
 | **Lib** | `src/lib/` | Seguridad (bcrypt, JWT), cliente Supabase |
-| **Store** | `src/store/` | Enums del dominio (UserType, PropertyType, PropertyState, InvitationState) |
+| **Store** | `src/store/` | Enums del dominio (UserType, PropertyType, PropertyState, InvitationState) y Singleton de variables de entorno (`EnvVars`) |
 | **Utils** | `src/utils/` | Funciones utilitarias (respuestas HTTP, base64, env, strings) |
 | **DB** | `src/db/` | Conexión a BD con Prisma + pool pg |
 
@@ -528,16 +415,15 @@ server/
 │   ├── middleware/            # Auth middleware, validación
 │   ├── modules/               # Módulos por dominio
 │   │   ├── auth/              #   route.ts, controller.ts, service.ts
-│   │   ├── admin/             #   (en desarrollo)
-│   │   ├── agent/             #   (en desarrollo)
-│   │   └── client/            #   (en desarrollo)
-│   ├── store/                 # Enums (UserType, PropertyType, etc.)
+│   │   ├── admin/             #   route.ts, controller.ts, service.ts
+│   │   ├── agent/             #   routes.ts, controller.ts, service.ts, dto.ts
+│   │   └── client/            #   routes.ts, controller.ts, service.ts
+│   ├── store/                 # Enums + EnvVars Singleton
 │   ├── types/                 # Tipos globales (Express.d.ts)
 │   ├── utils/                 # Utilidades (response, base64, env, strings)
 │   └── index.ts               # Entry point del servidor
 ├── docker-compose.yml         # Orquestación Docker
 ├── Dockerfile                 # Imagen del backend
-├── docker-entrypoint.sh       # Script de arranque
 ├── package.json
 └── tsconfig.json
 ```
@@ -563,11 +449,647 @@ server/
 
 ### 4.6 APIs y Endpoints
 
-| Método | Endpoint | Descripción | Autenticación |
-|--------|----------|-------------|---------------|
-| `POST` | `/api/auth/register` | Registro de nuevo cliente con datos personales y fotografía opcional (base64) | No |
-| `POST` | `/api/auth/login` | Inicio de sesión con email y contraseña, retorna JWT | No |
-| `GET` | `/api/auth/me` | Obtener información del usuario autenticado | Sí (Bearer JWT) |
+> **Nota sobre formato de respuesta:** Los endpoints de Auth, Admin y Agent (CRUD de propiedades, invitaciones) utilizan el helper `response_ok()`, por lo que sus respuestas reales están envueltas en `{ "ok": true, "data": { ... } }`. Los endpoints del módulo Client y algunos del Agent (dashboard, filter) retornan el JSON directamente sin este envoltorio. Los ejemplos de respuesta a continuación muestran el contenido del campo `data` (o el JSON directo según el caso).
+
+#### Autenticación (`/api/auth`) — Público
+
+##### `POST /api/auth/login`
+
+**Request:**
+```json
+{
+  "email": "example@gmail.com",
+  "password": "password123"
+}
+```
+
+**Response:**
+```json
+{
+  "message": "Usuario Logueado.",
+  "userId": 1,
+  "token": "eyJhbGciOiJIUzI1NiIs..."
+}
+```
+
+---
+
+##### `POST /api/auth/register`
+
+**Request:**
+```json
+{
+  "name": "Juan",
+  "last_name": "Pérez",
+  "gender": true,
+  "phone": 12345678,
+  "email": "juan@gmail.com",
+  "password": "password123",
+  "url_img": "base64_string_or_url" | null
+}
+```
+
+**Response:**
+```json
+{
+  "message": "Usuario creado.",
+  "userId": 1
+}
+```
+
+---
+
+##### `GET /api/auth/me`
+
+**Request:** Token Bearer
+
+**Response:**
+```json
+{
+  "user": {
+    "sub": "1",
+    "email": "example@gmail.com",
+    "type": "CLIENT"
+  }
+}
+```
+
+> Retorna el payload del token JWT del usuario autenticado. Útil para validar la sesión activa y obtener el rol del usuario.
+
+---
+
+#### Administrador (`/api/admin`) — Token Bearer requerido (Admin)
+
+##### `GET /api/admin/agents`
+
+**Request:** Token Bearer
+
+**Response:**
+```json
+{
+  "list": [
+    {
+      "id_user": 1,
+      "email": "agente1@gmail.com",
+      "name": "Carlos",
+      "last_name": "García",
+      "phone": 12345678,
+      "url_img": "url_imagen",
+      "type": "agent"
+    }
+  ]
+}
+```
+
+---
+
+##### `GET /api/admin/agents/:id`
+
+**Request:** Token Bearer
+
+**Response:**
+```json
+{
+  "id_user": 1,
+  "email": "agente1@gmail.com",
+  "name": "Carlos",
+  "last_name": "García",
+  "phone": 12345678,
+  "url_img": "url_imagen",
+  "type": "agent"
+}
+```
+
+---
+
+##### `POST /api/admin/agents`
+
+**Request:**
+```json
+{
+  "email": "agente1@gmail.com",
+  "name": "Carlos",
+  "last_name": "García",
+  "phone": 12345678,
+  "url_img": "base64_imagen",
+  "type": "agent"
+}
+```
+
+**Response:**
+```json
+{ "message": "Agente creado con exito", "id_user": 1 }
+```
+
+---
+
+##### `PUT /api/admin/agents/:id`
+
+**Request:**
+```json
+{
+  "id_user": 1,
+  "email": "agente2@gmail.com",
+  "name": "Carlos",
+  "last_name": "García",
+  "phone": 12345678,
+  "url_img": "url_imagen",
+  "type": "agent"
+}
+```
+
+**Response:**
+```json
+{ "message": "Agente editado con exito", "id_user": 1 }
+```
+
+---
+
+##### `DELETE /api/admin/agents/:id`
+
+**Request:** Token Bearer
+
+**Response:**
+```json
+{ "message": "Se ha eliminado el agente" }
+```
+
+---
+
+#### Agente — Dashboard (`/api/agent`) — Token Bearer requerido (Agent)
+
+##### `GET /api/agent/dashboard`
+
+**Request:** Token Bearer
+
+**Response:**
+```json
+{
+  "total_properties": 12,
+  "pending_appointments": 3,
+  "sold_properties": 6,
+  "most_searched": [
+    { "type": "casa", "value": 50 }
+  ],
+  "most_offered_zones": [
+    { "zone": 1, "value": 23 }
+  ]
+}
+```
+
+---
+
+#### Agente — Gestión de Propiedades (`/api/agent`)
+
+##### `POST /api/agent/properties`
+
+**Request:**
+```json
+{
+  "title": "Casa en Zona 10",
+  "type": "Casa",
+  "address": "Calle principal",
+  "zone": "10",
+  "price": 500000,
+  "num_rooms": 3,
+  "num_bathrooms": 2,
+  "square_meters": 150.5,
+  "state": "Disponible",
+  "description": "Hermosa casa...",
+  "images": ["base64_1", "base64_2"]
+}
+```
+
+**Response:**
+```json
+{ "message": "Propiedad creada con exito", "id_property": 1 }
+```
+
+> Todos los campos son obligatorios. `images` debe contener mínimo 1 imagen. Tipos válidos: Casa, Apartamento, Terreno, Local Comercial. Estados válidos: Disponible, No Disponible, Vendido.
+
+---
+
+##### `POST /api/agent/filter`
+
+**Request** (todos los campos opcionales):
+```json
+{
+  "title": "Casa",
+  "type": "APARTMENT",
+  "price": 3435,
+  "rooms": 4,
+  "meter": 43,
+  "bathrooms": 2,
+  "is_ascendent_price": true,
+  "is_ascendent_title": false
+}
+```
+
+**Response:**
+```json
+{
+  "list": [
+    {
+      "id": 3,
+      "img": "url_imagen",
+      "title": "Casa en Zona 10",
+      "type": "apartamento",
+      "zone": 3,
+      "address": "2da avenida 53-56",
+      "price": 400,
+      "status": "available"
+    }
+  ]
+}
+```
+
+---
+
+##### `GET /api/agent/properties/:id`
+
+**Request:** Token Bearer
+
+**Response:**
+```json
+{
+  "id_property": 1,
+  "title": "Casa en Zona 10",
+  "type": "Casa",
+  "address": "Calle principal",
+  "zone": "10",
+  "price": 500000,
+  "num_rooms": 3,
+  "num_bathrooms": 2,
+  "square_meters": 150.5,
+  "state": "Disponible",
+  "description": "Hermosa casa...",
+  "created_at": "2026-02-04",
+  "images": [
+    { "id_image": 1, "url_img": "url_imagen_1" },
+    { "id_image": 2, "url_img": "url_imagen_2" }
+  ]
+}
+```
+
+---
+
+##### `PUT /api/agent/properties/:id`
+
+**Request** (todos los campos opcionales, solo se actualizan los enviados):
+```json
+{
+  "title": "Casa actualizada",
+  "type": "Casa",
+  "address": "Nueva dirección",
+  "zone": "10",
+  "price": 550000,
+  "num_rooms": 4,
+  "num_bathrooms": 2,
+  "square_meters": 160.0,
+  "state": "Vendido",
+  "description": "Descripción actualizada",
+  "images": ["base64_1", "base64_2"]
+}
+```
+
+**Response:**
+```json
+{ "message": "Propiedad editada con exito", "id_property": 1 }
+```
+
+> Si se envía `images`, reemplaza todas las imágenes existentes.
+
+---
+
+##### `DELETE /api/agent/properties/:id`
+
+**Request:** Token Bearer
+
+**Response:**
+```json
+{ "message": "Se ha eliminado la propiedad" }
+```
+
+---
+
+#### Agente — Gestión de Solicitudes/Citas (`/api/agent`)
+
+##### `GET /api/agent/invitations/:type`
+
+`:type` puede ser: `all`, `Pending`, `Accepted`, `Rejected`.
+
+**Request:** Token Bearer
+
+**Response:**
+```json
+{
+  "list": [
+    {
+      "id_invitation": 1,
+      "title": "Casa en Zona 10",
+      "address": "Calle principal",
+      "zone": "10",
+      "price": 500000,
+      "client_name": "Juan Pérez",
+      "url_img": "url_imagen",
+      "state": "Solicitud del cliente",
+      "expected_date": null,
+      "description": null,
+      "justification": null,
+      "created_at": "2026-02-01",
+      "is_accepted": null
+    },
+    {
+      "id_invitation": 2,
+      "title": "Apartamento Centro",
+      "address": "Avenida",
+      "zone": "1",
+      "price": 300000,
+      "client_name": "María López",
+      "url_img": "url_imagen",
+      "state": "Cita agendada",
+      "expected_date": "2026-02-10 14:00",
+      "description": "Favor confirmar disponibilidad",
+      "justification": null,
+      "created_at": "2026-01-28",
+      "is_accepted": true
+    }
+  ]
+}
+```
+
+---
+
+##### `POST /api/agent/invitations/:id/propose`
+
+**Request:**
+```json
+{
+  "expected_date": "2026-02-10 14:00",
+  "description": "Favor confirmar su disponibilidad para esta fecha"
+}
+```
+
+**Response:**
+```json
+{ "message": "Propuesta enviada exitosamente", "id_invitation": 1 }
+```
+
+> Solo se puede usar cuando el estado es "Solicitud del cliente". Ambos campos son obligatorios.
+
+---
+
+#### Cliente — Buscador de Propiedades (`/api/client`) — Token Bearer requerido (Client)
+
+##### `POST /api/client/dashboard`
+
+**Request** (todos los campos opcionales):
+```json
+{
+  "title": "Casa",
+  "type": "APARTMENT",
+  "price": 3435,
+  "rooms": 4,
+  "meter": 43,
+  "bathrooms": 2,
+  "is_ascendent_price": true,
+  "is_ascendent_title": false,
+  "is_ascendente_date": true,
+  "is_ascendente_area": true
+}
+```
+
+**Response:**
+```json
+{
+  "properties": [
+    {
+      "id_property": 2,
+      "title": "La estancia",
+      "price": 4500,
+      "address": "La playa",
+      "zone": "zona 13",
+      "img": "base64",
+      "num_rooms": 15,
+      "num_bathrooms": 7,
+      "square_meters": 49,
+      "already_in_favorite": true
+    }
+  ]
+}
+```
+
+---
+
+##### `GET /api/client/property?id=31`
+
+**Request:** Token Bearer
+
+**Response:**
+```json
+{
+  "id_property": 2,
+  "title": "La estancia",
+  "address": "La playa",
+  "price": 4500,
+  "description": "Descripción de la propiedad",
+  "zone": "zona 13",
+  "num_rooms": 15,
+  "num_bathrooms": 7,
+  "square_meters": 49,
+  "type": "home",
+  "image": ["base64_1", "base64_2"],
+  "already_in_favorite": true,
+  "estate_agent": "Roxana Valdeti"
+}
+```
+
+---
+
+##### `POST /api/client/property/favorite`
+
+**Request:**
+```json
+{ "id_property": 2 }
+```
+
+**Response:**
+```json
+{ "message": "Propiedad guardada en favoritos" }
+```
+
+---
+
+##### `POST /api/client/property/lookup`
+
+**Request:**
+```json
+{ "id_property": 2 }
+```
+
+**Response:**
+```json
+{ "message": "Informacion guardada" }
+```
+
+> Registra que el cliente visitó la propiedad (alimenta estadísticas del dashboard del agente).
+
+---
+
+#### Cliente — Perfil (`/api/client`)
+
+##### `GET /api/client/profile`
+
+**Request:** Token Bearer
+
+**Response:**
+```json
+{
+  "name": "Daniel",
+  "lastname": "Godinez",
+  "gender": true,
+  "phone": 333333333,
+  "email": "example@gmail.com",
+  "img": "base64"
+}
+```
+
+---
+
+##### `PUT /api/client/profile`
+
+**Request:**
+```json
+{
+  "name": "Daniel",
+  "lastname": "Godinez",
+  "gender": "male",
+  "phone": 333333333,
+  "email": "example@gmail.com",
+  "img": "base64" | null,
+  "password": "nueva_contraseña"
+}
+```
+
+**Response:**
+```json
+{ "message": "Datos de perfil actualizados exitosamente" }
+```
+
+---
+
+#### Cliente — Mis Citas (`/api/client`)
+
+##### `GET /api/client/appointment/{all|finalized|pending|acknowledge}`
+
+Cada filtro es una ruta estática independiente: `/appointment/all`, `/appointment/finalized`, `/appointment/pending`, `/appointment/acknowledge`. Todas retornan la misma estructura, solo cambia el filtro aplicado.
+
+**Request:** Token Bearer
+
+**Response:**
+```json
+{
+  "appointments": [
+    {
+      "id_property": 2,
+      "title": "La estancia",
+      "address": "La playa",
+      "id_agent": 4,
+      "agent_name": "Nombre Agente",
+      "img": "base64",
+      "status": "confirmed",
+      "description": "Cita programada para el 12...",
+      "expected_date": "2026-02-12 10:00",
+      "is_accepted": true,
+      "justification": null
+    },
+    {
+      "id_property": 3,
+      "title": "Local Comercial",
+      "address": "Zona Viva",
+      "id_agent": 4,
+      "agent_name": "Nombre Agente",
+      "img": "base64",
+      "status": "acknowledge",
+      "description": "Te espero a las 12",
+      "expected_date": "2026-02-15 12:00",
+      "is_accepted": null,
+      "justification": null
+    }
+  ]
+}
+```
+
+> Estados posibles: `confirmed` (aceptada), `rejected` (rechazada, incluye `justification`), `pending` (por confirmar el agente), `acknowledge` (por confirmar el cliente).
+
+---
+
+##### `POST /api/client/appointment/acknowledge`
+
+**Request:**
+```json
+{
+  "id_appointment": 15,
+  "status": "accepted" | "rejected",
+  "justification": null | "Motivo del rechazo"
+}
+```
+
+**Response:**
+```json
+{ "message": "Cita confirmada" }
+```
+
+---
+
+#### Cliente — Favoritos (`/api/client`)
+
+##### `GET /api/client/properties/favorite`
+
+**Request:** Token Bearer
+
+**Response:**
+```json
+{
+  "total": 4,
+  "favorites": [
+    {
+      "id_favorite": 4,
+      "title": "USAC",
+      "price": 50000,
+      "num_rooms": 15,
+      "num_bathrooms": 7,
+      "square_meters": 49,
+      "address": "cerca de cayala, octava avenida...",
+      "id_property": 3
+    }
+  ]
+}
+```
+
+---
+
+##### `DELETE /api/client/properties/favorite?id=31`
+
+**Request:** Token Bearer
+
+**Response:**
+```json
+{ "message": "Propiedad eliminada de favoritos" }
+```
+
+---
+
+#### Cliente — Zonas (`/api/client`)
+
+##### `GET /api/client/zones`
+
+**Request:** Token Bearer
+
+**Response:**
+```json
+{ "zones": ["zona 1", "zona 10", "zona 13"] }
+```
 
 ### 4.7 Seguridad
 
@@ -591,7 +1113,7 @@ services:
   backend:        # Node.js 24 Alpine, depende de postgres-db
 ```
 
-**Pasos**: `docker-compose up --build` → el `docker-entrypoint.sh` ejecuta migraciones (`prisma migrate dev`), seed (`prisma db seed`) y arranca el servidor (`npm run dev`).
+**Pasos**: `docker-compose up --build` → el servicio backend ejecuta un `command: sh -c "..."` que espera a que PostgreSQL esté listo, ejecuta migraciones (`prisma migrate deploy`), seed (`npm run db:seed`) y arranca el servidor (`npm run dev`).
 
 ---
 
@@ -626,10 +1148,10 @@ services:
 - CDU001.2: Actualizar Propiedad
 - CDU001.3: Eliminar Propiedad
 - CDU001.4: Consultar Estadísticas
-- CDU001.5: Gestionar Tipo de Inmuebles
-- CDU001.6: Crear Tipo de Inmueble
-- CDU001.7: Eliminar Tipo de Inmueble
-- CDU001.8: Actualizar Tipo de Inmueble
+- CDU001.5: Gestionar Tipo de Inmuebles (categorías predefinidas: Casa, Apartamento, Terreno, Local Comercial)
+- CDU001.6: Seleccionar Tipo de Inmueble al crear propiedad
+- CDU001.7: Validar Tipo de Inmueble
+- CDU001.8: Filtrar por Tipo de Inmueble
 - CDU001.9: Visualizar Propiedades
 
 **CDU002 - Gestión de Citas**:
@@ -674,7 +1196,7 @@ A continuación se presenta la especificación detallada de cada caso de uso exp
 | **Precondiciones** | El Agente debe haber iniciado sesión (CDU005). |
 | **Post Condiciones** | El catálogo de propiedades queda actualizado en la base de datos. |
 | **Flujo Principal** | 1. El Agente selecciona "Gestionar Propiedades" (CDU001.0).<br>2. El Sistema muestra el listado de inmuebles asignados.<br>3. El Agente visualiza la información general.<br>4. El Agente finaliza la gestión. |
-| **Flujos Alternos** | **FA1: Crear Propiedad (CDU001.1)**<br>1. El Agente selecciona "Nueva Propiedad".<br>2. Ingresa datos (título, dirección, precio, descripción, tipo, habitaciones, baños, m², zona) y fotos.<br>3. Sistema valida campos obligatorios y formatos.<br>4. Sistema almacena la propiedad e imágenes.<br><br>**FA2: Actualizar Propiedad (CDU001.2)**<br>1. El Agente selecciona una propiedad existente.<br>2. Modifica los datos necesarios.<br>3. Sistema valida y actualiza.<br><br>**FA3: Eliminar Propiedad (CDU001.3)**<br>1. El Agente selecciona eliminar propiedad.<br>2. Sistema solicita confirmación.<br>3. Sistema elimina la propiedad y sus imágenes/favoritos/citas asociadas (cascade).<br><br>**FA4: Consultar Estadísticas (CDU001.4)**<br>1. El Agente selecciona ver dashboard.<br>2. Sistema muestra Top 3 tipos de inmuebles más buscados y Top 5 zonas con mayor oferta.<br><br>**FA5: Gestión de Tipos (CDU001.5)**<br>1. El Agente accede al catálogo de tipos.<br>2. Puede crear (CDU001.6), actualizar (CDU001.8) o eliminar (CDU001.7) tipos de inmueble (Casa, Apartamento, Terreno, Local Comercial).<br><br>**FA6: Visualizar Propiedades (CDU001.9)**<br>1. El Agente visualiza el listado completo de sus propiedades con filtros por tipo, precio y características.<br>2. Sistema muestra información resumida de cada propiedad. |
+| **Flujos Alternos** | **FA1: Crear Propiedad (CDU001.1)**<br>1. El Agente selecciona "Nueva Propiedad".<br>2. Ingresa datos (título, dirección, precio, descripción, tipo, habitaciones, baños, m², zona) y fotos.<br>3. Sistema valida campos obligatorios y formatos.<br>4. Sistema almacena la propiedad e imágenes.<br><br>**FA2: Actualizar Propiedad (CDU001.2)**<br>1. El Agente selecciona una propiedad existente.<br>2. Modifica los datos necesarios.<br>3. Sistema valida y actualiza.<br><br>**FA3: Eliminar Propiedad (CDU001.3)**<br>1. El Agente selecciona eliminar propiedad.<br>2. Sistema solicita confirmación.<br>3. Sistema elimina la propiedad y sus imágenes/favoritos/citas asociadas (cascade).<br><br>**FA4: Consultar Estadísticas (CDU001.4)**<br>1. El Agente selecciona ver dashboard.<br>2. Sistema muestra Top 3 tipos de inmuebles más buscados y Top 5 zonas con mayor oferta.<br><br>**FA5: Gestión de Tipos (CDU001.5)**<br>1. Los tipos de inmueble están definidos como categorías predeterminadas en el sistema: Casa, Apartamento, Terreno, Local Comercial.<br>2. El Agente selecciona el tipo correspondiente al crear o editar una propiedad.<br>3. El sistema valida que el tipo sea uno de los valores permitidos.<br><br>**FA6: Visualizar Propiedades (CDU001.9)**<br>1. El Agente visualiza el listado completo de sus propiedades con filtros por tipo, precio y características.<br>2. Sistema muestra información resumida de cada propiedad. |
 | **Reglas de Negocio** | RN1: Solo el agente propietario puede editar o eliminar una propiedad.<br>RN2: Toda propiedad debe tener al menos título, dirección, precio, tipo y descripción.<br>RN3: Los tipos de inmueble válidos son: Casa, Apartamento, Terreno y Local Comercial.<br>RN4: El precio debe ser un valor numérico positivo con máximo 2 decimales.<br>RN5: Al eliminar una propiedad se eliminan en cascada sus imágenes, favoritos, citas y registros asociados.<br>RN6: Las estadísticas del dashboard se calculan en base a los registros de búsqueda (tabla `record`). |
 | **Reglas de Calidad** | RC1: La creación/actualización de propiedad debe completarse en menos de 3 segundos (excluyendo carga de imágenes).<br>RC2: El dashboard de estadísticas debe cargar en menos de 2 segundos.<br>RC3: Las imágenes de propiedades deben almacenarse en un servicio externo (Supabase Storage) con URL pública accesible.<br>RC4: Los campos deben validarse tanto en frontend como en backend para garantizar integridad. |
 
@@ -760,52 +1282,52 @@ A continuación se presenta la especificación detallada de cada caso de uso exp
 
 ### 6.1 Requerimientos Funcionales
 
-| ID | Requerimiento | Descripción | Prioridad | CDU Relacionado |
-|----|--------------|-------------|-----------|-----------------|
-| RF001 | Registro de clientes | El sistema debe permitir el registro de nuevos clientes con: nombre completo, correo electrónico (único), contraseña y fotografía (opcional). | Alta | CDU005.0 |
-| RF002 | Inicio de sesión | El sistema debe permitir que todos los usuarios (Cliente, Agente, Administrador) inicien sesión con correo electrónico y contraseña. | Alta | CDU005.1 |
-| RF003 | Autenticación JWT | El sistema debe emitir un token JWT al iniciar sesión o registrarse, que se utiliza para autenticar las solicitudes posteriores. | Alta | CDU005 |
-| RF004 | Cierre de sesión | El sistema debe permitir al usuario cerrar sesión, invalidando su sesión actual en el cliente. | Media | CDU005.2 |
-| RF005 | Crear propiedad | El sistema debe permitir al agente inmobiliario crear propiedades con: título, dirección, precio, descripción, fotos, número de habitaciones, baños, metros cuadrados, tipo y zona. | Alta | CDU001.1 |
-| RF006 | Actualizar propiedad | El sistema debe permitir al agente actualizar los datos de sus propiedades existentes. | Alta | CDU001.2 |
-| RF007 | Eliminar propiedad | El sistema debe permitir al agente eliminar propiedades, con confirmación previa y eliminación en cascada de datos asociados. | Alta | CDU001.3 |
-| RF008 | Consultar estadísticas | El sistema debe mostrar al agente un dashboard con: Top 3 de tipos de inmuebles más buscados y Top 5 de zonas con mayor oferta de propiedades. | Media | CDU001.4 |
-| RF009 | Gestionar tipos de inmueble | El sistema debe permitir al agente crear, actualizar y eliminar tipos de inmueble (Casa, Apartamento, Terreno, Local Comercial). | Media | CDU001.5, CDU001.6, CDU001.7, CDU001.8 |
-| RF010 | Visualizar propiedades (Agente) | El sistema debe permitir al agente visualizar el listado de sus propiedades con posibilidad de filtrar por tipo, precio y características. | Alta | CDU001.9 |
-| RF011 | Solicitar cita | El sistema debe permitir al cliente solicitar una cita para evaluar una propiedad. | Alta | CDU002.0 |
-| RF012 | Proponer horario de cita | El sistema debe permitir al agente proponer un horario alternativo para una solicitud de cita. | Alta | CDU002.1 |
-| RF013 | Aceptar/Rechazar horario | El sistema debe permitir tanto al cliente como al agente aceptar o rechazar un horario de cita, con justificación obligatoria en caso de rechazo. | Alta | CDU002.2 |
-| RF014 | Visualizar agentes | El sistema debe permitir al administrador ver el listado de todos los agentes registrados. | Alta | CDU003.0 |
-| RF015 | Crear agente | El sistema debe permitir al administrador crear nuevas cuentas de agente inmobiliario con sus datos personales. | Alta | CDU003.2 |
-| RF016 | Actualizar agente | El sistema debe permitir al administrador actualizar los datos de un agente existente. | Media | CDU003.3 |
-| RF017 | Eliminar agente | El sistema debe permitir al administrador eliminar un agente del sistema, con eliminación en cascada de sus propiedades. | Media | CDU003.4 |
-| RF018 | Buscar propiedades | El sistema debe permitir al cliente buscar propiedades por texto libre (título, descripción, dirección). | Alta | CDU004.0, CDU004.1 |
-| RF019 | Filtrar propiedades | El sistema debe permitir filtrar propiedades por: tipo de inmueble, rango de precio, zona, número de habitaciones, número de baños y rango de área. | Alta | CDU004.1 |
-| RF020 | Ordenar resultados | El sistema debe permitir ordenar los resultados de búsqueda por: más recientes, precio ascendente/descendente, mayor área y popularidad. | Media | CDU004.1 |
-| RF021 | Gestionar favoritos | El sistema debe permitir al cliente agregar y quitar propiedades de su lista de favoritos. | Media | CDU004.0 |
-| RF022 | Editar perfil | El sistema debe permitir al cliente actualizar sus datos personales (nombre, correo, teléfono, fotografía). | Media | CDU004.2 |
-| RF023 | Carga de imágenes | El sistema debe permitir subir fotografías de propiedades y perfiles en formato base64 o URL, almacenándolas en Supabase Storage. | Alta | CDU001.1, CDU005.0 |
-| RF024 | Registro de visitas | El sistema debe registrar cada visita/interacción de un cliente con una propiedad para alimentar las estadísticas del agente. | Baja | CDU004.0 |
+| ID | Requerimiento | Descripción | Prioridad | CDU Relacionado | Usuario |
+|----|--------------|-------------|-----------|-----------------|---------|
+| RF001 | Registro de clientes | El sistema debe permitir el registro de nuevos clientes con: nombre completo, correo electrónico (único), contraseña y fotografía (opcional). | Alta | CDU005.0 | Cliente |
+| RF002 | Inicio de sesión | El sistema debe permitir que todos los usuarios (Cliente, Agente, Administrador) inicien sesión con correo electrónico y contraseña. | Alta | CDU005.1 | Cliente, Agente Inmobiliario, Administrador |
+| RF003 | Autenticación JWT | El sistema debe emitir un token JWT al iniciar sesión o registrarse, que se utiliza para autenticar las solicitudes posteriores. | Alta | CDU005 | Cliente, Agente Inmobiliario, Administrador |
+| RF004 | Cierre de sesión | El sistema debe permitir al usuario cerrar sesión, invalidando su sesión actual en el cliente. | Media | CDU005.2 | Cliente, Agente Inmobiliario, Administrador |
+| RF005 | Crear propiedad | El sistema debe permitir al agente inmobiliario crear propiedades con: título, dirección, precio, descripción, fotos, número de habitaciones, baños, metros cuadrados, tipo y zona. | Alta | CDU001.1 | Agente Inmobiliario |
+| RF006 | Actualizar propiedad | El sistema debe permitir al agente actualizar los datos de sus propiedades existentes. | Alta | CDU001.2 | Agente Inmobiliario |
+| RF007 | Eliminar propiedad | El sistema debe permitir al agente eliminar propiedades, con confirmación previa y eliminación en cascada de datos asociados. | Alta | CDU001.3 | Agente Inmobiliario |
+| RF008 | Consultar estadísticas | El sistema debe mostrar al agente un dashboard con: Top 3 de tipos de inmuebles más buscados y Top 5 de zonas con mayor oferta de propiedades. | Media | CDU001.4 | Agente Inmobiliario |
+| RF009 | Tipos de inmueble predefinidos | El sistema define categorías fijas de inmueble (Casa, Apartamento, Terreno, Local Comercial) que el agente selecciona al crear o editar una propiedad. El sistema valida que el tipo sea válido. | Media | CDU001.5, CDU001.6, CDU001.7, CDU001.8 | Agente Inmobiliario |
+| RF010 | Visualizar propiedades (Agente) | El sistema debe permitir al agente visualizar el listado de sus propiedades con posibilidad de filtrar por tipo, precio y características. | Alta | CDU001.9 | Agente Inmobiliario |
+| RF011 | Solicitar cita | El sistema debe permitir al cliente solicitar una cita para evaluar una propiedad. | Alta | CDU002.0 | Cliente |
+| RF012 | Proponer horario de cita | El sistema debe permitir al agente proponer un horario alternativo para una solicitud de cita. | Alta | CDU002.1 | Agente Inmobiliario |
+| RF013 | Aceptar/Rechazar horario | El sistema debe permitir tanto al cliente como al agente aceptar o rechazar un horario de cita, con justificación obligatoria en caso de rechazo. | Alta | CDU002.2 | Cliente, Agente Inmobiliario |
+| RF014 | Visualizar agentes | El sistema debe permitir al administrador ver el listado de todos los agentes registrados. | Alta | CDU003.0 | Administrador |
+| RF015 | Crear agente | El sistema debe permitir al administrador crear nuevas cuentas de agente inmobiliario con sus datos personales. | Alta | CDU003.2 | Administrador |
+| RF016 | Actualizar agente | El sistema debe permitir al administrador actualizar los datos de un agente existente. | Media | CDU003.3 | Administrador |
+| RF017 | Eliminar agente | El sistema debe permitir al administrador eliminar un agente del sistema, con eliminación en cascada de sus propiedades. | Media | CDU003.4 | Administrador |
+| RF018 | Buscar propiedades | El sistema debe permitir al cliente buscar propiedades por texto libre (título, descripción, dirección). | Alta | CDU004.0, CDU004.1 | Cliente |
+| RF019 | Filtrar propiedades | El sistema debe permitir filtrar propiedades por: tipo de inmueble, rango de precio, zona, número de habitaciones, número de baños y rango de área. | Alta | CDU004.1 | Cliente |
+| RF020 | Ordenar resultados | El sistema debe permitir ordenar los resultados de búsqueda por: más recientes, precio ascendente/descendente, mayor área y popularidad. | Media | CDU004.1 | Cliente |
+| RF021 | Gestionar favoritos | El sistema debe permitir al cliente agregar y quitar propiedades de su lista de favoritos. | Media | CDU004.0 | Cliente |
+| RF022 | Editar perfil | El sistema debe permitir al cliente actualizar sus datos personales (nombre, correo, teléfono, fotografía). | Media | CDU004.2 | Cliente |
+| RF023 | Carga de imágenes | El sistema debe permitir subir fotografías de propiedades y perfiles en formato base64 o URL, almacenándolas en Supabase Storage. | Alta | CDU001.1, CDU005.0 | Cliente, Agente Inmobiliario |
+| RF024 | Registro de visitas | El sistema debe registrar cada visita/interacción de un cliente con una propiedad para alimentar las estadísticas del agente. | Baja | CDU004.0 | Cliente |
 
 ### 6.2 Requerimientos No Funcionales
 
-| ID | Requerimiento | Categoría | Descripción | Métrica / Criterio de Aceptación |
-|----|--------------|-----------|-------------|----------------------------------|
-| RNF001 | Tiempo de respuesta | Rendimiento | Las operaciones de lectura (listados, búsquedas) deben completarse en un tiempo aceptable. | ≤ 2 segundos para resultados de búsqueda y listados |
-| RNF002 | Tiempo de procesamiento | Rendimiento | Las operaciones de escritura (registro, creación de propiedades) deben procesarse rápidamente. | ≤ 3 segundos para operaciones de creación/actualización |
-| RNF003 | Seguridad de contraseñas | Seguridad | Las contraseñas deben almacenarse de forma segura utilizando algoritmos de hashing con salt. | bcrypt con 10 salt rounds; nunca en texto plano |
-| RNF004 | Autenticación stateless | Seguridad | El sistema debe utilizar autenticación basada en tokens para no depender de estado en el servidor. | JWT con firma, expiración de 7 días |
-| RNF005 | Validación de entrada | Seguridad | Toda entrada del usuario debe validarse tanto en frontend como en backend para prevenir inyecciones y datos malformados. | express-validator en backend; validaciones en React en frontend |
-| RNF006 | Protección CORS | Seguridad | El sistema debe restringir los orígenes permitidos para solicitudes cross-origin. | Solo orígenes autorizados (localhost en desarrollo, dominios específicos en producción) |
-| RNF007 | Containerización | Escalabilidad | El backend y la base de datos deben ejecutarse en contenedores Docker para garantizar portabilidad y reproducibilidad. | Docker Compose con 2 servicios (backend + PostgreSQL) |
-| RNF008 | Responsividad | Usabilidad | La interfaz de usuario debe adaptarse correctamente a diferentes tamaños de pantalla. | Tailwind CSS con breakpoints responsivos; funcional en móvil y escritorio |
-| RNF009 | Retroalimentación visual | Usabilidad | El sistema debe proporcionar retroalimentación visual clara ante las acciones del usuario (éxito, error, carga). | Toast notifications, estados de loading en botones, mensajes de error específicos |
-| RNF010 | Integridad referencial | Confiabilidad | La base de datos debe mantener integridad referencial con eliminación en cascada donde corresponda. | Foreign keys con ON DELETE CASCADE configuradas en Prisma |
-| RNF011 | Migraciones de base de datos | Mantenibilidad | Los cambios en el esquema de la base de datos deben gestionarse mediante migraciones versionadas. | Prisma Migrate con historial de migraciones |
-| RNF012 | Modularidad del código | Mantenibilidad | El código debe organizarse en módulos independientes con responsabilidades bien definidas. | Módulos por dominio (auth, admin, agent, client) con separación route/controller/service |
-| RNF013 | Patrones de diseño | Mantenibilidad | El sistema debe implementar patrones de diseño reconocidos para facilitar la extensibilidad y mantenimiento. | Strategy, Adapter, Singleton, Container/Presentational, Module |
-| RNF014 | Almacenamiento externo | Escalabilidad | Las imágenes y archivos deben almacenarse en un servicio externo de objetos, no en el servidor de aplicación. | Supabase Storage con URLs públicas |
-| RNF015 | Tipado estático | Mantenibilidad | El backend debe utilizar tipado estático para reducir errores en tiempo de desarrollo. | TypeScript con tipos generados por Prisma para queries type-safe |
+| ID | Requerimiento | Categoría | Descripción | Métrica / Criterio de Aceptación | Usuario |
+|----|--------------|-----------|-------------|----------------------------------|---------|
+| RNF001 | Tiempo de respuesta | Rendimiento | Las operaciones de lectura (listados, búsquedas) deben completarse en un tiempo aceptable. | ≤ 2 segundos para resultados de búsqueda y listados | Cliente, Agente Inmobiliario, Administrador |
+| RNF002 | Tiempo de procesamiento | Rendimiento | Las operaciones de escritura (registro, creación de propiedades) deben procesarse rápidamente. | ≤ 3 segundos para operaciones de creación/actualización | Cliente, Agente Inmobiliario, Administrador |
+| RNF003 | Seguridad de contraseñas | Seguridad | Las contraseñas deben almacenarse de forma segura utilizando algoritmos de hashing con salt. | bcrypt con 10 salt rounds; nunca en texto plano | Cliente, Agente Inmobiliario, Administrador |
+| RNF004 | Autenticación stateless | Seguridad | El sistema debe utilizar autenticación basada en tokens para no depender de estado en el servidor. | JWT con firma, expiración de 7 días | Cliente, Agente Inmobiliario, Administrador |
+| RNF005 | Validación de entrada | Seguridad | Toda entrada del usuario debe validarse tanto en frontend como en backend para prevenir inyecciones y datos malformados. | express-validator en backend; validaciones en React en frontend | Cliente, Agente Inmobiliario, Administrador |
+| RNF006 | Protección CORS | Seguridad | El sistema debe restringir los orígenes permitidos para solicitudes cross-origin. | Solo orígenes autorizados (localhost en desarrollo, dominios específicos en producción) | Cliente, Agente Inmobiliario, Administrador |
+| RNF007 | Containerización | Escalabilidad | El backend y la base de datos deben ejecutarse en contenedores Docker para garantizar portabilidad y reproducibilidad. | Docker Compose con 2 servicios (backend + PostgreSQL) | Sistema |
+| RNF008 | Responsividad | Usabilidad | La interfaz de usuario debe adaptarse correctamente a diferentes tamaños de pantalla. | Tailwind CSS con breakpoints responsivos; funcional en móvil y escritorio | Cliente, Agente Inmobiliario, Administrador |
+| RNF009 | Retroalimentación visual | Usabilidad | El sistema debe proporcionar retroalimentación visual clara ante las acciones del usuario (éxito, error, carga). | Toast notifications, estados de loading en botones, mensajes de error específicos | Cliente, Agente Inmobiliario, Administrador |
+| RNF010 | Integridad referencial | Confiabilidad | La base de datos debe mantener integridad referencial con eliminación en cascada donde corresponda. | Foreign keys con ON DELETE CASCADE configuradas en Prisma | Sistema |
+| RNF011 | Migraciones de base de datos | Mantenibilidad | Los cambios en el esquema de la base de datos deben gestionarse mediante migraciones versionadas. | Prisma Migrate con historial de migraciones | Sistema |
+| RNF012 | Modularidad del código | Mantenibilidad | El código debe organizarse en módulos independientes con responsabilidades bien definidas. | Módulos por dominio (auth, admin, agent, client) con separación route/controller/service | Sistema |
+| RNF013 | Patrones de diseño | Mantenibilidad | El sistema debe implementar patrones de diseño reconocidos para facilitar la extensibilidad y mantenimiento. | Strategy, Adapter, Singleton, State, Command | Sistema |
+| RNF014 | Almacenamiento externo | Escalabilidad | Las imágenes y archivos deben almacenarse en un servicio externo de objetos, no en el servidor de aplicación. | Supabase Storage con URLs públicas | Sistema |
+| RNF015 | Tipado estático | Mantenibilidad | El backend debe utilizar tipado estático para reducir errores en tiempo de desarrollo. | TypeScript con tipos generados por Prisma para queries type-safe | Sistema |
 
 ---
 
@@ -813,28 +1335,28 @@ A continuación se presenta la especificación detallada de cada caso de uso exp
 
 ### 7.1 Matriz de Trazabilidad de Casos de Uso
 
-| Caso de Uso | Actor(es) | Requerimientos Funcionales | Módulo Backend | Componentes Frontend |
-|-------------|-----------|---------------------------|----------------|---------------------|
-| CDU001.0 - Gestionar Propiedades | Agente | RF010 | `modules/agent/` | Dashboard del Agente |
-| CDU001.1 - Crear Propiedad | Agente | RF005, RF023 | `modules/agent/` | Formulario de Propiedad |
-| CDU001.2 - Actualizar Propiedad | Agente | RF006 | `modules/agent/` | Formulario de Propiedad |
-| CDU001.3 - Eliminar Propiedad | Agente | RF007 | `modules/agent/` | Dashboard del Agente |
-| CDU001.4 - Consultar Estadísticas | Agente | RF008 | `modules/agent/` | Dashboard con Gráficas |
-| CDU001.5-8 - Gestionar Tipos | Agente | RF009 | `modules/agent/` | Catálogo de Tipos |
-| CDU001.9 - Visualizar Propiedades | Agente | RF010 | `modules/agent/` | Listado de Propiedades |
-| CDU002.0 - Solicitar Cita | Cliente | RF011 | `modules/client/` | Detalle de Propiedad |
-| CDU002.1 - Proponer Horario | Agente | RF012 | `modules/agent/` | Gestión de Citas |
-| CDU002.2 - Aceptar/Rechazar | Cliente, Agente | RF013 | `modules/client/`, `modules/agent/` | Vista de Citas |
-| CDU003.0 - Visualizar Agentes | Administrador | RF014 | `modules/admin/` | Panel de Administración |
-| CDU003.2 - Crear Agente | Administrador | RF015 | `modules/admin/` | Formulario de Agente |
-| CDU003.3 - Actualizar Agente | Administrador | RF016 | `modules/admin/` | Formulario de Agente |
-| CDU003.4 - Eliminar Agente | Administrador | RF017 | `modules/admin/` | Panel de Administración |
-| CDU004.0 - Visualizar Propiedades | Cliente | RF018, RF021, RF024 | `modules/client/` | `SearchContainer`, `PropertyCard` |
-| CDU004.1 - Filtrar Propiedades | Cliente | RF019, RF020 | `modules/client/` | `FilterPanel`, `SearchContainer` |
-| CDU004.2 - Editar Perfil | Cliente | RF022 | `modules/client/` | Formulario de Perfil |
-| CDU005.0 - Registrar Cliente | Cliente | RF001, RF003, RF023 | `modules/auth/` | `RegisterContainer`, `RegisterForm` |
-| CDU005.1 - Iniciar Sesión | Cliente, Agente, Admin | RF002, RF003 | `modules/auth/` | `LoginContainer`, `LoginForm` |
-| CDU005.2 - Cerrar Sesión | Cliente, Agente, Admin | RF004 | — (cliente) | `NavbarClient` |
+| Caso de Uso | Actor(es) | Requerimientos Funcionales | Componentes Frontend |
+|-------------|-----------|---------------------------|---------------------|
+| CDU001.0 - Gestionar Propiedades | Agente | RF010 | Dashboard del Agente |
+| CDU001.1 - Crear Propiedad | Agente | RF005, RF023 | Formulario de Propiedad |
+| CDU001.2 - Actualizar Propiedad | Agente | RF006 | Formulario de Propiedad |
+| CDU001.3 - Eliminar Propiedad | Agente | RF007 | Dashboard del Agente |
+| CDU001.4 - Consultar Estadísticas | Agente | RF008 | Dashboard con Gráficas |
+| CDU001.5-8 - Gestionar Tipos | Agente | RF009 | Selector de Tipo en Formulario de Propiedad |
+| CDU001.9 - Visualizar Propiedades | Agente | RF010 | Listado de Propiedades |
+| CDU002.0 - Solicitar Cita | Cliente | RF011 | Detalle de Propiedad |
+| CDU002.1 - Proponer Horario | Agente | RF012 | Gestión de Citas |
+| CDU002.2 - Aceptar/Rechazar | Cliente, Agente | RF013 | Vista de Citas |
+| CDU003.0 - Visualizar Agentes | Administrador | RF014 | Panel de Administración |
+| CDU003.2 - Crear Agente | Administrador | RF015 | Formulario de Agente |
+| CDU003.3 - Actualizar Agente | Administrador | RF016 | Formulario de Agente |
+| CDU003.4 - Eliminar Agente | Administrador | RF017 | Panel de Administración |
+| CDU004.0 - Visualizar Propiedades | Cliente | RF018, RF021, RF024 | `SearchContainer`, `PropertyCard` |
+| CDU004.1 - Filtrar Propiedades | Cliente | RF019, RF020 | `FilterPanel`, `SearchContainer` |
+| CDU004.2 - Editar Perfil | Cliente | RF022 | Formulario de Perfil |
+| CDU005.0 - Registrar Cliente | Cliente | RF001, RF003, RF023 | `RegisterContainer`, `RegisterForm` |
+| CDU005.1 - Iniciar Sesión | Cliente, Agente, Admin | RF002, RF003 | `LoginContainer`, `LoginForm` |
+| CDU005.2 - Cerrar Sesión | Cliente, Agente, Admin | RF004| `NavbarClient` |
 
 
 ### 7.2 Matriz de Trazabilidad de Requerimientos No Funcionales
@@ -847,13 +1369,13 @@ A continuación se presenta la especificación detallada de cada caso de uso exp
 | RNF004 | Autenticación stateless | Seguridad | `lib/security.ts` → `signAuthToken()`, `middleware/auth.ts` | Todos los CDU protegidos |
 | RNF005 | Validación de entrada | Seguridad | `express-validator` en rutas, validaciones en React forms | Todos los CDU con formularios |
 | RNF006 | Protección CORS | Seguridad | `config/cors.config.ts` | Todos los CDU (comunicación frontend-backend) |
-| RNF007 | Containerización | Escalabilidad | `docker-compose.yml`, `Dockerfile`, `docker-entrypoint.sh` | Todos (infraestructura) |
+| RNF007 | Containerización | Escalabilidad | `docker-compose.yml`, `Dockerfile` | Todos (infraestructura) |
 | RNF008 | Responsividad | Usabilidad | Tailwind CSS responsive utilities, componentes responsivos | CDU004.0, CDU004.1, CDU005.0, CDU005.1 |
 | RNF009 | Retroalimentación visual | Usabilidad | `react-hot-toast`, estados `loading` en Button.jsx, mensajes de error | CDU005.0, CDU005.1, CDU004.1 |
 | RNF010 | Integridad referencial | Confiabilidad | `schema.prisma` → `onDelete: Cascade`, foreign keys | CDU001.3, CDU003.4 |
 | RNF011 | Migraciones de BD | Mantenibilidad | `prisma/migrations/`, `prisma migrate dev` | Todos (esquema de BD) |
-| RNF012 | Modularidad del código | Mantenibilidad | Estructura `modules/{auth,admin,agent,client}/`, barrel exports en frontend | Todos |
-| RNF013 | Patrones de diseño | Mantenibilidad | Strategy (filtros/sort), Adapter (storage), Singleton (DB), Container/Presentational | CDU004.1, CDU001.1, Todos |
+| RNF012 | Modularidad del código | Mantenibilidad | Estructura `modules/{auth,admin,agent,client}/` con separación de responsabilidades | Todos |
+| RNF013 | Patrones de diseño | Mantenibilidad | Strategy (filtros/sort), Adapter (storage), Singleton (DB), State (citas), Command (admin) | CDU004.1, CDU001.1, Todos |
 | RNF014 | Almacenamiento externo | Escalabilidad | `adapters/storage/`, Supabase Storage | CDU001.1, CDU005.0 |
 | RNF015 | Tipado estático | Mantenibilidad | TypeScript, Prisma Client generado, tipos en `types/express.d.ts` | Todos (backend) |
 

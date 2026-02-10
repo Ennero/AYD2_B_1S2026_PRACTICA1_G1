@@ -33,7 +33,7 @@ clientRouter.put(
 		body('gender').notEmpty().withMessage('gender must not be empty'),
 		body('phone').notEmpty().withMessage('phone must not be empty'),
 		body('email').isEmail().withMessage('email must be valid'),
-		body('url_img').optional({ nullable: true }).isURL().withMessage('url_img must be a valid URL'),
+		body('url_img').optional({ nullable: true }),
 		body('password').optional().isString().isLength({ min: 8 }).withMessage('password must be at least 8 characters long'),
 		validateFields,
 	],
@@ -134,6 +134,56 @@ clientRouter.post(
 	clientController.acknowledgeappointment,
 )
 
+// POST /api/client/appointment/request
+clientRouter.post(
+	'/appointment/request',
+	[
+		authMiddleware,
+		requireRole(UserType.Client),
+		body('id_property').isInt({ gt: 0 }).withMessage('id_property must be a positive integer'),
+		body('description').optional().isString().withMessage('description must be a string'),
+	],
+	clientController.requestappointment,
+)
+
 // =============================== DAVID ===============================
+
+clientRouter.post('/dashboard',
+	[
+		authMiddleware,
+		requireRole(UserType.Client),
+		body('title').isString().optional(),
+		body('type').isString().optional(),
+		body('price').isNumeric().optional(),
+		body('rooms').isNumeric().optional(),
+		body('meter').isNumeric().optional(),
+		body('bathrooms').isNumeric().optional(),
+		body('is_ascendent_price').isBoolean().optional(),
+		body('is_ascendent_title').isBoolean().optional(),
+		body('is_ascendent_date').isBoolean().optional(),
+		body('is_ascendent_area').isBoolean().optional(),
+		validateFields
+	],
+	clientController.filter
+)
+
+clientRouter.post('/property/lookup',
+	[
+		authMiddleware,
+		requireRole(UserType.Client),
+		body('id_property').isNumeric().withMessage('id_property must be a positive integer'),
+		validateFields
+	],
+	clientController.lookUpProperty
+)
+
+clientRouter.get('/zones',
+	[
+		authMiddleware,
+		requireRole(UserType.Client),
+	],
+	clientController.getZones
+)
+
 
 export default clientRouter
