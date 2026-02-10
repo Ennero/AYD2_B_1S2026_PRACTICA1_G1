@@ -106,7 +106,7 @@ const PropertyFormModal = ({ isOpen, onClose, onSubmit, property = null, isLoadi
       images: previewImages,
     }
     
-    console.log('📝 Datos del formulario a enviar:', dataToSubmit)
+    console.log('Datos del formulario a enviar:', dataToSubmit)
     onSubmit(dataToSubmit)
   }
 

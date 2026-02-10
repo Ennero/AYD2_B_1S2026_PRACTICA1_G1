@@ -13,6 +13,7 @@ const PropertyDetailModal = ({ isOpen, onClose, property = null }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
 
   const images = property?.images || ['/images/logo-HomeFinder.png']
+  const isLoading = isOpen && !property
 
   const nextImage = () => {
     setCurrentImageIndex(prev => (prev + 1) % images.length)
@@ -41,7 +42,7 @@ const PropertyDetailModal = ({ isOpen, onClose, property = null }) => {
 
   return (
     <AnimatePresence>
-      {isOpen && property && (
+      {isOpen && (
         <motion.div
           className="fixed inset-0 z-[9999] flex items-center justify-center px-4"
           initial={{ opacity: 0 }}
@@ -66,6 +67,19 @@ const PropertyDetailModal = ({ isOpen, onClose, property = null }) => {
             exit={{ opacity: 0, scale: 0.85, y: 40 }}
             transition={{ type: 'spring', stiffness: 300, damping: 25 }}
           >
+            {/* Loading State */}
+            {isLoading && (
+              <div className="p-20 text-center">
+                <div className="inline-block p-8 bg-white/90 rounded-3xl shadow-2xl backdrop-blur-sm">
+                  <div className="w-14 h-14 border-4 border-sky-200 border-t-sky-500 rounded-full animate-spin mx-auto mb-5"></div>
+                  <p className="text-gray-600 font-semibold text-lg">Cargando detalle...</p>
+                </div>
+              </div>
+            )}
+
+            {/* Content State */}
+            {property && (
+              <>
             {/* Header */}
             <div className="bg-gradient-to-r from-sky-500 to-sky-600 px-8 py-5 relative overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-shimmer" style={{ backgroundSize: '200% 100%' }}></div>
@@ -210,6 +224,8 @@ const PropertyDetailModal = ({ isOpen, onClose, property = null }) => {
                 <span>Creado en: <span className="font-semibold text-gray-600">{property.createdAt}</span></span>
               </div>
             </div>
+            </>
+            )}
           </motion.div>
         </motion.div>
       )}

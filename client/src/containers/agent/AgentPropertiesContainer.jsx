@@ -58,9 +58,26 @@ const AgentPropertiesContainer = () => {
   }
 
   // Abrir modal de detalle
-  const handleOpenDetail = (property) => {
-    setSelectedProperty(property)
-    setIsDetailModalOpen(true)
+  const handleOpenDetail = async (property) => {
+    try {
+      setActionLoading(true)
+      setIsDetailModalOpen(true)
+      setSelectedProperty(null) // Limpiar primero para mostrar loading
+      
+      console.log('🔍 Cargando detalle de propiedad ID:', property.id)
+      
+      // Cargar detalle completo desde el backend
+      const propertyDetail = await AgentPropertyService.getPropertyDetail(property.id)
+      
+      console.log('✨ Detalle cargado para el modal:', propertyDetail)
+      setSelectedProperty(propertyDetail)
+    } catch (error) {
+      console.error('❌ Error al cargar detalle de propiedad:', error)
+      toast.error('Error al cargar el detalle de la propiedad')
+      setIsDetailModalOpen(false)
+    } finally {
+      setActionLoading(false)
+    }
   }
 
   // Abrir modal de eliminación
