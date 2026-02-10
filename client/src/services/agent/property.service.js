@@ -170,15 +170,12 @@ class CreatePropertyCommand extends PropertyCommand {
       // Remover cualquier texto y dejar solo números
       zoneValue = zoneValue.replace(/[^\d]/g, '').trim()
     }
+    // Convertir a número
+    zoneValue = parseInt(zoneValue) || 1
 
     // Convertir imágenes a base64 (ya vienen en base64 desde el modal)
-    const imagesBase64 = this.propertyData.images.map(img => {
-      // Si la imagen ya es base64, extraer solo la parte después de la coma
-      if (typeof img === 'string' && img.includes('base64,')) {
-        return img.split('base64,')[1]
-      }
-      return img
-    })
+    // Mantener el prefijo completo data:image/...;base64, para que el backend detecte el tipo correctamente
+    const imagesBase64 = this.propertyData.images.filter(img => img && img.trim())
 
     // Asegurar al menos una imagen
     if (imagesBase64.length === 0) {
@@ -199,9 +196,13 @@ class CreatePropertyCommand extends PropertyCommand {
       images: imagesBase64
     }
 
-    console.log('Body que se enviará al backend:', body)
+    console.log('Body que se enviará al backend:', {
+      ...body,
+      images: `[${body.images.length} imágenes]`
+    })
     console.log('Número de imágenes:', imagesBase64.length)
-    console.log('Primera imagen (preview):', imagesBase64[0]?.substring(0, 50) + '...')
+    console.log('Primera imagen tiene prefijo data:image?:', imagesBase64[0]?.startsWith('data:image'))
+    console.log('Primera imagen (preview):', imagesBase64[0]?.substring(0, 80) + '...')
     return body
   }
 
@@ -215,7 +216,7 @@ class CreatePropertyCommand extends PropertyCommand {
 
       const propertyBody = this.buildPropertyBody()
 
-      console.log('🚀 Enviando petición POST a /agent/properties')
+      console.log('Enviando petición POST a /agent/properties')
       
       const response = await fetch(`${this.apiUrl}/agent/properties`, {
         method: 'POST',
@@ -226,7 +227,7 @@ class CreatePropertyCommand extends PropertyCommand {
         body: JSON.stringify(propertyBody)
       })
 
-      console.log('📥 Respuesta del servidor:', {
+      console.log('Respuesta del servidor:', {
         status: response.status,
         statusText: response.statusText,
         ok: response.ok

@@ -64,15 +64,15 @@ const AgentPropertiesContainer = () => {
       setIsDetailModalOpen(true)
       setSelectedProperty(null) // Limpiar primero para mostrar loading
       
-      console.log('🔍 Cargando detalle de propiedad ID:', property.id)
+      console.log('Cargando detalle de propiedad ID:', property.id)
       
       // Cargar detalle completo desde el backend
       const propertyDetail = await AgentPropertyService.getPropertyDetail(property.id)
       
-      console.log('✨ Detalle cargado para el modal:', propertyDetail)
+      console.log('Detalle cargado para el modal:', propertyDetail)
       setSelectedProperty(propertyDetail)
     } catch (error) {
-      console.error('❌ Error al cargar detalle de propiedad:', error)
+      console.error('Error al cargar detalle de propiedad:', error)
       toast.error('Error al cargar el detalle de la propiedad')
       setIsDetailModalOpen(false)
     } finally {
