@@ -1,6 +1,11 @@
 import DB from '../../db/db.ts'
 import { resultCounts, resultChart1, resultChart2 } from './dto.ts'
 import { Prisma } from '../../generated/prisma/client.ts'
+import { decodeBase64ToBytes, guessExtensionFromMime } from '../../utils/base64.ts'
+import { buildPublicBucketPath } from '../../utils/supabase-storage.ts'
+import { getPublicObjectStorage } from '../../adapters/storage/index.ts'
+import { getOptionalEnv } from '../../utils/env.ts'
+import crypto from 'node:crypto'
 //helado
 // Mapeo de tipos de propiedad
 const PROPERTY_TYPE_MAP: Record<string, string> = {
@@ -134,8 +139,61 @@ from property p where `)
 
 }
 //helado
+
+async function processImage(imageData: string): Promise<string> {
+    // Si ya es una URL completa, retornarla directamente
+    if (imageData.startsWith('http://') || imageData.startsWith('https://')) {
+        return imageData
+    }
+
+    // Si es base64 con prefijo data:image/
+    if (imageData.startsWith('data:image/')) {
+        // Extraer mime type del data URL
+        const mimeMatch = imageData.match(/^data:(image\/[^;]+);base64,/)
+        const mime: string = (mimeMatch && mimeMatch[1]) ? mimeMatch[1] : 'image/jpeg'
+        const ext = guessExtensionFromMime(mime)
+
+        // Decodificar base64 a bytes
+        const bytes = decodeBase64ToBytes(imageData)
+
+        // Subir a Supabase Storage
+        const storage = getPublicObjectStorage()
+        const bucket = getOptionalEnv('SUPABASE_BUCKET_USERS', 'user-images') ?? 'user-images'
+        const objectPath = buildPublicBucketPath(['properties', `${crypto.randomUUID()}.${ext}`])
+
+        const uploaded = await storage.uploadObject({
+            bucket,
+            path: objectPath,
+            contentType: mime,
+            data: bytes,
+        })
+
+        return uploaded.publicUrl
+    }
+
+    // Si no es URL ni tiene prefijo, asumir que es base64 puro (sin prefijo)
+    const base64WithPrefix = `data:image/jpeg;base64,${imageData}`
+    const mime = 'image/jpeg'
+    const ext = guessExtensionFromMime(mime)
+
+    const bytes = decodeBase64ToBytes(base64WithPrefix)
+
+    // Subir a Supabase Storage
+    const storage = getPublicObjectStorage()
+    const bucket = getOptionalEnv('SUPABASE_BUCKET_USERS', 'user-images') ?? 'user-images'
+    const objectPath = buildPublicBucketPath(['properties', `${crypto.randomUUID()}.${ext}`])
+
+    const uploaded = await storage.uploadObject({
+        bucket,
+        path: objectPath,
+        contentType: mime,
+        data: bytes,
+    })
+
+    return uploaded.publicUrl
+}
+
 export async function createProperty(agentId: number, input: CreatePropertyInput) {
-    // Validar que tenga al menos 1 imagen
     if (!input.images || input.images.length === 0) {
         throw new Error('At least one image is required')
     }
@@ -170,9 +228,13 @@ export async function createProperty(agentId: number, input: CreatePropertyInput
         },
     })
 
-    // Crear las imágenes
+    const uploadedImageUrls = await Promise.all(
+        input.images.map(imageData => processImage(imageData))
+    )
+
+    // Crear las imágenes en la BD
     await Promise.all(
-        input.images.map((url, index) =>
+        uploadedImageUrls.map((url, index) =>
             DB.image.create({
                 data: {
                     id_property: property.id_property,
@@ -273,14 +335,16 @@ export async function updateProperty(agentId: number, propertyId: number, input:
 
     // Si se envían imágenes, reemplazar todas
     if (input.images !== undefined && input.images.length > 0) {
-        // Eliminar imágenes existentes
         await DB.image.deleteMany({
             where: { id_property: propertyId },
         })
 
-        // Crear nuevas imágenes
+        const uploadedImageUrls = await Promise.all(
+            input.images.map(imageData => processImage(imageData))
+        )
+
         await Promise.all(
-            input.images.map((url, index) =>
+            uploadedImageUrls.map((url, index) =>
                 DB.image.create({
                     data: {
                         id_property: propertyId,
