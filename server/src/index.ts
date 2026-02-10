@@ -5,15 +5,16 @@ import corsOptions from './config/cors.config.ts'
 import authRouter from './modules/auth/route.ts'
 import adminRouter from './modules/admin/routes.ts'
 import clientRouter from './modules/client/routes.ts'
+import { agentRouter } from './modules/agent/routes.ts'
 import { EnvVars } from './store/enviroment.ts'
 
 
 const app = express()
 const port = EnvVars.instance.PORT;
 
-app.use(express.json())
+app.use(express.json({ limit: '10mb' }))
 app.use(cors(corsOptions))
-app.use(express.urlencoded({ extended: true }))
+app.use(express.urlencoded({ extended: true, limit: '10mb' }))
 await DB_Connection.instance.connectDB()
 
 app.get('/', async (req, res) => {
@@ -23,6 +24,7 @@ app.get('/', async (req, res) => {
 app.use('/api/auth', authRouter)
 app.use('/api/admin', adminRouter)
 app.use('/api/client', clientRouter)
+app.use('/api/agent', agentRouter)
 
 
 

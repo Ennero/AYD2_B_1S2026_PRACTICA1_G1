@@ -1,12 +1,7 @@
 import { User } from 'lucide-react'
 
-/**
- * Componente presentacional - Header del Dashboard del Agente
- * Muestra saludo personalizado y subtítulo
- * @param {string} firstName - Nombre del agente
- * @param {string} lastName - Apellido del agente
- */
-const DashboardHeader = ({ firstName = '', lastName = '' }) => {
+const DashboardHeader = () => {
+  
   return (
     <div className="animate-fadeInUp">
       {/* Decoración de fondo */}
@@ -16,9 +11,9 @@ const DashboardHeader = ({ firstName = '', lastName = '' }) => {
       </div>
 
       <h1 className="text-4xl md:text-5xl font-black text-gray-900 tracking-tight mb-2">
-        Bienvenido, Agente{' '}
+        Bienvenido,{' '}
         <span className="bg-gradient-to-r from-sky-600 to-cyan-500 bg-clip-text text-transparent">
-          {firstName} {lastName}
+          Agente Inmobiliario
         </span>
       </h1>
       <p className="text-gray-500 text-lg font-medium">

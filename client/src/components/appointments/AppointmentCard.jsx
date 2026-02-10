@@ -110,9 +110,19 @@ const AppointmentCard = ({ appointment, onAccept, onReject }) => {
           </div>
         </div>
 
-        {/* Imagen placeholder (lado derecho en escritorio) */}
-        <div className="w-full lg:w-80 h-48 lg:h-auto bg-gradient-to-br from-gray-200 to-gray-300 rounded-xl flex items-center justify-center group-hover:from-gray-300 group-hover:to-gray-400 transition-all duration-500">
-          <span className="text-gray-500 font-medium">Vista previa</span>
+        {/* Imagen de la propiedad (lado derecho en escritorio) */}
+        <div className="w-full lg:w-80 h-48 lg:h-auto rounded-xl overflow-hidden group-hover:shadow-xl transition-all duration-500">
+          {appointment.img ? (
+            <img 
+              src={appointment.img} 
+              alt={appointment.propertyTitle}
+              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+            />
+          ) : (
+            <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
+              <span className="text-gray-500 font-medium">Sin imagen</span>
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -29,22 +29,22 @@ async function main() {
     // Crear usuarios
     console.log('👥 Creating users...');
 
-    // 1 Admin
+    // 1 Admin - Rosita
     const admin = await DB.uSER.create({
         data: {
             email: 'admin@homefinder.com',
             password: await hashPassword('Admin123!'),
-            gender: 1,
+            gender: 2,
             type: UserType.Admin,
-            name: 'Carlos',
-            last_name: 'Administrador',
-            url_img: 'https://i.pravatar.cc/300?img=12',
+            name: 'Rosita',
+            last_name: 'Administradora',
+            url_img: 'https://i.pravatar.cc/300?img=47',
             phone: '55551234',
             created_at: new Date('2026-01-01T08:00:00Z')
         }
     });
 
-    // 6 Agentes
+    // 6 Agentes - María López es la agente principal para presentación
     const agents = await Promise.all([
         DB.uSER.create({
             data: {
@@ -56,7 +56,7 @@ async function main() {
                 last_name: 'López',
                 url_img: 'https://i.pravatar.cc/300?img=47',
                 phone: '55557001',
-                created_at: randomDate(new Date('2026-01-02'), new Date('2026-01-05'))
+                created_at: new Date('2026-01-05T10:00:00Z')
             }
         }),
         DB.uSER.create({
@@ -141,6 +141,7 @@ async function main() {
                 created_at: randomDate(new Date('2026-01-10'), new Date('2026-01-15'))
             }
         }),
+        // Pedro Sánchez - Cliente principal para presentación
         DB.uSER.create({
             data: {
                 email: 'pedro.sanchez@gmail.com',
@@ -1054,12 +1055,31 @@ async function main() {
 
     console.log(`✅ Created ${properties.length} properties with images`);
 
-    // Crear favoritos
+    // Crear favoritos - Mayormente Pedro marcando propiedades de María
     console.log('⭐ Creating favorites...');
     const favorites: any[] = [];
     
-    // Algunos clientes marcan propiedades como favoritas
-    for (let i = 0; i < 30; i++) {
+    // Pedro (cliente principal) marca muchas propiedades de María como favoritas
+    const mariaProperties = properties.filter(p => p.id_agent === agents[0].id_user && p.state === PropertyState.Available);
+    const pedro = clients[1]; // Pedro Sánchez
+    
+    // Pedro marca 8 propiedades de María como favoritas
+    for (let i = 0; i < Math.min(8, mariaProperties.length); i++) {
+        const mariaProp = mariaProperties[i];
+        if (!mariaProp) continue;
+        
+        const favorite = await DB.favorite.create({
+            data: {
+                id_client: pedro.id_user,
+                id_property: mariaProp.id_property,
+                created_at: randomDate(new Date('2026-01-20'), new Date('2026-02-07'))
+            }
+        });
+        favorites.push(favorite);
+    }
+    
+    // Otros clientes también marcan propiedades como favoritas (menos cantidad)
+    for (let i = 0; i < 25; i++) {
         const randomClient = clients[Math.floor(Math.random() * clients.length)];
         const randomProperty = properties[Math.floor(Math.random() * properties.length)];
         
@@ -1076,7 +1096,7 @@ async function main() {
                 data: {
                     id_client: randomClient.id_user,
                     id_property: randomProperty.id_property,
-                    created_at: randomDate(new Date('2026-01-15'), new Date('2026-02-05'))
+                    created_at: randomDate(new Date('2026-01-15'), new Date('2026-02-07'))
                 }
             });
             favorites.push(favorite);
@@ -1085,11 +1105,43 @@ async function main() {
 
     console.log(`✅ Created ${favorites.length} favorites`);
 
-    // Crear historial de visitas (records)
+    // Crear historial de visitas (records) - Pedro visitando propiedades de María principalmente
     console.log('📜 Creating visit records...');
     const records = [];
     
-    for (let i = 0; i < 80; i++) {
+    // Pedro tiene un historial extenso visitando propiedades de María
+    const allMariaProperties = properties.filter(p => p.id_agent === agents[0].id_user);
+    for (let i = 0; i < Math.min(15, allMariaProperties.length); i++) {
+        const mariaProp = allMariaProperties[i];
+        if (!mariaProp) continue;
+        
+        const record = await DB.record.create({
+            data: {
+                id_client: pedro.id_user,
+                id_property: mariaProp.id_property,
+                created_at: randomDate(new Date('2026-01-18'), new Date('2026-02-07'))
+            }
+        });
+        records.push(record);
+    }
+    
+    // Pedro también visita algunas propiedades de otros agentes
+    for (let i = 0; i < 10; i++) {
+        const randomProperty = properties[Math.floor(Math.random() * properties.length)];
+        if (randomProperty && randomProperty.id_agent !== agents[0].id_user) {
+            const record = await DB.record.create({
+                data: {
+                    id_client: pedro.id_user,
+                    id_property: randomProperty.id_property,
+                    created_at: randomDate(new Date('2026-01-20'), new Date('2026-02-06'))
+                }
+            });
+            records.push(record);
+        }
+    }
+    
+    // Otros clientes también tienen visitas
+    for (let i = 0; i < 60; i++) {
         const randomClient = clients[Math.floor(Math.random() * clients.length)];
         const randomProperty = properties[Math.floor(Math.random() * properties.length)];
         
@@ -1107,54 +1159,134 @@ async function main() {
 
     console.log(`✅ Created ${records.length} visit records`);
 
-    // Crear invitaciones
+    // Crear invitaciones - Principalmente entre Pedro y propiedades de María
     console.log('📅 Creating invitations...');
     const invitations = [];
-    const invitationStatuses = [
-        InvitationState.Pending,
-        InvitationState.Accepted,
-        InvitationState.Rejected,
-        InvitationState.Acknowledge
+    
+    // Razones comunes para rechazar una invitación
+    const rejectionReasons = [
+        'Cambio de planes',
+        'Conflicto de horarios',
+        'Propiedad no cumple requisitos',
+        'Presupuesto insuficiente',
+        'Ubicación no conveniente',
+        'Ya encontré otra propiedad'
     ];
 
-    for (let i = 0; i < 40; i++) {
+    // Pedro tiene muchas invitaciones con propiedades de María (15 invitaciones)
+    const availableMariaProps = properties.filter(p => p.id_agent === agents[0].id_user && p.state === PropertyState.Available);
+    
+    for (let i = 0; i < Math.min(15, availableMariaProps.length); i++) {
+        const property = availableMariaProps[i];
+        if (!property) continue;
+        
+        let status: InvitationState;
+        
+        // Distribuir los estados
+        const statusDistribution = i % 4;
+        if (statusDistribution === 0) {
+            status = InvitationState.Pending;
+        } else if (statusDistribution === 1) {
+            status = InvitationState.Acknowledge;
+        } else if (statusDistribution === 2) {
+            status = InvitationState.Accepted;
+        } else {
+            status = InvitationState.Rejected;
+        }
+        
+        // Fechas actuales y futuras (a partir del 8 de febrero 2026)
+        const createdAt = randomDate(new Date('2026-02-01'), new Date('2026-02-08'));
+        const updatedAt = randomDate(createdAt, new Date('2026-02-08'));
+        
+        const invitationData: any = {
+            id_client: pedro.id_user,
+            id_property: property.id_property,
+            status: status,
+            created_at: createdAt,
+            updated_at: updatedAt
+        };
+
+        // Agregar campos según el estado del flujo de invitación
+        if (status === InvitationState.Pending) {
+            invitationData.description = null;
+            invitationData.expected_date = null;
+            invitationData.is_accepted = null;
+            invitationData.justification = null;
+        } else if (status === InvitationState.Acknowledge) {
+            invitationData.description = `Solicitud de visita para ${property.title}`;
+            invitationData.expected_date = randomDate(new Date('2026-02-09'), new Date('2026-02-28'));
+            invitationData.is_accepted = null;
+            invitationData.justification = null;
+        } else if (status === InvitationState.Accepted) {
+            invitationData.description = `Solicitud de visita para ${property.title}`;
+            invitationData.expected_date = randomDate(new Date('2026-02-10'), new Date('2026-03-05'));
+            invitationData.is_accepted = 1;
+            invitationData.justification = null;
+        } else if (status === InvitationState.Rejected) {
+            invitationData.description = `Solicitud de visita para ${property.title}`;
+            invitationData.expected_date = randomDate(new Date('2026-02-09'), new Date('2026-02-20'));
+            invitationData.is_accepted = 0;
+            invitationData.justification = rejectionReasons[Math.floor(Math.random() * rejectionReasons.length)];
+        }
+
+        const invitation = await DB.invitation.create({
+            data: invitationData
+        });
+        invitations.push(invitation);
+    }
+    
+    // Otros clientes también tienen invitaciones (25 adicionales)
+    for (let i = 0; i < 25; i++) {
         const randomClient = clients[Math.floor(Math.random() * clients.length)];
         const availableProperties = properties.filter(p => p.state === PropertyState.Available);
         const randomProperty = availableProperties[Math.floor(Math.random() * availableProperties.length)];
         
         if (!randomClient || !randomProperty) continue;
         
-        const status = invitationStatuses[Math.floor(Math.random() * invitationStatuses.length)];
+        const statusDistribution = i % 4;
+        let status: InvitationState;
         
-        const createdAt = randomDate(new Date('2026-01-20'), new Date('2026-02-05'));
-        const updatedAt = new Date(createdAt.getTime() + Math.random() * (new Date('2026-02-06').getTime() - createdAt.getTime()));
+        if (statusDistribution === 0) {
+            status = InvitationState.Pending;
+        } else if (statusDistribution === 1) {
+            status = InvitationState.Acknowledge;
+        } else if (statusDistribution === 2) {
+            status = InvitationState.Accepted;
+        } else {
+            status = InvitationState.Rejected;
+        }
+        
+        const createdAt = randomDate(new Date('2026-01-20'), new Date('2026-02-07'));
+        const updatedAt = randomDate(createdAt, new Date('2026-02-08'));
         
         const invitationData: any = {
             id_client: randomClient.id_user,
             id_property: randomProperty.id_property,
             status: status,
             created_at: createdAt,
-            updated_at: updatedAt,
-            description: `Solicitud de visita para ${randomProperty.title}`
+            updated_at: updatedAt
         };
 
-        // Agregar campos según el estado
         if (status === InvitationState.Pending) {
+            invitationData.description = null;
+            invitationData.expected_date = null;
             invitationData.is_accepted = null;
             invitationData.justification = null;
-            invitationData.expected_date = null;
-        } else if (status === InvitationState.Accepted) {
-            invitationData.is_accepted = 1;
-            invitationData.justification = null;
-            invitationData.expected_date = randomDate(updatedAt, new Date('2026-03-01'));
-        } else if (status === InvitationState.Rejected) {
-            invitationData.is_accepted = 0;
-            invitationData.justification = 'No puedo asistir en las fechas propuestas';
-            invitationData.expected_date = null;
         } else if (status === InvitationState.Acknowledge) {
+            invitationData.description = `Solicitud de visita para ${randomProperty.title}`;
+            invitationData.expected_date = randomDate(new Date('2026-02-09'), new Date('2026-02-25'));
+            invitationData.is_accepted = null;
+            invitationData.justification = null;
+        } else if (status === InvitationState.Accepted) {
+            invitationData.description = `Solicitud de visita para ${randomProperty.title}`;
+            invitationData.expected_date = randomDate(new Date('2026-02-10'), new Date('2026-02-28'));
             invitationData.is_accepted = 1;
             invitationData.justification = null;
-            invitationData.expected_date = randomDate(new Date('2026-01-25'), updatedAt);
+        } else if (status === InvitationState.Rejected) {
+            invitationData.description = `Solicitud de visita para ${randomProperty.title}`;
+            invitationData.expected_date = randomDate(new Date('2026-02-09'), new Date('2026-02-20'));
+            invitationData.is_accepted = 0;
+            invitationData.justification = rejectionReasons[Math.floor(Math.random() * rejectionReasons.length)];
         }
 
         const invitation = await DB.invitation.create({
