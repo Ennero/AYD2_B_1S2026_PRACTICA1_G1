@@ -5,7 +5,6 @@
 export {
   AgentAppointmentState,
   NuevaSolicitudState,
-  EnEsperaState,
   ConfirmadaState,
   CanceladaState,
   AgentAppointmentContext,
