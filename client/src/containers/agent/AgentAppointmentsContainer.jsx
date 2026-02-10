@@ -44,7 +44,7 @@ const AgentAppointmentsContainer = () => {
 
   // Contador por tab
   const tabCounts = useMemo(() => {
-    const counts = { todos: appointments.length, nuevas: 0, espera: 0, confirmadas: 0, canceladas: 0 }
+    const counts = { todos: appointments.length, nuevas: 0, confirmadas: 0, canceladas: 0 }
     appointments.forEach((apt) => {
       const ctx = new AgentAppointmentContext(apt)
       const tab = ctx.getTabKey()
@@ -61,7 +61,7 @@ const AgentAppointmentsContainer = () => {
         setAppointments(prev =>
           prev.map(a =>
             a.id === appointmentId
-              ? { ...a, ...result.appointment, status: 'en_espera' }
+              ? { ...a, ...result.appointment, status: 'confirmada' }
               : a
           )
         )

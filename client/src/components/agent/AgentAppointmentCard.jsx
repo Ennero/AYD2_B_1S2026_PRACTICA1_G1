@@ -45,14 +45,14 @@ const AgentAppointmentCard = ({ appointment, index, onPropose }) => {
         <div className="flex flex-col lg:flex-row items-center lg:items-stretch">
 
           {/* ──── Imagen ──── */}
-          <div className="lg:w-64 flex-shrink-0 p-5 flex items-center">
-            <div className="relative w-full h-40 lg:h-full min-h-[200px] bg-gradient-to-br from-gray-100 via-gray-50 to-gray-200 rounded-2xl border-2 border-gray-200 flex items-center justify-center overflow-hidden transition-all duration-700 group-hover:shadow-xl">
+          <div className="lg:w-80 flex-shrink-0 p-5 flex items-center">
+            <div className="relative w-full h-48 lg:h-full min-h-[240px] bg-gradient-to-br from-gray-100 via-gray-50 to-gray-200 rounded-2xl border-2 border-gray-200 flex items-center justify-center overflow-hidden transition-all duration-700 group-hover:shadow-xl">
               {/* Efecto de brillo */}
               <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
               <img
                 src={appointment.propertyImage}
                 alt={appointment.propertyTitle}
-                className="relative z-10 w-20 h-20 object-contain opacity-30 group-hover:opacity-70 group-hover:scale-125 group-hover:rotate-6 transition-all duration-700"
+                className="relative z-10 w-full h-full object-cover group-hover:scale-110 transition-all duration-700"
               />
             </div>
           </div>

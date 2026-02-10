@@ -2,7 +2,6 @@
 const TABS = [
   { key: 'todos',       label: 'Todos'              },
   { key: 'nuevas',      label: 'Nuevas Solicitudes' },
-  { key: 'espera',      label: 'En Espera'          },
   { key: 'confirmadas', label: 'Confirmadas'        },
   { key: 'canceladas',  label: 'Canceladas'         },
 ]
