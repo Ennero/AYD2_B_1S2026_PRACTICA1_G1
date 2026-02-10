@@ -1,5 +1,39 @@
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
 
+// Mapeo de tipos de propiedades: Frontend -> Backend
+const PROPERTY_TYPE_MAP = {
+  'Casa': 'HOUSE',
+  'Apartamento': 'APARTMENT',
+  'Terreno': 'LAND',
+  'Local Comercial': 'RETAIL SPACE'
+}
+
+// Mapeo inverso: Backend -> Frontend
+const PROPERTY_TYPE_REVERSE_MAP = {
+  'HOUSE': 'Casa',
+  'APARTMENT': 'Apartamento',
+  'LAND': 'Terreno',
+  'RETAIL SPACE': 'Local Comercial',
+  // Agregar mapeo directo por si el backend envía en español
+  'Casa': 'Casa',
+  'Apartamento': 'Apartamento',
+  'Terreno': 'Terreno',
+  'Local Comercial': 'Local Comercial'
+}
+
+// Mapeo de estados: Backend -> Frontend
+const STATE_MAP = {
+  'AVAILABLE': 'Disponible',
+  'UNAVAILABLE': 'No Disponible',
+  'NOT_AVAILABLE': 'No Disponible',
+  'NOT AVAILABLE': 'No Disponible',
+  'SOLD': 'Vendido',
+  // Agregar mapeo directo por si el backend envía en español
+  'Disponible': 'Disponible',
+  'No Disponible': 'No Disponible',
+  'Vendido': 'Vendido'
+}
+
 // Clase Base Comando
 class PropertyCommand {
   execute() {
@@ -7,126 +41,112 @@ class PropertyCommand {
   }
 }
 
-// Comando Get
+// Comando Get con filtros
 class GetPropertiesCommand extends PropertyCommand {
-  constructor(apiUrl) {
+  constructor(apiUrl, filters = {}) {
     super()
     this.apiUrl = apiUrl
+    this.filters = filters
+  }
+
+  // Construye el body de filtros para el backend
+  buildFilterBody() {
+    const body = {}
+
+    // Título
+    if (this.filters.title) {
+      body.title = this.filters.title
+    }
+
+    // Tipo de propiedad
+    if (this.filters.propertyType) {
+      body.type = PROPERTY_TYPE_MAP[this.filters.propertyType] || this.filters.propertyType
+    }
+
+    // Precio
+    if (this.filters.price) {
+      body.price = Number(this.filters.price)
+    }
+
+    // Habitaciones
+    if (this.filters.bedrooms) {
+      body.rooms = Number(this.filters.bedrooms)
+    }
+
+    // Baños
+    if (this.filters.bathrooms) {
+      body.bathrooms = Number(this.filters.bathrooms)
+    }
+
+    // Metros cuadrados
+    if (this.filters.area) {
+      body.meter = Number(this.filters.area)
+    }
+
+    // Ordenamiento por precio
+    if (this.filters.sortPriceLow) {
+      body.is_ascendent_price = true
+    } else if (this.filters.sortPriceHigh) {
+      body.is_ascendent_price = false
+    }
+
+    // Ordenamiento por título
+    if (this.filters.sortTitleAsc) {
+      body.is_ascendent_title = true
+    } else if (this.filters.sortTitleDesc) {
+      body.is_ascendent_title = false
+    }
+
+    return body
+  }
+
+  // Transforma la respuesta del backend al formato del frontend
+  transformProperty(apiProperty) {
+    return {
+      id: apiProperty.id_property,
+      title: apiProperty.title,
+      propertyType: PROPERTY_TYPE_REVERSE_MAP[apiProperty.type] || apiProperty.type,
+      zone: apiProperty.zone != null ? String(apiProperty.zone) : '',
+      address: apiProperty.address,
+      price: Number(apiProperty.price) ?? 0,
+      status: STATE_MAP[apiProperty.state] || apiProperty.state,
+      images: apiProperty.url_img ? [apiProperty.url_img] : ['/images/logo-HomeFinder.png'],
+      // Campos adicionales para compatibilidad con los modales
+      bedrooms: 0,
+      bathrooms: 0,
+      area: 0,
+      description: '',
+      createdAt: new Date().toISOString().split('T')[0],
+    }
   }
 
   async execute() {
     try {
-      //Logica para obtener propiedades del agente (simulación)
-      return [
-        {
-          id: 1,
-          title: 'Casa Residencial en Zona 10',
-          propertyType: 'Casa',
-          zone: 'Zona 10',
-          address: 'Avenida Las Américas 15-30',
-          price: 1250000,
-          status: 'Disponible',
-          bedrooms: 4,
-          bathrooms: 3,
-          area: 280,
-          description: 'Hermosa casa residencial con acabados de lujo, amplio jardín, cocina moderna y sala de estar con doble altura. Ubicada en una de las zonas más exclusivas de la ciudad.',
-          images: [
-            '/images/logo-HomeFinder.png',
-            '/images/logo-HomeFinder.png',
-            '/images/logo-HomeFinder.png',
-          ],
-          createdAt: '2026-01-15',
+      const token = localStorage.getItem('authToken')
+      
+      if (!token) {
+        throw new Error('No se encontró token de autenticación')
+      }
+
+      const filterBody = this.buildFilterBody()
+
+      const response = await fetch(`${this.apiUrl}/agent/filter`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
-        {
-          id: 2,
-          title: 'Apartamento Moderno Zona 14',
-          propertyType: 'Apartamento',
-          zone: 'Zona 14',
-          address: 'Boulevard Vista Hermosa 8-50',
-          price: 850000,
-          status: 'Disponible',
-          bedrooms: 3,
-          bathrooms: 2,
-          area: 150,
-          description: 'Apartamento moderno con vista panorámica, acabados contemporáneos, área social y parqueo para 2 vehículos. Incluye acceso a gimnasio y piscina.',
-          images: [
-            '/images/logo-HomeFinder.png',
-            '/images/logo-HomeFinder.png',
-          ],
-          createdAt: '2026-01-20',
-        },
-        {
-          id: 3,
-          title: 'Terreno en Carretera a El Salvador',
-          propertyType: 'Terreno',
-          zone: 'Zona 16',
-          address: 'Km 18.5 Carretera a El Salvador',
-          price: 500000,
-          status: 'Disponible',
-          bedrooms: 0,
-          bathrooms: 0,
-          area: 1200,
-          description: 'Terreno plano con excelente ubicación, ideal para proyecto residencial o comercial. Cuenta con acceso a servicios básicos y vías principales.',
-          images: [
-            '/images/logo-HomeFinder.png',
-          ],
-          createdAt: '2026-02-01',
-        },
-        {
-          id: 4,
-          title: 'Local Comercial Centro Histórico',
-          propertyType: 'Local Comercial',
-          zone: 'Zona 1',
-          address: '6ta Avenida 9-15',
-          price: 320000,
-          status: 'No Disponible',
-          bedrooms: 0,
-          bathrooms: 1,
-          area: 95,
-          description: 'Local comercial en pleno centro histórico, ideal para restaurante o tienda. Alto flujo peatonal, cuenta con instalaciones eléctricas y sanitarias completas.',
-          images: [
-            '/images/logo-HomeFinder.png',
-            '/images/logo-HomeFinder.png',
-          ],
-          createdAt: '2026-02-05',
-        },
-        {
-          id: 5,
-          title: 'Casa en Condominio Zona 16',
-          propertyType: 'Casa',
-          zone: 'Zona 16',
-          address: 'Condominio Los Eucaliptos Lote 12',
-          price: 1800000,
-          status: 'Vendido',
-          bedrooms: 5,
-          bathrooms: 4,
-          area: 350,
-          description: 'Casa en exclusivo condominio con seguridad 24/7, amplios jardines, piscina privada, 3 niveles y acabados premium. Área de servicio completa.',
-          images: [
-            '/images/logo-HomeFinder.png',
-            '/images/logo-HomeFinder.png',
-            '/images/logo-HomeFinder.png',
-          ],
-          createdAt: '2026-01-10',
-        },
-        {
-          id: 6,
-          title: 'Apartamento Estudiantil Zona 12',
-          propertyType: 'Apartamento',
-          zone: 'Zona 12',
-          address: 'Colonia Monte María 3-25',
-          price: 450000,
-          status: 'Disponible',
-          bedrooms: 2,
-          bathrooms: 1,
-          area: 75,
-          description: 'Apartamento ideal para estudiantes o profesionales jóvenes, cerca de universidades y centros comerciales. Incluye un parqueo.',
-          images: [
-            '/images/logo-HomeFinder.png',
-          ],
-          createdAt: '2026-02-10',
-        },
-      ]
+        body: JSON.stringify(filterBody)
+      })
+
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`)
+      }
+
+      const data = await response.json()
+      
+      // Transformar cada propiedad al formato del frontend
+      return data.map(prop => this.transformProperty(prop))
     } catch (error) {
       console.error('Error al obtener propiedades:', error)
       throw error
@@ -136,32 +156,152 @@ class GetPropertiesCommand extends PropertyCommand {
 
 // Comando Post
 class CreatePropertyCommand extends PropertyCommand {
-  constructor(apiUrl, propertyData, existingProperties = []) {
+  constructor(apiUrl, propertyData) {
     super()
     this.apiUrl = apiUrl
     this.propertyData = propertyData
-    this.existingProperties = existingProperties
+  }
+
+  // Transforma los datos del frontend al formato del backend
+  buildPropertyBody() {
+    // Extraer la zona sin el prefijo "Zona" si existe - solo números
+    let zoneValue = this.propertyData.zone
+    if (typeof zoneValue === 'string') {
+      // Remover cualquier texto y dejar solo números
+      zoneValue = zoneValue.replace(/[^\d]/g, '').trim()
+    }
+    // Convertir a número
+    zoneValue = parseInt(zoneValue) || 1
+
+    // Convertir imágenes a base64 (ya vienen en base64 desde el modal)
+    // Mantener el prefijo completo data:image/...;base64, para que el backend detecte el tipo correctamente
+    const imagesBase64 = this.propertyData.images.filter(img => img && img.trim())
+
+    // Asegurar al menos una imagen
+    if (imagesBase64.length === 0) {
+      throw new Error('Se requiere al menos una imagen')
+    }
+
+    const body = {
+      title: this.propertyData.title,
+      type: this.propertyData.propertyType, // Casa, Apartamento, Terreno, Local Comercial
+      address: this.propertyData.address,
+      zone: zoneValue,
+      price: Number(this.propertyData.price),
+      num_rooms: Number(this.propertyData.bedrooms),
+      num_bathrooms: Number(this.propertyData.bathrooms),
+      square_meters: parseFloat(this.propertyData.area), // Puede ser decimal
+      state: this.propertyData.status, // Disponible, No Disponible, Vendido
+      description: this.propertyData.description,
+      images: imagesBase64
+    }
+
+    return body
   }
 
   async execute() {
     try {
-      // Logica para crear una nueva propiedad (simulación)
+      const token = localStorage.getItem('authToken')
+      
+      if (!token) {
+        throw new Error('No se encontró token de autenticación')
+      }
 
-      // Calcular el próximo ID secuencial
-      const maxId = this.existingProperties.length > 0
-        ? Math.max(...this.existingProperties.map(p => p.id))
-        : 0
-      const nextId = maxId + 1
+      const propertyBody = this.buildPropertyBody()
+      
+      const response = await fetch(`${this.apiUrl}/agent/properties`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(propertyBody)
+      })
 
-      // Simulación de creación
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        console.error('Error del servidor:', errorData)
+        throw new Error(errorData.message || `Error ${response.status}: ${response.statusText}`)
+      }
+
+      const result = await response.json()
+
+      // Retornar la propiedad creada con el ID del servidor
       return {
-        id: nextId,
+        id: result.id_property,
         ...this.propertyData,
-        images: this.propertyData.images || ['/images/logo-HomeFinder.png'],
         createdAt: new Date().toISOString().split('T')[0],
       }
     } catch (error) {
       console.error('Error al crear propiedad:', error)
+      throw error
+    }
+  }
+}
+
+// Comando para obtener detalle de una propiedad
+class GetPropertyDetailCommand extends PropertyCommand {
+  constructor(apiUrl, propertyId) {
+    super()
+    this.apiUrl = apiUrl
+    this.propertyId = propertyId
+  }
+
+  // Transforma la respuesta del backend al formato del frontend
+  transformPropertyDetail(apiProperty) {
+    
+    // Extraer URLs de las imágenes
+    const imageUrls = apiProperty.images?.map(img => img.url_img) || ['/images/logo-HomeFinder.png']
+
+    const transformed = {
+      id: apiProperty.id_property,
+      title: apiProperty.title,
+      propertyType: PROPERTY_TYPE_REVERSE_MAP[apiProperty.type] || apiProperty.type,
+      zone: apiProperty.zone != null ? String(apiProperty.zone) : '',
+      address: apiProperty.address,
+      price: Number(apiProperty.price) ?? 0,
+      status: STATE_MAP[apiProperty.state] || apiProperty.state,
+      bedrooms: apiProperty.num_rooms ?? 0,
+      bathrooms: apiProperty.num_bathrooms ?? 0,
+      area: apiProperty.square_meters ?? 0,
+      description: apiProperty.description || '',
+      createdAt: apiProperty.created_at || new Date().toISOString().split('T')[0],
+      images: imageUrls,
+    }
+    
+    return transformed
+  }
+
+  async execute() {
+    try {
+      const token = localStorage.getItem('authToken')
+      
+      if (!token) {
+        throw new Error('No se encontró token de autenticación')
+      }
+
+      const response = await fetch(`${this.apiUrl}/agent/properties/${this.propertyId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      })
+
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`)
+      }
+
+      const result = await response.json()
+      
+      // La respuesta viene con estructura { ok: true, data: {...} }
+      const propertyData = result.data || result
+      
+      // Transformar al formato del frontend
+      const transformed = this.transformPropertyDetail(propertyData)
+      return transformed
+    } catch (error) {
+      console.error('Error al obtener detalle de propiedad:', error)
       throw error
     }
   }
@@ -176,9 +316,109 @@ class UpdatePropertyCommand extends PropertyCommand {
     this.propertyData = propertyData
   }
 
+  // Construir el body para actualizar - todos los campos son opcionales
+  buildUpdateBody() {
+    const body = {}
+
+    // Solo agregar campos que existan en propertyData
+    if (this.propertyData.title !== undefined) {
+      body.title = this.propertyData.title
+    }
+
+    if (this.propertyData.propertyType !== undefined) {
+      body.type = this.propertyData.propertyType
+    }
+
+    if (this.propertyData.address !== undefined) {
+      body.address = this.propertyData.address
+    }
+
+    if (this.propertyData.zone !== undefined) {
+      let zoneValue = this.propertyData.zone
+      if (typeof zoneValue === 'string') {
+        zoneValue = zoneValue.replace(/[^\d]/g, '').trim()
+        console.log('buildUpdateBody - zone después de limpiar:', zoneValue)
+      }
+      body.zone = parseInt(zoneValue) || 1
+      console.log('buildUpdateBody - zone final a enviar:', body.zone)
+    }
+
+    if (this.propertyData.price !== undefined) {
+      body.price = Number(this.propertyData.price)
+    }
+
+    if (this.propertyData.bedrooms !== undefined) {
+      body.num_rooms = Number(this.propertyData.bedrooms)
+    }
+
+    if (this.propertyData.bathrooms !== undefined) {
+      body.num_bathrooms = Number(this.propertyData.bathrooms)
+    }
+
+    if (this.propertyData.area !== undefined) {
+      body.square_meters = parseFloat(this.propertyData.area)
+    }
+
+    if (this.propertyData.status !== undefined) {
+      body.state = this.propertyData.status
+    }
+
+    if (this.propertyData.description !== undefined) {
+      body.description = this.propertyData.description
+    }
+
+    // Manejar imágenes si se proporcionan
+    if (this.propertyData.images && this.propertyData.images.length > 0) {
+      const imagesBase64 = this.propertyData.images.filter(img => img && img.trim())
+      body.images = imagesBase64
+    }
+
+    console.log('Body para actualizar propiedad:', {
+      ...body,
+      images: body.images ? `[${body.images.length} imágenes]` : 'sin cambios'
+    })
+
+    return body
+  }
+
   async execute() {
     try {
-      // Logica para actualizar una propiedad (simulación)
+      const token = localStorage.getItem('authToken')
+      
+      if (!token) {
+        throw new Error('No se encontró token de autenticación')
+      }
+
+      const updateBody = this.buildUpdateBody()
+
+      console.log(`Actualizando propiedad ID: ${this.propertyId}`)
+      console.log('Datos a enviar:', updateBody)
+      
+      const response = await fetch(`${this.apiUrl}/agent/properties/${this.propertyId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(updateBody)
+      })
+
+      console.log('Respuesta del servidor:', {
+        status: response.status,
+        statusText: response.statusText,
+        ok: response.ok
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        console.error('Error del servidor:', errorData)
+        throw new Error(errorData.message || `Error ${response.status}: ${response.statusText}`)
+      }
+
+      const result = await response.json()
+      console.log('Propiedad actualizada exitosamente:', result)
+
+      // Retornar la propiedad actualizada
       return {
         id: this.propertyId,
         ...this.propertyData,
@@ -200,10 +440,27 @@ class DeletePropertyCommand extends PropertyCommand {
 
   async execute() {
     try {
-      // Logica para eliminar una propiedad (simulación)
-      return { success: true, deletedId: this.propertyId }
+      const token = localStorage.getItem('authToken')
+      
+      if (!token) {
+        throw new Error('No se encontró token de autenticación')
+      }
+
+      const response = await fetch(`${this.apiUrl}/agent/properties/${this.propertyId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.message || `Error ${response.status}: ${response.statusText}`)
+      }
+
+      const result = await response.json()
+      return result
     } catch (error) {
-      console.error('Error al eliminar propiedad:', error)
       throw error
     }
   }
@@ -229,13 +486,18 @@ class PropertyCommandInvoker {
 const AgentPropertyService = {
   invoker: new PropertyCommandInvoker(),
 
-  async getProperties() {
-    const command = new GetPropertiesCommand(API_URL)
+  async getProperties(filters = {}) {
+    const command = new GetPropertiesCommand(API_URL, filters)
     return await this.invoker.executeCommand(command)
   },
 
-  async createProperty(propertyData, existingProperties = []) {
-    const command = new CreatePropertyCommand(API_URL, propertyData, existingProperties)
+  async getPropertyDetail(propertyId) {
+    const command = new GetPropertyDetailCommand(API_URL, propertyId)
+    return await this.invoker.executeCommand(command)
+  },
+
+  async createProperty(propertyData) {
+    const command = new CreatePropertyCommand(API_URL, propertyData)
     return await this.invoker.executeCommand(command)
   },
 
@@ -255,6 +517,7 @@ export default AgentPropertyService
 export {
   PropertyCommand,
   GetPropertiesCommand,
+  GetPropertyDetailCommand,
   CreatePropertyCommand,
   UpdatePropertyCommand,
   DeletePropertyCommand,

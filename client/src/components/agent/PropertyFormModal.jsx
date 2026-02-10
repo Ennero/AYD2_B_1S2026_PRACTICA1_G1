@@ -29,21 +29,32 @@ const PropertyFormModal = ({ isOpen, onClose, onSubmit, property = null, isLoadi
 
   useEffect(() => {
     if (property) {
+      console.log('📋 Autocompletando formulario con datos de propiedad:', property)
       setFormData({
         title: property.title || '',
         propertyType: property.propertyType || 'Casa',
         address: property.address || '',
-        zone: property.zone || '',
-        price: property.price || '',
-        bedrooms: property.bedrooms || '',
-        bathrooms: property.bathrooms || '',
-        area: property.area || '',
+        zone: property.zone ?? '',
+        price: property.price ?? '',
+        bedrooms: property.bedrooms ?? '',
+        bathrooms: property.bathrooms ?? '',
+        area: property.area ?? '',
         status: property.status || 'Disponible',
         description: property.description || '',
         images: [],
       })
       setPreviewImages(property.images || [])
+      console.log('✅ Formulario autocompletado con:', {
+        title: property.title,
+        bedrooms: property.bedrooms,
+        bathrooms: property.bathrooms,
+        area: property.area,
+        zone: property.zone,
+        price: property.price,
+        numImages: property.images?.length || 0
+      })
     } else {
+      console.log('🆕 Preparando formulario para crear nueva propiedad')
       setFormData({
         title: '',
         propertyType: 'Casa',
@@ -90,14 +101,24 @@ const PropertyFormModal = ({ isOpen, onClose, onSubmit, property = null, isLoadi
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    onSubmit({
+    
+    // Validar que haya al menos una imagen
+    if (previewImages.length === 0) {
+      alert('Debes subir al menos una imagen de la propiedad')
+      return
+    }
+    
+    const dataToSubmit = {
       ...formData,
       price: Number(formData.price),
       bedrooms: Number(formData.bedrooms),
       bathrooms: Number(formData.bathrooms),
       area: Number(formData.area),
-      images: previewImages.length > 0 ? previewImages : ['/images/logo-HomeFinder.png'],
-    })
+      images: previewImages,
+    }
+    
+    console.log('Datos del formulario a enviar:', dataToSubmit)
+    onSubmit(dataToSubmit)
   }
 
   return (
@@ -154,7 +175,18 @@ const PropertyFormModal = ({ isOpen, onClose, onSubmit, property = null, isLoadi
             {/* Separador decorativo */}
             <div className="h-1 bg-gradient-to-r from-sky-300 via-sky-500 to-sky-300"></div>
 
+            {/* Estado de carga al cargar datos para editar */}
+            {isLoading && !property && (
+              <div className="p-20 text-center">
+                <div className="inline-block p-8 bg-white/90 rounded-3xl shadow-2xl backdrop-blur-sm">
+                  <div className="w-14 h-14 border-4 border-sky-200 border-t-sky-500 rounded-full animate-spin mx-auto mb-5"></div>
+                  <p className="text-gray-600 font-semibold text-lg">Cargando datos de la propiedad...</p>
+                </div>
+              </div>
+            )}
+
             {/* Formulario */}
+            {(!isLoading || property) && (
             <form onSubmit={handleSubmit} className="p-8 space-y-5">
               {/* Título */}
               <div className="transform transition-all duration-300 hover:scale-[1.01]">
@@ -225,12 +257,12 @@ const PropertyFormModal = ({ isOpen, onClose, onSubmit, property = null, isLoadi
                   <div className="relative group">
                     <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 transition-all duration-300 group-hover:text-sky-500 group-hover:scale-110" />
                     <input
-                      type="text"
+                      type="number"
                       name="zone"
                       value={formData.zone}
                       onChange={handleChange}
                       required
-                      placeholder="Zona 10"
+                      placeholder="10"
                       className="w-full pl-10 pr-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:bg-white focus:ring-4 focus:ring-sky-100 focus:border-sky-400 transition-all duration-300 hover:border-sky-300 hover:shadow-md"
                     />
                   </div>
@@ -306,7 +338,8 @@ const PropertyFormModal = ({ isOpen, onClose, onSubmit, property = null, isLoadi
                       onChange={handleChange}
                       required
                       min="0"
-                      placeholder="280"
+                      step="0.1"
+                      placeholder="280.5"
                       className="w-full pl-10 pr-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:bg-white focus:ring-4 focus:ring-sky-100 focus:border-sky-400 transition-all duration-300 hover:border-sky-300 hover:shadow-md"
                     />
                   </div>
@@ -413,8 +446,7 @@ const PropertyFormModal = ({ isOpen, onClose, onSubmit, property = null, isLoadi
                 </span>
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
               </button>
-            </form>
-          </motion.div>
+            </form>            )}          </motion.div>
         </motion.div>
       )}
     </AnimatePresence>
