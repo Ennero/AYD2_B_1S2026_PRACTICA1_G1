@@ -4,3 +4,4 @@
 
 export { default as AgentDashboardService } from './dashboard.service'
 export { default as AgentPropertyService } from './property.service'
+export { default as AgentAppointmentService } from './appointment.service'

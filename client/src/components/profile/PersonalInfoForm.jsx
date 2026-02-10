@@ -76,7 +76,7 @@ const PersonalInfoForm = ({ personalInfo, onPersonalInfoChange, onPhotoChange })
             />
           </div>
           <p className="text-xs text-red-600 mt-2 animate-pulse flex items-center gap-1">
-            🔒 No se puede editar
+           No se puede editar
           </p>
         </div>
 

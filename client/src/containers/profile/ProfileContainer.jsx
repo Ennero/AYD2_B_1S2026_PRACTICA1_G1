@@ -85,7 +85,9 @@ const ProfileContainer = () => {
         return
       }
 
-      setPersonalInfo(prev => ({ ...prev, foto: file }))
+      // Crear preview de la imagen para mostrarla inmediatamente
+      const previewUrl = URL.createObjectURL(file)
+      setPersonalInfo(prev => ({ ...prev, foto: previewUrl, fotoFile: file }))
       toast.success('Foto cargada correctamente')
     }
   }
@@ -149,7 +151,15 @@ const ProfileContainer = () => {
 
     
     try {
-      await profileService.updatePersonalInfo(personalInfo)
+      // Preparar datos para enviar al backend
+      const dataToSend = {
+        ...personalInfo,
+        // Si hay fotoFile, usar el File; si no, usar foto (que puede ser URL del backend)
+        foto: personalInfo.fotoFile || (personalInfo.foto?.startsWith('blob:') ? null : personalInfo.foto)
+      }
+      delete dataToSend.fotoFile // Eliminar fotoFile del objeto que se envía
+      
+      await profileService.updatePersonalInfo(dataToSend)
       
       if (passwords.nuevaContrasena) {
         await profileService.updatePassword('Test1234', passwords.nuevaContrasena)
@@ -157,6 +167,8 @@ const ProfileContainer = () => {
 
       toast.success('Perfil actualizado correctamente')
       
+      // Recargar perfil para obtener la URL real de la imagen desde el backend
+      await loadProfile()
     
       setPasswords({
         nuevaContrasena: '',
@@ -194,7 +206,7 @@ const ProfileContainer = () => {
       <div className="max-w-4xl mx-auto px-4 relative z-10">
       
         <div className="animate-fadeInUp mb-10">
-          <ProfileHeader nombre={personalInfo.nombre} />
+          <ProfileHeader nombre={personalInfo.nombre} foto={personalInfo.foto} />
         </div>
 
         {/* Formulario principal */}

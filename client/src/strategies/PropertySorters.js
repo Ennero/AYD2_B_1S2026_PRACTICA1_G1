@@ -33,21 +33,17 @@ export class PriceHighToLowStrategy extends SortStrategy {
   }
 }
 
-// Estrategia 4: Ordenar por área (mayor a menor)
-export class AreaHighToLowStrategy extends SortStrategy {
+// Estrategia 4: Ordenar por área (menor a mayor)
+export class AreaLowToHighStrategy extends SortStrategy {
   sort(properties) {
-    return [...properties].sort((a, b) => b.area - a.area)
+    return [...properties].sort((a, b) => a.area - b.area)
   }
 }
 
-// Estrategia 5: Ordenar por popularidad (más vistas y favoritos)
-export class MostPopularStrategy extends SortStrategy {
+// Estrategia 5: Ordenar por área (mayor a menor)
+export class AreaHighToLowStrategy extends SortStrategy {
   sort(properties) {
-    return [...properties].sort((a, b) => {
-      const popularityA = (a.views || 0) + (a.favorites || 0) * 2
-      const popularityB = (b.views || 0) + (b.favorites || 0) * 2
-      return popularityB - popularityA
-    })
+    return [...properties].sort((a, b) => b.area - a.area)
   }
 }
 
@@ -73,8 +69,8 @@ export const getSortStrategy = (sortType) => {
     'recent': new MostRecentStrategy(),
     'price-low': new PriceLowToHighStrategy(),
     'price-high': new PriceHighToLowStrategy(),
-    'area': new AreaHighToLowStrategy(),
-    'popular': new MostPopularStrategy()
+    'area-low': new AreaLowToHighStrategy(),
+    'area-high': new AreaHighToLowStrategy()
   }
   
   return strategies[sortType] || new MostRecentStrategy()

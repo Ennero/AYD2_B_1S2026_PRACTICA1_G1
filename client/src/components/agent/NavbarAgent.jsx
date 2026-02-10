@@ -52,8 +52,9 @@ const NavbarAgent = ({ onLogout }) => {
           </Link>
         ))}
         
-        <button
-          onClick={onLogout}
+        <Link
+          to="/"
+          onClick={() => onLogout?.()}
           className="text-sm font-semibold bg-gradient-to-r from-red-500 to-red-600 text-white px-7 py-2.5 rounded-xl hover:from-red-600 hover:to-red-700 transition-all duration-500 shadow-lg hover:shadow-xl transform hover:scale-105 hover:-translate-y-0.5 active:scale-95 relative overflow-hidden group ml-2"
           style={{ transformStyle: 'preserve-3d', boxShadow: '0 6px 20px rgba(239, 68, 68, 0.35)' }}
         >
@@ -62,7 +63,7 @@ const NavbarAgent = ({ onLogout }) => {
             Logout
           </span>
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
-        </button>
+        </Link>
       </div>
     </nav>
   )

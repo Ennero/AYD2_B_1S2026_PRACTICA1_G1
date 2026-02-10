@@ -22,8 +22,8 @@ export {
   MostRecentStrategy,
   PriceLowToHighStrategy,
   PriceHighToLowStrategy,
+  AreaLowToHighStrategy,
   AreaHighToLowStrategy,
-  MostPopularStrategy,
   PropertySorter,
   getSortStrategy
 } from './PropertySorters'
