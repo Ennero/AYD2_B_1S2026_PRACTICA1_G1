@@ -264,22 +264,81 @@ class GetAgentAppointmentsCommand extends AppointmentCommand {
 
 // Comando Proponer Nueva Fecha
 class ProposeAppointmentCommand extends AppointmentCommand {
-  constructor(appointmentId, proposalData) {
+  constructor(apiUrl, appointmentId, proposalData) {
     super()
+    this.apiUrl = apiUrl
     this.appointmentId = appointmentId
     this.proposalData = proposalData
   }
 
   async execute() {
-    await new Promise(resolve => setTimeout(resolve, 600))
-    const appointment = MOCK_AGENT_APPOINTMENTS.find(a => a.id === this.appointmentId)
-    if (appointment) {
-      appointment.status = 'confirmada'
-      appointment.proposedDate = this.proposalData.date
-      appointment.proposedTime = this.proposalData.time
-      appointment.proposedDescription = this.proposalData.description
+    try {
+      const token = localStorage.getItem('authToken')
+      
+      if (!token) {
+        throw new Error('No se encontró token de autenticación')
+      }
+
+      // Validar campos obligatorios
+      if (!this.proposalData.date || !this.proposalData.time) {
+        throw new Error('La fecha y hora son obligatorias')
+      }
+
+      if (!this.proposalData.description) {
+        throw new Error('La descripción es obligatoria')
+      }
+
+      // Construir expected_date en formato "YYYY-MM-DD HH:MM"
+      const expectedDate = `${this.proposalData.date} ${this.proposalData.time}`
+
+      const body = {
+        expected_date: expectedDate,
+        description: this.proposalData.description
+      }
+
+      console.log(`📅 Proponiendo fecha para invitación ID: ${this.appointmentId}`)
+      console.log('📦 Datos a enviar:', body)
+
+      const response = await fetch(`${this.apiUrl}/agent/invitations/${this.appointmentId}/propose`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(body)
+      })
+
+      console.log('📥 Respuesta del servidor:', {
+        status: response.status,
+        statusText: response.statusText,
+        ok: response.ok
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        console.error('❌ Error del servidor:', errorData)
+        throw new Error(errorData.message || `Error ${response.status}: ${response.statusText}`)
+      }
+
+      const result = await response.json()
+      console.log('✅ Propuesta enviada exitosamente:', result)
+
+      // Retornar datos actualizados
+      return {
+        success: true,
+        message: result.message || 'Propuesta enviada exitosamente',
+        appointment: {
+          id: this.appointmentId,
+          status: 'confirmada',
+          proposedDate: this.proposalData.date,
+          proposedTime: this.proposalData.time,
+          proposedDescription: this.proposalData.description
+        }
+      }
+    } catch (error) {
+      console.error('❌ Error al proponer fecha:', error)
+      throw error
     }
-    return { success: true, appointment: { ...appointment } }
   }
 }
 
@@ -304,7 +363,7 @@ const AgentAppointmentService = {
   },
 
   async proposeDateTime(appointmentId, proposalData) {
-    const command = new ProposeAppointmentCommand(appointmentId, proposalData)
+    const command = new ProposeAppointmentCommand(API_URL, appointmentId, proposalData)
     return await this.invoker.executeCommand(command)
   },
 }

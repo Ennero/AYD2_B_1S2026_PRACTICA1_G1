@@ -56,7 +56,11 @@ const AgentAppointmentsContainer = () => {
   // Form de propuesta
   const handlePropose = async (appointmentId, proposalData) => {
     try {
+      console.log('📤 Enviando propuesta para invitación:', appointmentId)
+      console.log('📋 Datos de la propuesta:', proposalData)
+      
       const result = await AgentAppointmentService.proposeDateTime(appointmentId, proposalData)
+      
       if (result.success) {
         setAppointments(prev =>
           prev.map(a =>
@@ -65,10 +69,11 @@ const AgentAppointmentsContainer = () => {
               : a
           )
         )
-        toast.success('¡Propuesta enviada exitosamente!')
+        toast.success(result.message || '¡Propuesta enviada exitosamente!')
       }
     } catch (error) {
-      toast.error('Error al enviar la propuesta')
+      console.error('❌ Error al proponer fecha:', error)
+      toast.error(error.message || 'Error al enviar la propuesta')
     }
   }
 
