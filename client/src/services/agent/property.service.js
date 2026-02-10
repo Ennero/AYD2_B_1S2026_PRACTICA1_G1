@@ -106,9 +106,9 @@ class GetPropertiesCommand extends PropertyCommand {
       id: apiProperty.id_property,
       title: apiProperty.title,
       propertyType: PROPERTY_TYPE_REVERSE_MAP[apiProperty.type] || apiProperty.type,
-      zone: apiProperty.zone ? `Zona ${apiProperty.zone}` : apiProperty.zone,
+      zone: apiProperty.zone != null ? String(apiProperty.zone) : '',
       address: apiProperty.address,
-      price: Number(apiProperty.price) || 0,
+      price: Number(apiProperty.price) ?? 0,
       status: STATE_MAP[apiProperty.state] || apiProperty.state,
       images: apiProperty.url_img ? [apiProperty.url_img] : ['/images/logo-HomeFinder.png'],
       // Campos adicionales para compatibilidad con los modales
@@ -249,6 +249,7 @@ class GetPropertyDetailCommand extends PropertyCommand {
 
   // Transforma la respuesta del backend al formato del frontend
   transformPropertyDetail(apiProperty) {
+    
     // Extraer URLs de las imágenes
     const imageUrls = apiProperty.images?.map(img => img.url_img) || ['/images/logo-HomeFinder.png']
 
@@ -256,13 +257,13 @@ class GetPropertyDetailCommand extends PropertyCommand {
       id: apiProperty.id_property,
       title: apiProperty.title,
       propertyType: PROPERTY_TYPE_REVERSE_MAP[apiProperty.type] || apiProperty.type,
-      zone: apiProperty.zone ? `Zona ${apiProperty.zone}` : apiProperty.zone,
+      zone: apiProperty.zone != null ? String(apiProperty.zone) : '',
       address: apiProperty.address,
-      price: Number(apiProperty.price) || 0,
+      price: Number(apiProperty.price) ?? 0,
       status: STATE_MAP[apiProperty.state] || apiProperty.state,
-      bedrooms: apiProperty.num_rooms || 0,
-      bathrooms: apiProperty.num_bathrooms || 0,
-      area: apiProperty.square_meters || 0,
+      bedrooms: apiProperty.num_rooms ?? 0,
+      bathrooms: apiProperty.num_bathrooms ?? 0,
+      area: apiProperty.square_meters ?? 0,
       description: apiProperty.description || '',
       createdAt: apiProperty.created_at || new Date().toISOString().split('T')[0],
       images: imageUrls,
@@ -315,9 +316,109 @@ class UpdatePropertyCommand extends PropertyCommand {
     this.propertyData = propertyData
   }
 
+  // Construir el body para actualizar - todos los campos son opcionales
+  buildUpdateBody() {
+    const body = {}
+
+    // Solo agregar campos que existan en propertyData
+    if (this.propertyData.title !== undefined) {
+      body.title = this.propertyData.title
+    }
+
+    if (this.propertyData.propertyType !== undefined) {
+      body.type = this.propertyData.propertyType
+    }
+
+    if (this.propertyData.address !== undefined) {
+      body.address = this.propertyData.address
+    }
+
+    if (this.propertyData.zone !== undefined) {
+      let zoneValue = this.propertyData.zone
+      if (typeof zoneValue === 'string') {
+        zoneValue = zoneValue.replace(/[^\d]/g, '').trim()
+        console.log('buildUpdateBody - zone después de limpiar:', zoneValue)
+      }
+      body.zone = parseInt(zoneValue) || 1
+      console.log('buildUpdateBody - zone final a enviar:', body.zone)
+    }
+
+    if (this.propertyData.price !== undefined) {
+      body.price = Number(this.propertyData.price)
+    }
+
+    if (this.propertyData.bedrooms !== undefined) {
+      body.num_rooms = Number(this.propertyData.bedrooms)
+    }
+
+    if (this.propertyData.bathrooms !== undefined) {
+      body.num_bathrooms = Number(this.propertyData.bathrooms)
+    }
+
+    if (this.propertyData.area !== undefined) {
+      body.square_meters = parseFloat(this.propertyData.area)
+    }
+
+    if (this.propertyData.status !== undefined) {
+      body.state = this.propertyData.status
+    }
+
+    if (this.propertyData.description !== undefined) {
+      body.description = this.propertyData.description
+    }
+
+    // Manejar imágenes si se proporcionan
+    if (this.propertyData.images && this.propertyData.images.length > 0) {
+      const imagesBase64 = this.propertyData.images.filter(img => img && img.trim())
+      body.images = imagesBase64
+    }
+
+    console.log('Body para actualizar propiedad:', {
+      ...body,
+      images: body.images ? `[${body.images.length} imágenes]` : 'sin cambios'
+    })
+
+    return body
+  }
+
   async execute() {
     try {
-      // Logica para actualizar una propiedad (simulación)
+      const token = localStorage.getItem('authToken')
+      
+      if (!token) {
+        throw new Error('No se encontró token de autenticación')
+      }
+
+      const updateBody = this.buildUpdateBody()
+
+      console.log(`Actualizando propiedad ID: ${this.propertyId}`)
+      console.log('Datos a enviar:', updateBody)
+      
+      const response = await fetch(`${this.apiUrl}/agent/properties/${this.propertyId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(updateBody)
+      })
+
+      console.log('Respuesta del servidor:', {
+        status: response.status,
+        statusText: response.statusText,
+        ok: response.ok
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        console.error('Error del servidor:', errorData)
+        throw new Error(errorData.message || `Error ${response.status}: ${response.statusText}`)
+      }
+
+      const result = await response.json()
+      console.log('Propiedad actualizada exitosamente:', result)
+
+      // Retornar la propiedad actualizada
       return {
         id: this.propertyId,
         ...this.propertyData,

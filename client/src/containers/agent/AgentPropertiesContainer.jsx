@@ -52,9 +52,26 @@ const AgentPropertiesContainer = () => {
   }
 
   // Abrir modal de edición
-  const handleOpenEdit = (property) => {
-    setSelectedProperty(property)
-    setIsFormModalOpen(true)
+  const handleOpenEdit = async (property) => {
+    try {
+      setActionLoading(true)
+      setIsFormModalOpen(true)
+      setSelectedProperty(null) // Limpiar primero para mostrar loading
+      
+      console.log('📝 Cargando detalle completo para editar propiedad ID:', property.id)
+      
+      // Cargar detalle completo desde el backend para autocompletar el formulario
+      const propertyDetail = await AgentPropertyService.getPropertyDetail(property.id)
+      
+      console.log('✅ Detalle cargado para edición:', propertyDetail)
+      setSelectedProperty(propertyDetail)
+    } catch (error) {
+      console.error('❌ Error al cargar detalle de propiedad para editar:', error)
+      toast.error('Error al cargar los datos de la propiedad')
+      setIsFormModalOpen(false)
+    } finally {
+      setActionLoading(false)
+    }
   }
 
   // Abrir modal de detalle
@@ -109,19 +126,25 @@ const AgentPropertiesContainer = () => {
     try {
       if (selectedProperty) {
         // Editar propiedad (Command: UpdatePropertyCommand)
+        console.log('Editando propiedad ID:', selectedProperty.id)
+        console.log('Datos del formulario para editar:', formData)
+        
         const updatedProperty = await AgentPropertyService.updateProperty(selectedProperty.id, formData)
-        setProperties(prev =>
-          prev.map(p => (p.id === selectedProperty.id ? { ...p, ...formData, ...updatedProperty } : p))
-        )
-        setFilteredProperties(prev =>
-          prev.map(p => (p.id === selectedProperty.id ? { ...p, ...formData, ...updatedProperty } : p))
-        )
+        
+        console.log('Propiedad actualizada, recargando lista...')
+        
+        // Recargar la lista de propiedades para obtener los datos actualizados del servidor
+        await loadProperties(currentFilters)
+        
         toast.success(
           `Propiedad editada exitosamente — ID: ${selectedProperty.id}, ${formData.title}`,
           { duration: 4000 }
         )
       } else {
         // Crear propiedad (Command: CreatePropertyCommand)
+        console.log('Creando nueva propiedad')
+        console.log('Datos del formulario para crear:', formData)
+        
         await AgentPropertyService.createProperty(formData)
         toast.success(
           `Propiedad creada exitosamente — ${formData.title}`,
@@ -132,6 +155,7 @@ const AgentPropertiesContainer = () => {
       }
       handleCloseModals()
     } catch (error) {
+      console.error('Error en handleFormSubmit:', error)
       const errorMessage = error.message || (selectedProperty ? 'Error al editar la propiedad' : 'Error al crear la propiedad')
       toast.error(errorMessage, { duration: 5000 })
     } finally {
