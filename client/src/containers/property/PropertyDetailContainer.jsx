@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { ImageGallery, PropertyInfo, AgentCard } from '../../components/property'
-import { propertyService } from '../../services'
+import { propertyService, appointmentService } from '../../services'
 import { ArrowLeft } from 'lucide-react'
 import toast from 'react-hot-toast'
 
@@ -36,10 +36,17 @@ const PropertyDetailContainer = () => {
     }
   }
 
-  const handleRequestAppointment = () => {
-    
-    console.log('Solicitar cita para propiedad:', id)
-    toast.info('Funcionalidad de solicitar cita en desarrollo')
+  const handleRequestAppointment = async () => {
+    try {
+      const result = await appointmentService.requestAppointment(id)
+      
+      if (result.success) {
+        toast.success(result.message || 'Solicitud de cita enviada correctamente')
+      }
+    } catch (error) {
+      toast.error(error.message || 'Error al solicitar la cita')
+      console.error('[PROPERTY DETAIL] Error al solicitar cita:', error)
+    }
   }
 
   const handleAddToFavorites = async () => {

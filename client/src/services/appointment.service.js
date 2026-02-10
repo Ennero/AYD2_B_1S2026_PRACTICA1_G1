@@ -1,55 +1,9 @@
-/**
- * Command Pattern - Servicio para gestión de citas
- * Encapsula todas las operaciones relacionadas con citas
- */
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
 
-// Datos simulados
-const MOCK_APPOINTMENTS = [
-  {
-    id: 1,
-    propertyTitle: 'Casa Modern Style Zona 10',
-    agentName: 'María González',
-    location: 'Zona 10',
-    status: 'confirmed',
-    scheduledDate: '2026-02-12T10:00:00',
-    createdAt: '2026-02-01T14:30:00'
-  },
-  {
-    id: 2,
-    propertyTitle: 'Apartamento Lux Zone 14',
-    agentName: 'Carlos Ramírez',
-    location: 'Zona 14',
-    status: 'pending_agent',
-    createdAt: '2026-02-05T09:15:00'
-  },
-  {
-    id: 3,
-    propertyTitle: 'Villa Colonial Antigua',
-    agentName: 'Ana Martínez',
-    location: 'Antigua Guatemala',
-    status: 'pending_user',
-    proposedDate: '2026-02-18T14:30:00',
-    createdAt: '2026-02-03T16:45:00'
-  },
-  {
-    id: 4,
-    propertyTitle: 'Penthouse Vista Hermosa',
-    agentName: 'Roberto López',
-    location: 'Zona 15',
-    status: 'rejected',
-    rejectionReason: 'Ya no me interesa la propiedad',
-    createdAt: '2026-01-28T11:20:00'
-  },
-  {
-    id: 5,
-    propertyTitle: 'Casa de Campo Panajachel',
-    agentName: 'Sofía Hernández',
-    location: 'Panajachel',
-    status: 'confirmed',
-    scheduledDate: '2026-02-20T15:00:00',
-    createdAt: '2026-02-02T10:00:00'
-  }
-]
+/**
+ * PATRÓN COMMAND - GESTIÓN DE CITAS
+ * Encapsula cada operación como un objeto Command independiente
+ */
 
 /**
  * Comando base
@@ -63,13 +17,174 @@ class AppointmentCommand {
 /**
  * Comando para obtener todas las citas
  */
-class GetAppointmentsCommand extends AppointmentCommand {
+class GetAllAppointmentsCommand extends AppointmentCommand {
+  constructor(apiUrl) {
+    super()
+    this.apiUrl = apiUrl
+  }
+
   async execute() {
-    // Simular delay de red
-    await new Promise(resolve => setTimeout(resolve, 800))
-    
-    // En producción: return await fetch('/api/appointments')
-    return [...MOCK_APPOINTMENTS]
+    try {
+      const token = localStorage.getItem('authToken')
+      if (!token) {
+        throw new Error('No hay sesión activa')
+      }
+
+      const response = await fetch(`${this.apiUrl}/client/appointment/all`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Error al cargar citas')
+      }
+
+      // Backend devuelve { appoinments: [...] }
+      const appointments = data.appoinments || data.appointments || []
+      // Transformar datos del backend al formato del frontend
+      return appointments.map(appointment => this.transformAppointment(appointment))
+    } catch (error) {
+      console.error('[APPOINTMENT] Error al cargar citas:', error)
+      throw error
+    }
+  }
+
+  transformAppointment(app) {
+    return {
+      id: app.id_invitation,
+      propertyId: app.id_property,
+      propertyTitle: app.title,
+      agentName: app.agent_name,
+      location: app.address,
+      img: app.img,
+      status: this.mapStatus(app.status),
+      description: app.description,
+      scheduledDate: app.expected_date,
+      proposedDate: app.status === 'ACKNOWLEDGE' ? app.expected_date : null,
+      isAccepted: app.is_accepted,
+      rejectionReason: app.justification,
+      createdAt: null // No viene del backend
+    }
+  }
+
+  mapStatus(backendStatus) {
+    const statusMap = {
+      'PENDING': 'pending_agent',
+      'ACKNOWLEDGE': 'pending_user',
+      'ACCEPTED': 'confirmed',
+      'REJECTED': 'rejected'
+    }
+    return statusMap[backendStatus] || backendStatus.toLowerCase()
+  }
+}
+
+/**
+ * Comando para obtener citas finalizadas (aceptadas o rechazadas)
+ */
+class GetFinalizedAppointmentsCommand extends GetAllAppointmentsCommand {
+  async execute() {
+    try {
+      const token = localStorage.getItem('authToken')
+      if (!token) {
+        throw new Error('No hay sesión activa')
+      }
+
+      const response = await fetch(`${this.apiUrl}/client/appointment/finalized`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Error al cargar citas finalizadas')
+      }
+
+      // Backend devuelve { appoinments: [...] }
+      const appointments = data.appoinments || data.appointments || []
+      return appointments.map(appointment => this.transformAppointment(appointment))
+    } catch (error) {
+      console.error('[APPOINTMENT] Error al cargar citas finalizadas:', error)
+      throw error
+    }
+  }
+}
+
+/**
+ * Comando para obtener citas pendientes (esperando respuesta del agente)
+ */
+class GetPendingAppointmentsCommand extends GetAllAppointmentsCommand {
+  async execute() {
+    try {
+      const token = localStorage.getItem('authToken')
+      if (!token) {
+        throw new Error('No hay sesión activa')
+      }
+
+      const response = await fetch(`${this.apiUrl}/client/appointment/pending`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Error al cargar citas pendientes')
+      }
+
+      // Backend devuelve { appoinments: [...] }
+      const appointments = data.appoinments || data.appointments || []
+      return appointments.map(appointment => this.transformAppointment(appointment))
+    } catch (error) {
+      console.error('[APPOINTMENT] Error al cargar citas pendientes:', error)
+      throw error
+    }
+  }
+}
+
+/**
+ * Comando para obtener citas por confirmar (esperando respuesta del cliente)
+ */
+class GetAcknowledgeAppointmentsCommand extends GetAllAppointmentsCommand {
+  async execute() {
+    try {
+      const token = localStorage.getItem('authToken')
+      if (!token) {
+        throw new Error('No hay sesión activa')
+      }
+
+      const response = await fetch(`${this.apiUrl}/client/appointment/acknowledge`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Error al cargar citas por confirmar')
+      }
+
+      // Backend devuelve { appoinments: [...] }
+      const appointments = data.appoinments || data.appointments || []
+      return appointments.map(appointment => this.transformAppointment(appointment))
+    } catch (error) {
+      console.error('[APPOINTMENT] Error al cargar citas por confirmar:', error)
+      throw error
+    }
   }
 }
 
@@ -77,23 +192,43 @@ class GetAppointmentsCommand extends AppointmentCommand {
  * Comando para aceptar una cita
  */
 class AcceptAppointmentCommand extends AppointmentCommand {
-  constructor(appointmentId) {
+  constructor(appointmentId, apiUrl) {
     super()
     this.appointmentId = appointmentId
+    this.apiUrl = apiUrl
   }
 
   async execute() {
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    
-    // En producción: return await fetch(`/api/appointments/${id}/accept`, { method: 'POST' })
-    const appointment = MOCK_APPOINTMENTS.find(a => a.id === this.appointmentId)
-    if (appointment) {
-      appointment.status = 'confirmed'
-      appointment.scheduledDate = appointment.proposedDate
-      delete appointment.proposedDate
+    try {
+      const token = localStorage.getItem('authToken')
+      if (!token) {
+        throw new Error('No hay sesión activa')
+      }
+
+      const response = await fetch(`${this.apiUrl}/client/appointment/acknowledge`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          id_appointment: this.appointmentId,
+          status: 'accepted',
+          justification: null
+        })
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Error al aceptar la cita')
+      }
+
+      return { success: true, message: data.message || 'Cita aceptada correctamente' }
+    } catch (error) {
+      console.error('[APPOINTMENT] Error al aceptar cita:', error)
+      throw error
     }
-    
-    return { success: true, appointment }
   }
 }
 
@@ -101,24 +236,94 @@ class AcceptAppointmentCommand extends AppointmentCommand {
  * Comando para rechazar una cita
  */
 class RejectAppointmentCommand extends AppointmentCommand {
-  constructor(appointmentId, reason) {
+  constructor(appointmentId, reason, apiUrl) {
     super()
     this.appointmentId = appointmentId
     this.reason = reason
+    this.apiUrl = apiUrl
   }
 
   async execute() {
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    
-    // En producción: return await fetch(`/api/appointments/${id}/reject`, { method: 'POST', body: { reason } })
-    const appointment = MOCK_APPOINTMENTS.find(a => a.id === this.appointmentId)
-    if (appointment) {
-      appointment.status = 'rejected'
-      appointment.rejectionReason = this.reason
-      delete appointment.proposedDate
+    try {
+      const token = localStorage.getItem('authToken')
+      if (!token) {
+        throw new Error('No hay sesión activa')
+      }
+
+      const response = await fetch(`${this.apiUrl}/client/appointment/acknowledge`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          id_appointment: this.appointmentId,
+          status: 'rejected',
+          justification: this.reason
+        })
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Error al rechazar la cita')
+      }
+
+      return { success: true, message: data.message || 'Cita rechazada correctamente' }
+    } catch (error) {
+      console.error('[APPOINTMENT] Error al rechazar cita:', error)
+      throw error
     }
-    
-    return { success: true, appointment }
+  }
+}
+
+/**
+ * Comando para solicitar una cita (crear invitación)
+ */
+class RequestAppointmentCommand extends AppointmentCommand {
+  constructor(propertyId, description, apiUrl) {
+    super()
+    this.propertyId = propertyId
+    this.description = description
+    this.apiUrl = apiUrl
+  }
+
+  async execute() {
+    try {
+      const token = localStorage.getItem('authToken')
+      if (!token) {
+        throw new Error('No hay sesión activa')
+      }
+
+      console.log('[REQUEST APPOINTMENT] Enviando solicitud:', {
+        id_property: this.propertyId,
+        description: this.description
+      })
+
+      const response = await fetch(`${this.apiUrl}/client/appointment/request`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          id_property: this.propertyId,
+          description: this.description || null
+        })
+      })
+
+      const data = await response.json()
+      console.log('[REQUEST APPOINTMENT] Respuesta del backend:', data)
+
+      if (!response.ok) {
+        throw new Error(data.details || data.message || 'Error al solicitar la cita')
+      }
+
+      return { success: true, message: data.message || 'Solicitud enviada correctamente', id_invitation: data.id_invitation }
+    } catch (error) {
+      console.error('[APPOINTMENT] Error al solicitar cita:', error)
+      throw error
+    }
   }
 }
 
@@ -126,18 +331,63 @@ class RejectAppointmentCommand extends AppointmentCommand {
  * Invoker - Ejecutor de comandos
  */
 class AppointmentService {
+  constructor() {
+    this.apiUrl = API_URL
+  }
+
+  /**
+   * Obtener todas las citas
+   */
   async getAppointments() {
-    const command = new GetAppointmentsCommand()
+    const command = new GetAllAppointmentsCommand(this.apiUrl)
     return await command.execute()
   }
 
+  /**
+   * Obtener citas finalizadas (aceptadas o rechazadas)
+   */
+  async getFinalizedAppointments() {
+    const command = new GetFinalizedAppointmentsCommand(this.apiUrl)
+    return await command.execute()
+  }
+
+  /**
+   * Obtener citas pendientes (esperando respuesta del agente)
+   */
+  async getPendingAppointments() {
+    const command = new GetPendingAppointmentsCommand(this.apiUrl)
+    return await command.execute()
+  }
+
+  /**
+   * Obtener citas por confirmar (esperando respuesta del cliente)
+   */
+  async getAcknowledgeAppointments() {
+    const command = new GetAcknowledgeAppointmentsCommand(this.apiUrl)
+    return await command.execute()
+  }
+
+  /**
+   * Aceptar una cita
+   */
   async acceptAppointment(appointmentId) {
-    const command = new AcceptAppointmentCommand(appointmentId)
+    const command = new AcceptAppointmentCommand(appointmentId, this.apiUrl)
     return await command.execute()
   }
 
+  /**
+   * Rechazar una cita
+   */
   async rejectAppointment(appointmentId, reason) {
-    const command = new RejectAppointmentCommand(appointmentId, reason)
+    const command = new RejectAppointmentCommand(appointmentId, reason, this.apiUrl)
+    return await command.execute()
+  }
+
+  /**
+   * Solicitar una cita para una propiedad
+   */
+  async requestAppointment(propertyId, description = null) {
+    const command = new RequestAppointmentCommand(propertyId, description, this.apiUrl)
     return await command.execute()
   }
 }

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { AgentTable, AgentFormModal, DeleteConfirmModal } from '../../components/admin'
+import { AgentTable, AgentFormModal, DeleteConfirmModal, TemporaryPasswordModal } from '../../components/admin'
 import { AgentService } from '../../services'
 import toast from 'react-hot-toast'
 import { UserPlus, Users, Shield } from 'lucide-react'
@@ -13,7 +13,10 @@ const AgentManagementContainer = () => {
   // Estado de modales
   const [isFormModalOpen, setIsFormModalOpen] = useState(false)
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false)
   const [selectedAgent, setSelectedAgent] = useState(null)
+  const [temporaryPassword, setTemporaryPassword] = useState('')
+  const [newAgentName, setNewAgentName] = useState('')
 
   // Cargar agentes al montar (Command: GetAgentsCommand)
   const loadAgents = useCallback(async () => {
@@ -22,7 +25,8 @@ const AgentManagementContainer = () => {
       const data = await AgentService.getAgents()
       setAgents(data)
     } catch (error) {
-      toast.error('Error al cargar los agentes')
+      const errorMessage = error.message || 'Error al cargar los agentes'
+      toast.error(errorMessage)
     } finally {
       setLoading(false)
     }
@@ -57,16 +61,24 @@ const AgentManagementContainer = () => {
     setSelectedAgent(null)
   }
 
+  // Cerrar modal de contraseña
+  const handleClosePasswordModal = () => {
+    setIsPasswordModalOpen(false)
+    setTemporaryPassword('')
+    setNewAgentName('')
+  }
+
   // Enviar formulario de creación o edición
   const handleFormSubmit = async (formData) => {
     setActionLoading(true)
     try {
       if (selectedAgent) {
         // Editar agente
-        const updatedAgent = await AgentService.updateAgent(selectedAgent.id, formData)
-        setAgents(prev =>
-          prev.map(a => (a.id === selectedAgent.id ? { ...a, ...formData, ...updatedAgent } : a))
-        )
+        await AgentService.updateAgent(selectedAgent.id, formData)
+        
+        // Recargar todos los agentes para obtener los datos actualizados del servidor
+        await loadAgents()
+        
         toast.success(
           `Agente editado exitosamente — ID: ${selectedAgent.id}, ${formData.firstName} ${formData.lastName}`,
           { duration: 4000 }
@@ -74,7 +86,19 @@ const AgentManagementContainer = () => {
       } else {
         // Crear agente
         const newAgent = await AgentService.createAgent(formData)
-        setAgents(prev => [...prev, newAgent])
+        setAgents(prev => {
+          const updated = [...prev, newAgent]
+          // Ordenar por ID después de crear
+          return updated.sort((a, b) => a.id - b.id)
+        })
+        
+        // Si hay contraseña temporal, mostrar el modal
+        if (newAgent.temporaryPassword) {
+          setTemporaryPassword(newAgent.temporaryPassword)
+          setNewAgentName(`${formData.firstName} ${formData.lastName}`)
+          setIsPasswordModalOpen(true)
+        }
+        
         toast.success(
           `Agente creado exitosamente — ${formData.firstName} ${formData.lastName} (${formData.email})`,
           { duration: 4000 }
@@ -82,7 +106,8 @@ const AgentManagementContainer = () => {
       }
       handleCloseModals()
     } catch (error) {
-      toast.error(selectedAgent ? 'Error al editar el agente' : 'Error al crear el agente')
+      const errorMessage = error.message || (selectedAgent ? 'Error al editar el agente' : 'Error al crear el agente')
+      toast.error(errorMessage, { duration: 4000 })
     } finally {
       setActionLoading(false)
     }
@@ -101,7 +126,8 @@ const AgentManagementContainer = () => {
       )
       handleCloseModals()
     } catch (error) {
-      toast.error('Error al eliminar el agente')
+      const errorMessage = error.message || 'Error al eliminar el agente'
+      toast.error(errorMessage, { duration: 4000 })
     } finally {
       setActionLoading(false)
     }
@@ -197,6 +223,13 @@ const AgentManagementContainer = () => {
         onConfirm={handleConfirmDelete}
         agent={selectedAgent}
         isLoading={actionLoading}
+      />
+
+      <TemporaryPasswordModal
+        isOpen={isPasswordModalOpen}
+        onClose={handleClosePasswordModal}
+        password={temporaryPassword}
+        agentName={newAgentName}
       />
     </div>
   )
