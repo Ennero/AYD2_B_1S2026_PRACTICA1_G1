@@ -49,6 +49,8 @@ services:
         until node -e \"const pg = require('pg'); const client = new pg.Client(process.env.DATABASE_URL); client.connect().then(() => { console.log('✅ PostgreSQL is ready'); client.end(); }).catch(() => { process.exit(1); })\"; do
           sleep 2;
         done;
+        echo '🔧 Generating Prisma client...';
+        npx prisma generate;
         echo '🔧 Running Prisma migrations...';
         npx prisma migrate deploy;
         echo '🌱 Running database seed...';
