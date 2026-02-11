@@ -1,57 +1,89 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import AgentAppointmentCard from '../../components/agent/AgentAppointmentCard'
 import AgentAppointmentTabs from '../../components/agent/AgentAppointmentTabs'
 import AgentAppointmentService from '../../services/agent/appointment.service'
-import { AgentAppointmentContext } from '../../context'
 import { CalendarDays } from 'lucide-react'
 import toast from 'react-hot-toast'
 
+// Mapeo de tab key → tipo de endpoint del backend
+const TAB_TO_TYPE = {
+  todos: 'all',
+  nuevas: 'Pending',
+  confirmadas: 'Accepted',
+  canceladas: 'Rejected',
+}
+
 // Container principal
 const AgentAppointmentsContainer = () => {
-  const [appointments, setAppointments] = useState([])
+  // Cada tab tiene su propio arreglo de citas
+  const [appointmentsByTab, setAppointmentsByTab] = useState({
+    todos: [],
+    nuevas: [],
+    confirmadas: [],
+    canceladas: [],
+  })
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('todos')
 
-  // Carga las citas
-  useEffect(() => {
-    loadAppointments()
+  // Carga las citas de un tab específico
+  const loadTabAppointments = useCallback(async (tabKey) => {
+    const type = TAB_TO_TYPE[tabKey]
+    const data = await AgentAppointmentService.getAppointments(type)
+    return data
   }, [])
 
-  const loadAppointments = async () => {
+  // Carga inicial: traer TODOS los tabs en paralelo para tener contadores
+  useEffect(() => {
+    const loadAll = async () => {
+      try {
+        setLoading(true)
+        const [all, pending, accepted, rejected] = await Promise.all([
+          loadTabAppointments('todos'),
+          loadTabAppointments('nuevas'),
+          loadTabAppointments('confirmadas'),
+          loadTabAppointments('canceladas'),
+        ])
+        setAppointmentsByTab({
+          todos: all,
+          nuevas: pending,
+          confirmadas: accepted,
+          canceladas: rejected,
+        })
+      } catch (error) {
+        toast.error('Error al cargar las citas')
+        console.error(error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    loadAll()
+  }, [loadTabAppointments])
+
+  // Al cambiar de tab, recargar ese tab desde el backend
+  const handleTabChange = useCallback(async (tabKey) => {
+    setActiveTab(tabKey)
     try {
       setLoading(true)
-      const data = await AgentAppointmentService.getAppointments()
-      setAppointments(data)
+      const data = await loadTabAppointments(tabKey)
+      setAppointmentsByTab(prev => ({ ...prev, [tabKey]: data }))
     } catch (error) {
       toast.error('Error al cargar las citas')
       console.error(error)
     } finally {
       setLoading(false)
     }
+  }, [loadTabAppointments])
+
+  // Citas mostradas = las del tab activo
+  const displayedAppointments = appointmentsByTab[activeTab] || []
+
+  // Contadores por tab
+  const tabCounts = {
+    todos: appointmentsByTab.todos.length,
+    nuevas: appointmentsByTab.nuevas.length,
+    confirmadas: appointmentsByTab.confirmadas.length,
+    canceladas: appointmentsByTab.canceladas.length,
   }
-
-  // Filtrar citas según la pestaña activa
-  const filteredAppointments = useMemo(() => {
-    if (activeTab === 'todos') {
-      // Ordenar por fecha de creación, más recientes primero
-      return [...appointments].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-    }
-    return appointments.filter((apt) => {
-      const ctx = new AgentAppointmentContext(apt)
-      return ctx.getTabKey() === activeTab
-    })
-  }, [appointments, activeTab])
-
-  // Contador por tab
-  const tabCounts = useMemo(() => {
-    const counts = { todos: appointments.length, nuevas: 0, confirmadas: 0, canceladas: 0 }
-    appointments.forEach((apt) => {
-      const ctx = new AgentAppointmentContext(apt)
-      const tab = ctx.getTabKey()
-      if (counts[tab] !== undefined) counts[tab]++
-    })
-    return counts
-  }, [appointments])
 
   // Form de propuesta
   const handlePropose = async (appointmentId, proposalData) => {
@@ -62,13 +94,14 @@ const AgentAppointmentsContainer = () => {
       const result = await AgentAppointmentService.proposeDateTime(appointmentId, proposalData)
       
       if (result.success) {
-        setAppointments(prev =>
-          prev.map(a =>
-            a.id === appointmentId
-              ? { ...a, ...result.appointment, status: 'confirmada' }
-              : a
-          )
-        )
+        // Recargar todos los tabs para que contadores y listas estén sincronizados
+        const [all, pending, accepted, rejected] = await Promise.all([
+          loadTabAppointments('todos'),
+          loadTabAppointments('nuevas'),
+          loadTabAppointments('confirmadas'),
+          loadTabAppointments('canceladas'),
+        ])
+        setAppointmentsByTab({ todos: all, nuevas: pending, confirmadas: accepted, canceladas: rejected })
         toast.success(result.message || '¡Propuesta enviada exitosamente!')
       }
     } catch (error) {
@@ -146,7 +179,7 @@ const AgentAppointmentsContainer = () => {
         <div className="animate-fadeInUp" style={{ animationDelay: '100ms' }}>
           <AgentAppointmentTabs
             activeTab={activeTab}
-            onTabChange={setActiveTab}
+            onTabChange={handleTabChange}
             counts={tabCounts}
           />
         </div>
@@ -167,7 +200,7 @@ const AgentAppointmentsContainer = () => {
         )}
 
         {/* Sin resultados */}
-        {!loading && filteredAppointments.length === 0 && (
+        {!loading && displayedAppointments.length === 0 && (
           <div className="flex items-center justify-center py-24 animate-fadeInUp">
             <div className="text-center inline-block p-10 bg-white/90 backdrop-blur-sm rounded-3xl shadow-xl">
               <CalendarDays className="w-16 h-16 text-sky-300 mx-auto mb-4" />
@@ -178,9 +211,9 @@ const AgentAppointmentsContainer = () => {
         )}
 
         {/* Listado */}
-        {!loading && filteredAppointments.length > 0 && (
+        {!loading && displayedAppointments.length > 0 && (
           <div className="space-y-5 max-w-[1400px] mx-auto">
-            {filteredAppointments.map((apt, idx) => (
+            {displayedAppointments.map((apt, idx) => (
               <AgentAppointmentCard
                 key={apt.id}
                 appointment={apt}
