@@ -5,6 +5,7 @@ import { decodeBase64ToBytes, guessExtensionFromMime } from '../../utils/base64.
 import { buildPublicBucketPath } from '../../utils/supabase-storage.ts'
 import { getPublicObjectStorage } from '../../adapters/storage/index.ts'
 import { getOptionalEnv } from '../../utils/env.ts'
+import { InvitationState } from '../../store/enums.ts'
 import crypto from 'node:crypto'
 //helado
 // Mapeo de tipos de propiedad
@@ -439,8 +440,10 @@ export async function getInvitations(agentId: number, type: string) {
     } else if (type === 'Rejected') {
         // Cancelado: is_accepted = false
         whereCondition.is_accepted = 0
+    } else if (type === 'all') {
+        // Excluir invitaciones con status ACKNOWLEDGE
+        whereCondition.status = { not: InvitationState.Acknowledge }
     }
-    // Si es 'all', no agregamos filtros adicionales
 
     const invitations = await DB.invitation.findMany({
         where: whereCondition,
