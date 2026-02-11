@@ -1,0 +1,25 @@
+meta {
+  name: d
+  type: http
+  seq: 9
+}
+
+get {
+  url: '''
+    agent/invitations/:type
+    agent/invitations/:type
+    agent/invitations/:type
+    localhost:agent/invitations/accepted
+'''
+  body: none
+  auth: inherit
+}
+
+params:path {
+  typeagent: 
+  typelocalhost:agent: 
+}
+
+settings {
+  encodeUrl: true
+}
