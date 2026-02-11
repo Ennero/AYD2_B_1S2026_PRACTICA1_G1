@@ -401,11 +401,9 @@ function getInvitationState(invitation: any): string {
     if (invitation.is_accepted === null && invitation.expected_date === null) {
         return 'Solicitud del cliente'
     }
-    // Cancelado por el cliente: is_accepted = false
     if (invitation.is_accepted !== null && Number(invitation.is_accepted) === 0) {
         return 'Cancelado por el cliente'
     }
-    // Cita agendada: expected_date != null o is_accepted = true
     if (invitation.expected_date !== null || (invitation.is_accepted !== null && Number(invitation.is_accepted) === 1)) {
         return 'Cita agendada'
     }
@@ -413,13 +411,11 @@ function getInvitationState(invitation: any): string {
 }
 
 export async function getInvitations(agentId: number, type: string) {
-    // Validar el tipo
     const validTypes = ['all', 'Pending', 'Accepted', 'Rejected']
     if (!validTypes.includes(type)) {
         throw new Error(`Invalid type. Valid types: ${validTypes.join(', ')}`)
     }
 
-    // Construir la condición WHERE según el tipo
     let whereCondition: any = {
         property: {
             id_agent: agentId,
@@ -431,16 +427,12 @@ export async function getInvitations(agentId: number, type: string) {
         whereCondition.is_accepted = null
         whereCondition.expected_date = null
     } else if (type === 'Accepted') {
-        // Cita agendada: expected_date != null O is_accepted = true
-        whereCondition.OR = [
-            { expected_date: { not: null } },
-            { is_accepted: 1 },
-        ]
+        // Cita agendada: solo las que el cliente aceptó (is_accepted = true)
+        whereCondition.is_accepted = 1
     } else if (type === 'Rejected') {
         // Cancelado: is_accepted = false
         whereCondition.is_accepted = 0
     }
-    // Si es 'all', no agregamos filtros adicionales
 
     const invitations = await DB.invitation.findMany({
         where: whereCondition,
@@ -494,7 +486,6 @@ export async function getInvitations(agentId: number, type: string) {
 }
 
 export async function proposeInvitation(agentId: number, invitationId: number, input: ProposeInvitationInput) {
-    // Buscar la invitación y verificar que pertenezca a una propiedad del agente
     const invitation = await DB.invitation.findUnique({
         where: { id_invitation: invitationId },
         include: {
