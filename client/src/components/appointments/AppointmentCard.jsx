@@ -62,9 +62,20 @@ const AppointmentCard = ({ appointment, onAccept, onReject }) => {
           <div className={`p-4 rounded-xl ${statusConfig.colorClass} border-2 ${statusConfig.colorClass.replace('bg-', 'border-')}`}>
             {/* Cita confirmada - mostrar fecha */}
             {statusConfig.showDateTime && appointment.scheduledDate && (
-              <div className={`flex items-center gap-2 font-bold ${statusConfig.textColorClass}`}>
-                <Calendar className="w-5 h-5" />
-                <span>Cita programada para: {formatDate(appointment.scheduledDate)}</span>
+              <div className="space-y-3">
+                <div className={`flex items-center gap-2 font-bold ${statusConfig.textColorClass}`}>
+                  <Calendar className="w-5 h-5" />
+                  <span>Cita programada para: {formatDate(appointment.scheduledDate)}</span>
+                </div>
+                {/* Descripción del agente */}
+                {appointment.description && (
+                  <div className="bg-white/90 rounded-lg p-3 border-2 border-green-200">
+                    <p className="text-xs font-bold text-green-700 mb-1">Descripción del agente:</p>
+                    <p className="text-gray-800 font-medium text-sm">
+                      {appointment.description}
+                    </p>
+                  </div>
+                )}
               </div>
             )}
 
@@ -82,6 +93,15 @@ const AppointmentCard = ({ appointment, onAccept, onReject }) => {
                   <Calendar className="w-5 h-5" />
                   <span>Propuesta de horario: {formatDate(appointment.proposedDate)}</span>
                 </div>
+                {/* Descripción de la propuesta */}
+                {appointment.description && (
+                  <div className="bg-white/90 rounded-lg p-3 border-2 border-orange-200">
+                    <p className="text-xs font-bold text-orange-700 mb-1">Descripción del agente:</p>
+                    <p className="text-gray-800 font-medium text-sm">
+                      {appointment.description}
+                    </p>
+                  </div>
+                )}
                 <div className="flex gap-3 pt-2">
                   <button
                     onClick={() => onAccept(appointment.id)}
@@ -101,10 +121,22 @@ const AppointmentCard = ({ appointment, onAccept, onReject }) => {
 
             {/* Rechazada - motivo */}
             {statusConfig.showRejectionReason && appointment.rejectionReason && (
-              <div className="bg-red-50 border-2 border-red-200 rounded-xl p-3">
-                <p className="text-red-800 font-medium">
-                  <span className="font-bold">Motivo de rechazo:</span> {appointment.rejectionReason}
-                </p>
+              <div className="space-y-3">
+                {/* Descripción del agente */}
+                {appointment.description && (
+                  <div className="bg-white/90 rounded-lg p-3 border-2 border-red-200">
+                    <p className="text-xs font-bold text-red-700 mb-1">Descripción del agente:</p>
+                    <p className="text-gray-800 font-medium text-sm">
+                      {appointment.description}
+                    </p>
+                  </div>
+                )}
+                {/* Motivo de rechazo */}
+                <div className="bg-red-50 border-2 border-red-200 rounded-xl p-3">
+                  <p className="text-red-800 font-medium">
+                    <span className="font-bold">Motivo de rechazo:</span> {appointment.rejectionReason}
+                  </p>
+                </div>
               </div>
             )}
           </div>
