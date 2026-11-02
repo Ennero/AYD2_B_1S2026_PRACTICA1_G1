@@ -1,4 +1,23 @@
-# HomeFinder Pro S.A.
+<div align="center">
+
+# 🧪 Automated Unit & Integration Testing Suite (AYD2)
+
+**Suite de pruebas unitarias, mocks y pruebas de integración para aplicaciones web utilizando Jest y buenas prácticas de QA.**
+
+[![Language](https://img.shields.io/badge/Language-JavaScript,%20Node.js-blue?style=for-the-badge)](https://github.com/Ennero/AYD2_B_1S2026_PRACTICA1_G1)
+[![Course](https://img.shields.io/badge/Course-Análisis%20y%20Diseño%20de%20Sistemas%202-003366?style=for-the-badge)](https://ingenieria.usac.edu.gt/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)
+
+</div>
+
+---
+
+
+## 📌 Contexto Académico
+
+Proyecto desarrollado en el marco del curso **Análisis y Diseño de Sistemas 2** de la carrera de Ingeniería en Ciencias y Sistemas en la Universidad de San Carlos de Guatemala (USAC).
+
+---
 
 Plataforma web para la gestión y publicación de bienes raíces y alquiler de propiedades.
 
@@ -97,3 +116,16 @@ Frontend disponible en: **http://localhost:5173**
 - [README del Servidor](server/README.md)
 - [README del Cliente](client/README.md)
 - [Resumen de Datos Seed](server/src/db/SEED_DATA_SUMMARY.md)
+
+---
+
+## 📄 Licencia
+
+Este proyecto está bajo la Licencia **MIT**. Consulta el archivo [LICENSE](LICENSE) para más detalles.
+
+---
+
+## 👨‍💻 Autor
+
+- **Enner Mendizabal** - [@Ennero](https://github.com/Ennero)  
+- *Facultad de Ingeniería, Universidad de San Carlos de Guatemala.*
