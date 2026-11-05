@@ -1,23 +1,6 @@
-<div align="center">
+# HomeFinder Pro — gestión de propiedades y alquileres
 
-# 🧪 Automated Unit & Integration Testing Suite (AYD2)
-
-**Suite de pruebas unitarias, mocks y pruebas de integración para aplicaciones web utilizando Jest y buenas prácticas de QA.**
-
-[![Language](https://img.shields.io/badge/Language-JavaScript,%20Node.js-blue?style=for-the-badge)](https://github.com/Ennero/AYD2_B_1S2026_PRACTICA1_G1)
-[![Course](https://img.shields.io/badge/Course-Análisis%20y%20Diseño%20de%20Sistemas%202-003366?style=for-the-badge)](https://ingenieria.usac.edu.gt/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)
-
-</div>
-
----
-
-
-## 📌 Contexto Académico
-
-Proyecto desarrollado en el marco del curso **Análisis y Diseño de Sistemas 2** de la carrera de Ingeniería en Ciencias y Sistemas en la Universidad de San Carlos de Guatemala (USAC).
-
----
+Aplicación inmobiliaria de equipo con React, Express/TypeScript, Prisma, PostgreSQL y almacenamiento de imágenes en Supabase.
 
 Plataforma web para la gestión y publicación de bienes raíces y alquiler de propiedades.
 
@@ -68,25 +51,25 @@ Plataforma web para la gestión y publicación de bienes raíces y alquiler de p
 
 ### Requisitos
 
-- **Node.js** v18+
+- **Node.js** 22.12+ o 24 (Prisma 7)
 - **Docker Desktop** (Windows/Mac) o Docker Engine + Docker Compose (Linux)
 
 ### 1. Clonar el Repositorio
 
 ```bash
-git clone <url-del-repositorio>
+git clone https://github.com/Ennero/AYD2_B_1S2026_PRACTICA1_G1.git
 cd AYD2_B_1S2026_PRACTICA1_G1
 ```
 
 ### 2. Configurar Variables de Entorno
 
-Crear el archivo `server/.env` con las variables necesarias (ver [server/README.md](server/README.md) para detalle).
+Copiar `server/.env.example` a `server/.env` y ajustar las variables necesarias (ver [server/README.md](server/README.md) para detalle).
 
 ### 3. Levantar el Backend (Docker)
 
 ```bash
 cd server
-docker-compose up --build
+docker compose up --build
 ```
 
 Esto levanta PostgreSQL + Backend con migraciones y datos iniciales automáticamente.  
@@ -95,7 +78,7 @@ API disponible en: **http://localhost:3000**
 ### 4. Levantar el Frontend
 
 ```bash
-cd client
+cd ../client
 npm install
 npm run dev
 ```
@@ -117,15 +100,9 @@ Frontend disponible en: **http://localhost:5173**
 - [README del Cliente](client/README.md)
 - [Resumen de Datos Seed](server/src/db/SEED_DATA_SUMMARY.md)
 
----
 
-## 📄 Licencia
+## Alcance de las comprobaciones
 
-Este proyecto está bajo la Licencia **MIT**. Consulta el archivo [LICENSE](LICENSE) para más detalles.
+El repositorio implementa una aplicación inmobiliaria. No contiene una suite Jest: los scripts actuales de backend cubren construcción, ejecución y base de datos. Las cuentas seed son exclusivamente de demostración. Las imágenes requieren configurar un proyecto/bucket Supabase propio; los valores de ejemplo no conceden acceso a un servicio real.
 
----
-
-## 👨‍💻 Autor
-
-- **Enner Mendizabal** - [@Ennero](https://github.com/Ennero)  
-- *Facultad de Ingeniería, Universidad de San Carlos de Guatemala.*
+La base PostgreSQL se inicializa con migraciones y seeds. El directorio local `server/postgres` no se distribuye como fuente. La raíz declara MIT y el manifiesto del servidor conserva ISC; consultar los avisos de cada componente.

@@ -4,14 +4,14 @@ API RESTful desarrollada con **Node.js + Express + TypeScript + Prisma + Postgre
 
 ## 📋 Requisitos
 
-- **Node.js** (recomendado v18+)
+- **Node.js** (22.12+ o 24 para Prisma 7)
 - **Docker Desktop** (para Windows/Mac) o **Docker Engine + Docker Compose** (para Linux)
 
 ## 🚀 Inicio Rápido con Docker Compose
 
 ### 1. Configurar Variables de Entorno
 
-Crea/edita el archivo `.env` en esta carpeta (`server/`):
+Copia `.env.example` a `.env` en esta carpeta (`server/`) y configura tus servicios. Los siguientes valores son de demostración:
 
 ```dotenv
 PORT=3000
@@ -28,7 +28,7 @@ DATABASE_URL=postgresql://postgres:123456@localhost:5433/ptdb
 JWT_SECRET=change-me-in-production
 
 # Supabase (para almacenamiento de imágenes)
-SUPABASE_URL=https://hrctwyfmjbsfpcxyfrpn.supabase.co
+SUPABASE_URL=https://example.supabase.co
 SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 SUPABASE_BUCKET_USERS=AYD2_B_1S2026_PRACTICA1_G1/users
 ```
@@ -200,7 +200,7 @@ El proyecto incluye una seed que genera:
 - **30+ Favoritos** y **80+ Registros de visitas**
 - **40+ Invitaciones** con diferentes estados
 
-Ver más detalles en [SEED_DATA_SUMMARY.md](./SEED_DATA_SUMMARY.md)
+Ver más detalles en [SEED_DATA_SUMMARY.md](./src/db/SEED_DATA_SUMMARY.md)
 
 ## 🔌 Endpoints de la API
 
